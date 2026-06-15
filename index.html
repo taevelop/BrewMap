@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="취향과 분위기로 찾는 스페셜티 커피 지도 서비스 BrewMap" />
-    <title>BrewMap | Coffee Map Service</title>
+    <meta name="description" content="마시고 싶은 커피가 있는 카페를 찾는 성수·연남 커피맵 MVP" />
+    <title>BrewMap | Coffee Map MVP</title>
     <link rel="stylesheet" href="./src/styles.css" />
   </head>
   <body>
@@ -13,37 +13,40 @@
         <nav class="top-nav" aria-label="BrewMap 주요 메뉴">
           <div class="brand"><span class="brand-mark">☕</span><span>BrewMap</span></div>
           <div class="nav-actions">
-            <a href="#features">기능</a>
-            <a href="#cafes">추천 카페</a>
-            <button type="button">앱 시작하기</button>
+            <a href="#map">지도</a><a href="#saved">저장</a><a href="#report">제보</a><a href="#admin">Admin</a>
           </div>
         </nav>
         <div class="hero-grid">
           <div class="hero-copy">
-            <p class="eyebrow">Coffee Map Service</p>
-            <h1>취향, 분위기, 동선까지 맞춰 찾는 커피 지도</h1>
-            <p class="hero-description">BrewMap은 스페셜티 카페 탐색, 원두 취향 필터, 방문 기록을 한 화면에 모아 사용자가 지금 가기 좋은 커피 장소를 빠르게 결정하도록 돕는 지도 기반 서비스입니다.</p>
-            <form class="search-card" role="search">
-              <span aria-hidden="true">⌕</span>
-              <input aria-label="카페 검색" placeholder="동네, 원두, 분위기로 검색" />
-              <button type="submit">검색</button>
-            </form>
-            <div class="filter-row" aria-label="추천 검색 필터" data-filter-row></div>
+            <p class="eyebrow">Web MVP / PWA First · 성수 + 연남</p>
+            <h1>마시고 싶은 커피가 있는 카페를 찾는 지도</h1>
+            <p class="hero-description">리뷰와 별점 대신 필터커피, 디카페인, 콜드브루, 싱글오리진 같은 커피 가능 여부와 검증 상태를 먼저 보여주는 12주 MVP 실행 버전입니다.</p>
+            <form class="search-card" role="search"><span aria-hidden="true">⌕</span><input aria-label="카페 검색" placeholder="성수 필터커피, 연남 디카페인" /><button type="submit">검색</button></form>
+            <div class="filter-row" aria-label="MVP 커피 필터" data-filter-row></div>
+            <p class="metric-strip"><strong>목표</strong> 10주 클로즈드 베타 · 12주 퍼블릭 MVP · 초기 카페 150~300개</p>
           </div>
-          <div class="map-card" aria-label="BrewMap 카페 지도 미리보기">
-            <div class="map-toolbar"><span>⌖ 현재 위치 기반</span><button type="button">☷ 필터</button></div>
+          <section class="map-card" id="map" aria-label="BrewMap 카페 지도 미리보기">
+            <div class="map-toolbar"><span>현재 결과 <strong data-result-count>0개 카페</strong></span><button type="button">내 위치</button></div>
             <div class="map-surface" data-map-surface><span class="route-line route-line-a"></span><span class="route-line route-line-b"></span></div>
-          </div>
+          </section>
         </div>
       </section>
-      <section class="feature-section" id="features">
-        <article><span>01</span><h2>취향 기반 큐레이션</h2><p>산미, 바디감, 로스팅 정도, 추출 방식 등 커피 취향을 저장하고 맞춤 카페를 추천합니다.</p></article>
-        <article><span>02</span><h2>상황별 지도 필터</h2><p>작업 좌석, 콘센트, 반려동물, 야간 영업 같은 방문 맥락을 지도에서 바로 비교합니다.</p></article>
-        <article><span>03</span><h2>방문 기록과 리뷰</h2><p>마신 메뉴와 원두 노트를 기록해 나만의 커피 취향 그래프를 만들어 갑니다.</p></article>
+
+      <section class="workflow-section" aria-label="MVP 우선순위">
+        <article><span>01</span><h2>태그 체계</h2><p>핵심 필터 6개와 동의어 매핑을 먼저 고정합니다.</p></article>
+        <article><span>02</span><h2>DB + Admin</h2><p>카페, 가능 커피, 근거, 제보, 저장 데이터를 운영 가능하게 설계합니다.</p></article>
+        <article><span>03</span><h2>지도 + 필터</h2><p>정확한 필터 결과와 상세 진입을 MVP의 본체로 둡니다.</p></article>
       </section>
+
       <section class="cafe-section" id="cafes">
-        <div class="section-heading"><p class="eyebrow">Curated nearby</p><h2>오늘 가볼 만한 카페</h2></div>
+        <div class="section-heading"><p class="eyebrow">P0 Core Flow</p><h2>지도 → 필터 → 상세 → 저장/제보</h2></div>
         <div class="cafe-grid" data-cafe-grid></div>
+      </section>
+
+      <section class="ops-grid">
+        <article class="panel" id="saved"><p class="eyebrow">Saved</p><h2>기본 저장 리스트</h2><p>로그인 사용자는 “가보고 싶은 곳” 기본 리스트에 카페를 저장하고 해제할 수 있어야 합니다.</p></article>
+        <article class="panel" id="report"><p class="eyebrow">Report</p><h2>정보 수정 제보</h2><p>추가, 수정, 삭제, 폐업, 메뉴 변경 제보를 받아 검증 큐로 보냅니다.</p></article>
+        <article class="panel admin-panel" id="admin"><p class="eyebrow">Admin Required</p><h2>운영툴 우선 구현</h2><ul data-admin-queue></ul><button type="button">CSV Import 준비</button></article>
       </section>
     </main>
     <script type="module" src="./src/main.js"></script>
