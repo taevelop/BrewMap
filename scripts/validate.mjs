@@ -7,6 +7,7 @@ const requiredFiles = [
   'docs/mvp-plan.md',
   'docs/scope.md',
   'docs/taxonomy.md',
+  'docs/csv-format.md',
   'db/schema.sql',
   'data/seed-cafes.csv',
 ];
@@ -17,17 +18,23 @@ const js = await readFile('src/main.js', 'utf8');
 const css = await readFile('src/styles.css', 'utf8');
 const scope = await readFile('docs/scope.md', 'utf8');
 const schema = await readFile('db/schema.sql', 'utf8');
-const seed = await readFile('data/seed-cafes.csv', 'utf8');
+const seedBytes = await readFile('data/seed-cafes.csv');
+const seed = seedBytes.toString('utf8');
 
 const checks = [
   ['HTML has Korean language metadata', html.includes('lang="ko"')],
   ['HTML states the MVP mission', html.includes('마시고 싶은 커피가 있는 카페를 찾는 지도')],
   ['JavaScript defines MVP coffee capabilities', js.includes('filter_coffee') && js.includes('bean_sales')],
+  ['JavaScript wires cafe search', js.includes('data-search-form') && js.includes('matchesSearch')],
+  ['JavaScript wires saved cafes', js.includes('data-saved-list') && js.includes('toggleSaved')],
+  ['JavaScript wires report queue', js.includes('data-report-form') && js.includes('submitReport')],
+  ['JavaScript wires cafe detail modal', js.includes('data-detail-dialog') && js.includes('openDetail')],
   ['JavaScript avoids review/rating data model', !js.includes('rating')],
   ['CSS defines responsive layout', css.includes('@media (max-width: 900px)')],
   ['Scope includes required Admin work', scope.includes('관리자 페이지') && scope.includes('CSV Import')],
   ['Schema includes core tables', ['cafes', 'coffee_capabilities', 'cafe_capabilities', 'reports', 'admin_logs'].every((table) => schema.includes(`create table ${table}`))],
-  ['Seed CSV includes Seongsu and Yeonnam rows', seed.includes('seongsu') && seed.includes('yeonnam')],
+  ['Seed CSV is UTF-8 BOM for Excel', seedBytes[0] === 0xef && seedBytes[1] === 0xbb && seedBytes[2] === 0xbf],
+  ['Seed CSV includes Busan MVP area rows', seed.includes('city,area') && ['busan', 'jeonpo', 'gwangan', 'haeundae'].every((area) => seed.includes(area))],
 ];
 
 const failed = checks.filter(([, ok]) => !ok);

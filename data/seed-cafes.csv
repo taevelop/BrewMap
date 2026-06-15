@@ -1,4 +1,4 @@
-id,name,area,address,latitude,longitude,capabilities,confidence,verification_source,verified_at,naver_map_url,kakao_map_url,google_map_url
-seongsu-archive,Archive Beans,seongsu,서울 성동구 성수이로 12,37.5441000,127.0557000,"filter_coffee|single_origin|bean_sales",A,admin_verified,2026-06-01,#,#,#
-yeonnam-drip,Drip Station,yeonnam,서울 마포구 동교로 41,37.5615000,126.9237000,"filter_coffee|hand_drip|decaf",B,user_report,2026-05-24,#,#,#
-seongsu-cold,Cold Lab Roastery,seongsu,서울 성동구 연무장길 7,37.5430000,127.0529000,"cold_brew|flat_white|roastery",B,menu_photo,2026-05-18,#,#,#
+﻿id,name,city,area,address,latitude,longitude,capabilities,confidence,verification_source,verified_at,naver_map_url,kakao_map_url,google_map_url
+jeonpo-archive,Archive Beans,busan,jeonpo,부산 부산진구 전포대로 209,35.1549000,129.0632000,"filter_coffee|single_origin|bean_sales",A,admin_verified,2026-06-01,#,#,#
+gwangan-drip,Drip Station,busan,gwangan,부산 수영구 광남로 125,35.1534000,129.1139000,"filter_coffee|hand_drip|decaf",B,user_report,2026-05-24,#,#,#
+haeundae-cold,Cold Lab Roastery,busan,haeundae,부산 해운대구 해운대로 620,35.1629000,129.1635000,"cold_brew|flat_white|roastery",B,menu_photo,2026-05-18,#,#,#

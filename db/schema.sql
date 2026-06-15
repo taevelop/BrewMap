@@ -10,7 +10,8 @@ create table users (
 create table cafes (
   id uuid primary key,
   name text not null,
-  area text not null check (area in ('seongsu', 'yeonnam')),
+  city text not null default 'busan' check (city in ('busan', 'seoul')),
+  area text not null,
   address text not null,
   latitude numeric(10, 7) not null,
   longitude numeric(10, 7) not null,
