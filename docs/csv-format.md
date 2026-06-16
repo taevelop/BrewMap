@@ -39,11 +39,18 @@ BrewMap 카페 입력 CSV는 Excel에서 바로 열 수 있도록 **UTF-8 with B
 
 ### `area`
 
-현재 부산 MVP 권역:
+현재 부산 seed 권역:
 
 - `jeonpo`
 - `gwangan`
 - `haeundae`
+- `jung`
+- `yeongdo`
+- `dongnae`
+- `saha`
+- `gangseo`
+- `yeonje`
+- `geumjeong`
 
 ### `capabilities`
 
@@ -95,7 +102,7 @@ npm run data:check
 - UTF-8 BOM 유지 여부
 - 필수 컬럼, 중복 헤더, 알 수 없는 컬럼
 - `id` 중복과 slug 형식
-- 부산 MVP 권역 허용값: `jeonpo`, `gwangan`, `haeundae`
+- 부산 권역 허용값
 - 위도/경도 숫자 형식과 부산 대략 범위
 - 허용된 커피 태그, 중복 태그, 평균 태그 수
 - 신뢰도, 검증 출처, 최근 확인일 형식
