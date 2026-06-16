@@ -19,7 +19,7 @@ h1 { max-width: 760px; margin: 0; font-size: clamp(2.5rem, 6.4vw, 5.5rem); line-
 .hero-description { max-width: 660px; margin: 26px 0 30px; color: #674b3b; font-size: 1.13rem; line-height: 1.75; }
 .search-card { max-width: 650px; gap: 12px; padding: 10px 10px 10px 18px; border: 1px solid rgba(91,50,31,.12); background: rgba(255,255,255,.78); border-radius: 28px; box-shadow: 0 24px 70px rgba(91,50,31,.14); backdrop-filter: blur(18px); }
 .search-card input { flex: 1; min-width: 0; border: 0; outline: 0; color: #30180f; background: transparent; }
-.search-card button, .card-actions button, .admin-panel button, .map-toolbar button, .report-form button, .modal-actions button, .modal-close { border: 0; border-radius: 999px; color: #fff; background: #2f1a11; font-weight: 900; padding: 11px 16px; }
+.search-card button, .card-actions button, .admin-panel button, .map-toolbar button, .report-form button, .modal-actions button, .modal-close, .admin-form button, .form-actions button, .admin-row button, .tag-admin-item button, .queue-actions button { border: 0; border-radius: 999px; color: #fff; background: #2f1a11; font-weight: 900; padding: 11px 16px; }
 .filter-row { flex-wrap: wrap; gap: 10px; margin-top: 18px; }
 .filter-row button { border: 1px solid rgba(91,50,31,.13); color: #5d3d2c; background: rgba(255,255,255,.55); border-radius: 999px; padding: 10px 13px; font-weight: 900; }
 .filter-row button.is-active { color: #fff; background: #c46d2c; }
@@ -33,9 +33,9 @@ h1 { max-width: 760px; margin: 0; font-size: clamp(2.5rem, 6.4vw, 5.5rem); line-
 .route-line-b { width: 48%; top: 32%; left: 36%; transform: rotate(42deg); }
 .map-pin { position: absolute; display: grid; place-items: center; width: 52px; height: 52px; border: 4px solid #fff; border-radius: 50% 50% 50% 10px; color: #fff; background: #c46d2c; box-shadow: 0 18px 34px rgba(91,50,31,.28); transform: rotate(-45deg); font-weight: 900; }
 .map-pin.confidence-a { background: #247a52; }
-.workflow-section, .cafe-section, .ops-grid { max-width: 1180px; margin: 0 auto; padding: 0 24px 64px; }
+.workflow-section, .cafe-section, .ops-grid, .admin-workspace { max-width: 1180px; margin: 0 auto; padding: 0 24px 64px; }
 .workflow-section, .cafe-grid, .ops-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
-.workflow-section article, .cafe-card, .empty-state, .panel { border: 1px solid rgba(91,50,31,.1); background: rgba(255,255,255,.58); border-radius: 28px; padding: 24px; box-shadow: 0 20px 52px rgba(91,50,31,.11); }
+.workflow-section article, .cafe-card, .empty-state, .panel, .admin-tool { border: 1px solid rgba(91,50,31,.1); background: rgba(255,255,255,.58); border-radius: 28px; padding: 24px; box-shadow: 0 20px 52px rgba(91,50,31,.11); }
 .workflow-section span { color: #c46d2c; font-weight: 900; }
 h2, h3 { margin: 10px 0; letter-spacing: -.04em; }
 .workflow-section p, .cafe-card p, .panel p, .metadata, .saved-list, .detail-body { color: #6b4c3b; line-height: 1.65; }
@@ -57,11 +57,39 @@ h2, h3 { margin: 10px 0; letter-spacing: -.04em; }
 .saved-list, .admin-panel ul { display: grid; gap: 10px; padding: 0; list-style: none; }
 .saved-list li, .admin-panel li { display: grid; gap: 4px; padding: 12px; border-radius: 16px; background: rgba(255,246,237,.82); }
 .saved-list button { justify-self: start; border: 0; padding: 0; color: #6a3d22; background: transparent; font-weight: 900; text-align: left; text-decoration: underline; }
-.report-form { display: grid; gap: 12px; margin-top: 18px; }
-.report-form label { display: grid; gap: 7px; color: #5b321f; font-weight: 900; }
-.report-form select, .report-form textarea { width: 100%; border: 1px solid rgba(91,50,31,.14); border-radius: 14px; color: #30180f; background: rgba(255,255,255,.78); padding: 11px 12px; }
-.report-form textarea { resize: vertical; }
-.form-status, .admin-panel li span, .admin-panel li em { color: #6b4c3b; }
+.admin-summary { display: grid; gap: 8px; margin: 18px 0 12px; }
+.admin-summary span { display: flex; justify-content: space-between; gap: 10px; padding: 10px 12px; border-radius: 14px; color: #5b321f; background: rgba(255,246,237,.82); font-weight: 900; }
+.queue-actions, .form-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.queue-actions button, .form-actions button, .admin-row button, .tag-admin-item button { padding: 9px 12px; font-size: .9rem; }
+.secondary-button, .queue-actions .secondary-button, .form-actions button[data-admin-cafe-new], .form-actions button[data-admin-tag-new], .form-actions button[data-csv-sample], .form-actions button[data-csv-validate] { color: #5d3d2c; background: #fff6ed; }
+.danger-button, .form-actions .danger-button { background: #8f2f24; }
+.report-form, .admin-form { display: grid; gap: 12px; margin-top: 18px; }
+.report-form label, .admin-form label { display: grid; gap: 7px; color: #5b321f; font-weight: 900; }
+.report-form select, .report-form textarea, .admin-form input, .admin-form select, .admin-csv-tool textarea { width: 100%; border: 1px solid rgba(91,50,31,.14); border-radius: 14px; color: #30180f; background: rgba(255,255,255,.78); padding: 11px 12px; }
+.report-form textarea, .admin-csv-tool textarea { resize: vertical; }
+.admin-csv-tool textarea { min-height: 230px; font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace; font-size: .88rem; line-height: 1.5; }
+.admin-form input[readonly] { color: #6b4c3b; background: rgba(245,222,200,.62); }
+.form-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.check-line { display: flex !important; align-items: center; gap: 9px !important; }
+.check-line input { width: auto; }
+.capability-checklist { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 12px; border-radius: 16px; background: rgba(255,246,237,.74); }
+.capability-checklist .check-line { padding: 6px 0; color: #6a3d22; font-size: .92rem; }
+.form-status, .admin-panel li span, .admin-panel li em, .csv-errors, .admin-log-list, .tag-admin-item span, .admin-row-info span { color: #6b4c3b; }
+.admin-workspace { padding-top: 4px; }
+.admin-grid { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(0, .88fr); gap: 18px; align-items: start; }
+.admin-cafe-tool { grid-row: span 2; }
+.admin-csv-tool { grid-column: 1 / -1; }
+.tool-heading h3 { margin-top: 4px; font-size: 1.55rem; }
+.admin-table, .tag-admin-list, .admin-log-list, .csv-errors { display: grid; gap: 10px; padding: 0; list-style: none; }
+.admin-row, .tag-admin-item, .admin-log-list li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px; border-radius: 16px; background: rgba(255,246,237,.82); }
+.admin-row-info, .tag-admin-item div, .admin-log-list li { min-width: 0; }
+.admin-row-info, .tag-admin-item div { display: grid; gap: 4px; }
+.admin-row-info strong, .tag-admin-item strong, .admin-log-list strong { color: #2f1a11; }
+.admin-row.status-closed { border-left: 5px solid #8f2f24; }
+.admin-row.status-hidden { opacity: .68; border-left: 5px solid #6b4c3b; }
+.csv-errors li { padding: 10px 12px; border-radius: 14px; color: #8f2f24; background: rgba(255,246,237,.82); font-weight: 800; }
+.admin-log-list li { display: grid; justify-content: stretch; }
+.admin-log-list span { line-height: 1.5; }
 .detail-dialog { width: min(720px, calc(100vw - 32px)); border: 0; padding: 0; border-radius: 28px; color: #24150e; background: transparent; }
 .detail-dialog::backdrop { background: rgba(47,26,17,.44); backdrop-filter: blur(6px); }
 .detail-modal { position: relative; padding: 30px; border: 1px solid rgba(91,50,31,.12); border-radius: 28px; background: #fff8ee; box-shadow: 0 34px 90px rgba(47,26,17,.28); }
@@ -69,4 +97,4 @@ h2, h3 { margin: 10px 0; letter-spacing: -.04em; }
 .detail-body h2 { padding-right: 86px; font-size: clamp(2rem, 5vw, 3rem); }
 .detail-body .metadata { margin-right: 0; }
 .modal-actions { flex-wrap: wrap; gap: 10px; margin-top: 20px; }
-@media (max-width: 900px) { .top-nav, .hero-grid { align-items: flex-start; flex-direction: column; } .map-card { width: 100%; } .workflow-section, .cafe-grid, .ops-grid { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .top-nav, .hero-grid { align-items: flex-start; flex-direction: column; } .map-card { width: 100%; } .workflow-section, .cafe-grid, .ops-grid, .admin-grid, .form-pair, .capability-checklist { grid-template-columns: 1fr; } .admin-cafe-tool, .admin-csv-tool { grid-column: auto; grid-row: auto; } .admin-row, .tag-admin-item { align-items: flex-start; flex-direction: column; } }
