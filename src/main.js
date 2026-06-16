@@ -56,8 +56,19 @@ const reportTypeLabels = {
 
 const cityLabels = { busan: '부산', seoul: '서울' };
 const cityCodes = { 부산: 'busan', 서울: 'seoul' };
-const areaLabels = { jeonpo: '전포', gwangan: '광안리', haeundae: '해운대' };
-const areaCodes = { 전포: 'jeonpo', 광안리: 'gwangan', 해운대: 'haeundae' };
+const areaLabels = {
+  jeonpo: '전포',
+  gwangan: '광안리',
+  haeundae: '해운대',
+  jung: '중구',
+  yeongdo: '영도',
+  dongnae: '동래',
+  saha: '사하',
+  gangseo: '강서',
+  yeonje: '연제',
+  geumjeong: '금정',
+};
+const areaCodes = Object.fromEntries(Object.entries(areaLabels).map(([code, label]) => [label, code]));
 const statusLabels = { active: '운영중', closed: '폐업', hidden: '숨김' };
 const confidenceLabels = {
   A: 'A 등급',
@@ -104,81 +115,12 @@ function mapLinksFor(address, name) {
   };
 }
 
-let cafes = [
-  {
-    id: 'jeonpo-archive',
-    name: 'Archive Beans',
-    city: '부산',
-    area: '전포',
-    address: '부산 부산진구 전포대로 209',
-    latitude: 35.1549,
-    longitude: 129.0632,
-    capabilities: ['filter_coffee', 'single_origin', 'bean_sales'],
-    confidence: 'A',
-    verifiedAt: '2026-06-01',
-    source: 'admin_verified',
-    status: 'active',
-    links: mapLinksFor('부산 부산진구 전포대로 209', 'Archive Beans'),
-  },
-  {
-    id: 'gwangan-drip',
-    name: 'Drip Station',
-    city: '부산',
-    area: '광안리',
-    address: '부산 수영구 광남로 125',
-    latitude: 35.1534,
-    longitude: 129.1139,
-    capabilities: ['filter_coffee', 'hand_drip', 'decaf'],
-    confidence: 'B',
-    verifiedAt: '2026-05-24',
-    source: 'user_report',
-    status: 'active',
-    links: mapLinksFor('부산 수영구 광남로 125', 'Drip Station'),
-  },
-  {
-    id: 'haeundae-cold',
-    name: 'Cold Lab Roastery',
-    city: '부산',
-    area: '해운대',
-    address: '부산 해운대구 해운대로 620',
-    latitude: 35.1629,
-    longitude: 129.1635,
-    capabilities: ['cold_brew', 'flat_white', 'roastery'],
-    confidence: 'B',
-    verifiedAt: '2026-05-18',
-    source: 'menu_photo',
-    status: 'active',
-    links: mapLinksFor('부산 해운대구 해운대로 620', 'Cold Lab Roastery'),
-  },
-  {
-    id: 'haeundae-tenpercent-centum-design',
-    name: '텐퍼센트커피 부산센텀디자인진흥원점',
-    city: '부산',
-    area: '해운대',
-    address: '부산 해운대구 센텀6로 21 1층 106호',
-    latitude: 35.1734975,
-    longitude: 129.1292795,
-    capabilities: ['espresso_machine', 'cold_brew', 'flat_white', 'einspanner', 'discount_available'],
-    confidence: 'A',
-    verifiedAt: '2026-06-16',
-    source: 'admin_verified',
-    status: 'active',
-    links: {
-      naver: 'https://map.naver.com/p/entry/place/2018324444?lng=129.1292664&lat=35.1735161&placePath=%2Fhome&entry=plt&searchType=place',
-      kakao: 'https://place.map.kakao.com/369792673',
-      google: 'https://www.google.com/maps/search/?api=1&query=%ED%85%90%ED%8D%BC%EC%84%BC%ED%8A%B8%EC%BB%A4%ED%94%BC%20%EB%B6%80%EC%82%B0%EC%84%BC%ED%85%80%EB%94%94%EC%9E%90%EC%9D%B8%EC%A7%84%ED%9D%A5%EC%9B%90%EC%A0%90',
-    },
-  },
-];
+let cafes = [];
 
-const adminQueue = [
-  { id: 'report-seed-1', typeCode: 'update', type: '수정', cafeId: 'gwangan-drip', cafe: 'Drip Station', request: '디카페인 가능 여부 확인 요청', status: '검수 대기' },
-  { id: 'report-seed-2', typeCode: 'add', type: '추가', cafeId: '', cafe: 'New Brew Bar', request: '전포 신규 카페 등록 제보', status: '근거 필요' },
-  { id: 'report-seed-3', typeCode: 'closed', type: '폐업', cafeId: '', cafe: 'Old Beans', request: '폐업 신고', status: '확인 필요' },
-];
+const adminQueue = [];
 
 const adminLogs = [
-  { id: 'log-seed-1', action: 'seed', targetTable: 'cafes', targetId: 'busan-mvp', summary: '부산 MVP 샘플 데이터 준비', at: '2026. 6. 15.' },
+  { id: 'log-seed-1', action: 'seed', targetTable: 'cafes', targetId: 'busan-coffee', summary: '네이버 저장 목록 기반 실제 카페 seed 데이터 반영', at: '2026. 6. 16.' },
 ];
 
 const searchForm = document.querySelector('[data-search-form]');
@@ -312,8 +254,8 @@ function positionForCoordinates(latitude, longitude) {
   const lon = Number(longitude);
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) return { top: '50%', left: '50%' };
 
-  const top = clamp(82 - ((lat - 35.05) / 0.18) * 64, 12, 82);
-  const left = clamp(12 + ((lon - 129) / 0.22) * 76, 12, 84);
+  const top = clamp(82 - ((lat - 35.08) / 0.17) * 64, 12, 82);
+  const left = clamp(12 + ((lon - 128.93) / 0.26) * 76, 12, 84);
   return { top: `${top.toFixed(0)}%`, left: `${left.toFixed(0)}%` };
 }
 
@@ -1003,7 +945,7 @@ function validateCsvImportText(text) {
     seenIds.add(record.id);
 
     if (record.city && !cityLabels[record.city]) errors.push(`${rowNumber}행: city는 busan 또는 seoul이어야 합니다.`);
-    if (record.city === 'busan' && record.area && !areaLabels[record.area]) errors.push(`${rowNumber}행: 부산 MVP 권역은 jeonpo, gwangan, haeundae만 허용합니다.`);
+    if (record.city === 'busan' && record.area && !areaLabels[record.area]) errors.push(`${rowNumber}행: 지원하지 않는 부산 권역 코드입니다.`);
 
     const latitude = Number(record.latitude);
     const longitude = Number(record.longitude);
