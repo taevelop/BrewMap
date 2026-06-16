@@ -110,6 +110,10 @@ const verificationSources = ['owner_verified', 'admin_verified', 'user_report', 
 const csvRequiredColumns = ['id', 'name', 'city', 'area', 'address', 'latitude', 'longitude', 'capabilities', 'confidence', 'verification_source'];
 const csvOptionalColumns = ['verified_at', 'naver_map_url', 'kakao_map_url', 'google_map_url'];
 const savedStorageKey = 'brewmap.savedCafes.v1';
+const mapTileSize = 256;
+const defaultMapViewport = { latitude: 35.17, longitude: 129.08, zoom: 10 };
+const mapZoomRange = { min: 9, max: 14 };
+let mapViewport = { ...defaultMapViewport };
 
 function mapLinksFor(address, name) {
   const query = encodeURIComponent(`${address} ${name}`);
@@ -132,6 +136,10 @@ const searchForm = document.querySelector('[data-search-form]');
 const searchInput = document.querySelector('[data-search-input]');
 const filterRow = document.querySelector('[data-filter-row]');
 const mapSurface = document.querySelector('[data-map-surface]');
+const mapTiles = document.querySelector('[data-map-tiles]');
+const mapMarkerLayer = document.querySelector('[data-map-marker-layer]');
+const locationAction = document.querySelector('[data-location-action]');
+const mapStatus = document.querySelector('[data-map-status]');
 const cafeGrid = document.querySelector('[data-cafe-grid]');
 const adminQueueEl = document.querySelector('[data-admin-queue]');
 const resultCount = document.querySelector('[data-result-count]');
@@ -254,14 +262,175 @@ function activeCafes() {
   return cafes.filter((cafe) => cafe.status === 'active');
 }
 
-function positionForCoordinates(latitude, longitude) {
-  const lat = Number(latitude);
-  const lon = Number(longitude);
-  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return { top: '50%', left: '50%' };
+function mapSurfaceSize() {
+  const rect = mapSurface.getBoundingClientRect();
+  return {
+    width: rect.width || mapSurface.clientWidth || 420,
+    height: rect.height || mapSurface.clientHeight || 470,
+  };
+}
 
-  const top = clamp(82 - ((lat - 35.0) / 0.37) * 64, 12, 82);
-  const left = clamp(12 + ((lon - 128.8) / 0.47) * 76, 12, 84);
-  return { top: `${top.toFixed(0)}%`, left: `${left.toFixed(0)}%` };
+function projectCoordinates(latitude, longitude, zoom) {
+  const lat = clamp(Number(latitude), -85.05112878, 85.05112878);
+  const lon = Number(longitude);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+    return projectCoordinates(defaultMapViewport.latitude, defaultMapViewport.longitude, zoom);
+  }
+
+  const scale = mapTileSize * (2 ** zoom);
+  const sinLatitude = Math.sin((lat * Math.PI) / 180);
+  return {
+    x: ((lon + 180) / 360) * scale,
+    y: (0.5 - Math.log((1 + sinLatitude) / (1 - sinLatitude)) / (4 * Math.PI)) * scale,
+  };
+}
+
+function zoomForBounds(bounds, size) {
+  const usableWidth = Math.max(size.width - 92, 180);
+  const usableHeight = Math.max(size.height - 92, 180);
+
+  for (let zoom = mapZoomRange.max; zoom >= mapZoomRange.min; zoom -= 1) {
+    const northwest = projectCoordinates(bounds.maxLatitude, bounds.minLongitude, zoom);
+    const southeast = projectCoordinates(bounds.minLatitude, bounds.maxLongitude, zoom);
+    const spanWidth = Math.abs(southeast.x - northwest.x);
+    const spanHeight = Math.abs(southeast.y - northwest.y);
+    if (spanWidth <= usableWidth && spanHeight <= usableHeight) return zoom;
+  }
+
+  return mapZoomRange.min;
+}
+
+function fitMapToItems(items) {
+  if (!items.length) {
+    mapViewport = { ...defaultMapViewport };
+    return;
+  }
+
+  const coordinates = items.map((cafe) => ({
+    latitude: Number(cafe.latitude),
+    longitude: Number(cafe.longitude),
+  })).filter((coordinate) => Number.isFinite(coordinate.latitude) && Number.isFinite(coordinate.longitude));
+
+  if (!coordinates.length) {
+    mapViewport = { ...defaultMapViewport };
+    return;
+  }
+
+  const bounds = coordinates.reduce((accumulator, coordinate) => ({
+    minLatitude: Math.min(accumulator.minLatitude, coordinate.latitude),
+    maxLatitude: Math.max(accumulator.maxLatitude, coordinate.latitude),
+    minLongitude: Math.min(accumulator.minLongitude, coordinate.longitude),
+    maxLongitude: Math.max(accumulator.maxLongitude, coordinate.longitude),
+  }), {
+    minLatitude: coordinates[0].latitude,
+    maxLatitude: coordinates[0].latitude,
+    minLongitude: coordinates[0].longitude,
+    maxLongitude: coordinates[0].longitude,
+  });
+
+  const centerLatitude = (bounds.minLatitude + bounds.maxLatitude) / 2;
+  const centerLongitude = (bounds.minLongitude + bounds.maxLongitude) / 2;
+  const zoom = coordinates.length === 1 ? 14 : zoomForBounds(bounds, mapSurfaceSize());
+  mapViewport = { latitude: centerLatitude, longitude: centerLongitude, zoom };
+}
+
+function renderMapTiles() {
+  const { width, height } = mapSurfaceSize();
+  const center = projectCoordinates(mapViewport.latitude, mapViewport.longitude, mapViewport.zoom);
+  const startX = center.x - (width / 2);
+  const startY = center.y - (height / 2);
+  const minTileX = Math.floor(startX / mapTileSize);
+  const maxTileX = Math.floor((center.x + (width / 2)) / mapTileSize);
+  const minTileY = Math.floor(startY / mapTileSize);
+  const maxTileY = Math.floor((center.y + (height / 2)) / mapTileSize);
+  const tileLimit = 2 ** mapViewport.zoom;
+  const tiles = [];
+
+  for (let tileX = minTileX; tileX <= maxTileX; tileX += 1) {
+    for (let tileY = minTileY; tileY <= maxTileY; tileY += 1) {
+      if (tileY < 0 || tileY >= tileLimit) continue;
+
+      const image = document.createElement('img');
+      const wrappedX = ((tileX % tileLimit) + tileLimit) % tileLimit;
+      image.className = 'map-tile';
+      image.alt = '';
+      image.decoding = 'async';
+      image.loading = 'lazy';
+      image.referrerPolicy = 'no-referrer';
+      image.src = `https://tile.openstreetmap.org/${mapViewport.zoom}/${wrappedX}/${tileY}.png`;
+      image.style.left = `${Math.round((tileX * mapTileSize) - startX)}px`;
+      image.style.top = `${Math.round((tileY * mapTileSize) - startY)}px`;
+      tiles.push(image);
+    }
+  }
+
+  mapTiles.replaceChildren(...tiles);
+}
+
+function screenPositionForCoordinates(latitude, longitude) {
+  const { width, height } = mapSurfaceSize();
+  const center = projectCoordinates(mapViewport.latitude, mapViewport.longitude, mapViewport.zoom);
+  const point = projectCoordinates(latitude, longitude, mapViewport.zoom);
+  return {
+    left: width / 2 + point.x - center.x,
+    top: height / 2 + point.y - center.y,
+  };
+}
+
+function setMapStatus(message) {
+  mapStatus.textContent = message;
+}
+
+function requestUserLocation() {
+  if (!navigator.geolocation) {
+    setMapStatus('현재 위치를 확인할 수 없습니다.');
+    return;
+  }
+
+  setMapStatus('현재 위치 확인 중');
+  navigator.geolocation.getCurrentPosition((position) => {
+    mapViewport = {
+      latitude: position.coords.latitude,
+      longitude: position.coords.longitude,
+      zoom: 14,
+    };
+    renderMapPins(filteredCafes(), { keepViewport: true });
+    setMapStatus('현재 위치 기준으로 지도를 이동했습니다.');
+  }, () => {
+    setMapStatus('현재 위치를 확인할 수 없습니다.');
+  }, { enableHighAccuracy: false, maximumAge: 300000, timeout: 6000 });
+}
+
+function clusterMapItems(items) {
+  const cellSize = mapViewport.zoom >= 13 ? 38 : 58;
+  const clusters = new Map();
+
+  items.forEach((cafe) => {
+    const position = screenPositionForCoordinates(cafe.latitude, cafe.longitude);
+    const key = `${Math.floor(position.left / cellSize)}:${Math.floor(position.top / cellSize)}`;
+    const cluster = clusters.get(key) || {
+      items: [],
+      left: 0,
+      top: 0,
+      latitude: 0,
+      longitude: 0,
+    };
+
+    cluster.items.push(cafe);
+    cluster.left += position.left;
+    cluster.top += position.top;
+    cluster.latitude += Number(cafe.latitude);
+    cluster.longitude += Number(cafe.longitude);
+    clusters.set(key, cluster);
+  });
+
+  return [...clusters.values()].map((cluster) => ({
+    items: cluster.items,
+    left: cluster.left / cluster.items.length,
+    top: cluster.top / cluster.items.length,
+    latitude: cluster.latitude / cluster.items.length,
+    longitude: cluster.longitude / cluster.items.length,
+  }));
 }
 
 function readSavedCafeIds() {
@@ -395,19 +564,51 @@ function renderEmptyState() {
   return card;
 }
 
-function renderMapPins(items) {
-  mapSurface.querySelectorAll('.map-pin').forEach((pin) => pin.remove());
-  items.forEach((cafe) => {
+function renderMapPins(items, options = {}) {
+  if (!options.keepViewport) fitMapToItems(items);
+  renderMapTiles();
+  mapMarkerLayer.replaceChildren();
+
+  clusterMapItems(items).forEach((cluster) => {
+    if (cluster.items.length > 1) {
+      const clusterButton = document.createElement('button');
+      const previewNames = cluster.items.slice(0, 3).map((cafe) => cafe.name).join(', ');
+      clusterButton.className = 'map-cluster';
+      clusterButton.type = 'button';
+      clusterButton.style.left = `${cluster.left.toFixed(1)}px`;
+      clusterButton.style.top = `${cluster.top.toFixed(1)}px`;
+      clusterButton.textContent = cluster.items.length;
+      clusterButton.title = previewNames;
+      clusterButton.setAttribute('aria-label', `${cluster.items.length}개 카페 지도 묶음`);
+      clusterButton.addEventListener('click', () => {
+        if (mapViewport.zoom >= mapZoomRange.max) {
+          openDetail(cluster.items[0].id);
+          return;
+        }
+
+        mapViewport = {
+          latitude: cluster.latitude,
+          longitude: cluster.longitude,
+          zoom: Math.min(mapZoomRange.max, mapViewport.zoom + 2),
+        };
+        setMapStatus(`${cluster.items.length}개 카페 권역으로 확대했습니다.`);
+        renderMapPins(items, { keepViewport: true });
+      });
+      mapMarkerLayer.append(clusterButton);
+      return;
+    }
+
+    const [cafe] = cluster.items;
     const pin = document.createElement('button');
-    const position = positionForCoordinates(cafe.latitude, cafe.longitude);
     pin.className = `map-pin confidence-${cafe.confidence.toLowerCase()}`;
     pin.type = 'button';
-    pin.style.top = position.top;
-    pin.style.left = position.left;
+    pin.style.top = `${cluster.top.toFixed(1)}px`;
+    pin.style.left = `${cluster.left.toFixed(1)}px`;
     pin.setAttribute('aria-label', `${cafe.name} 지도 핀`);
-    pin.textContent = cafe.confidence;
+    pin.title = cafe.name;
+    pin.innerHTML = `<span>${escapeHtml(cafe.confidence)}</span>`;
     pin.addEventListener('click', () => openDetail(cafe.id));
-    mapSurface.append(pin);
+    mapMarkerLayer.append(pin);
   });
 }
 
@@ -1125,6 +1326,7 @@ searchInput.addEventListener('input', () => {
 });
 
 reportForm.addEventListener('submit', submitReport);
+locationAction.addEventListener('click', requestUserLocation);
 detailClose.addEventListener('click', closeDetail);
 detailDialog.addEventListener('click', (event) => {
   if (event.target === detailDialog) closeDetail();
@@ -1132,6 +1334,7 @@ detailDialog.addEventListener('click', (event) => {
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape' && detailDialog.open) closeDetail();
 });
+window.addEventListener('resize', () => renderMapPins(filteredCafes()));
 adminCafeForm.addEventListener('submit', saveCafeFromAdmin);
 adminCafeNew.addEventListener('click', resetCafeForm);
 adminCafeDelete.addEventListener('click', deleteSelectedCafe);

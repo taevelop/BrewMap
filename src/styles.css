@@ -28,12 +28,20 @@ h1 { max-width: 760px; margin: 0; font-size: clamp(2.5rem, 6.4vw, 5.5rem); line-
 .map-card { flex: 1 1 42%; min-height: 560px; padding: 18px; border: 1px solid rgba(255,255,255,.7); background: rgba(255,255,255,.48); border-radius: 38px; box-shadow: 0 34px 90px rgba(91,50,31,.22); backdrop-filter: blur(20px); }
 .map-toolbar { justify-content: space-between; gap: 14px; margin-bottom: 16px; color: #5a3a2b; font-weight: 900; }
 .map-toolbar button { background: #6b3d25; }
-.map-surface { position: relative; height: calc(100% - 52px); min-height: 470px; overflow: hidden; border-radius: 28px; background: linear-gradient(120deg, rgba(188,143,98,.36), rgba(255,255,255,.3)), repeating-linear-gradient(32deg, transparent 0 54px, rgba(91,50,31,.08) 55px 58px), repeating-linear-gradient(122deg, transparent 0 72px, rgba(91,50,31,.07) 73px 76px); }
-.route-line { position: absolute; height: 8px; border-radius: 999px; background: rgba(91,50,31,.25); transform-origin: left center; }
-.route-line-a { width: 62%; top: 48%; left: 18%; transform: rotate(-28deg); }
-.route-line-b { width: 48%; top: 32%; left: 36%; transform: rotate(42deg); }
-.map-pin { position: absolute; display: grid; place-items: center; width: 52px; height: 52px; border: 4px solid #fff; border-radius: 50% 50% 50% 10px; color: #fff; background: #c46d2c; box-shadow: 0 18px 34px rgba(91,50,31,.28); transform: rotate(-45deg); font-weight: 900; }
+.map-surface { position: relative; height: calc(100% - 52px); min-height: 470px; overflow: hidden; border: 1px solid rgba(91,50,31,.1); border-radius: 28px; background: #e9dccf; isolation: isolate; }
+.map-tiles, .map-marker-layer { position: absolute; inset: 0; }
+.map-tiles { z-index: 0; background: #e9dccf; }
+.map-tile { position: absolute; width: 256px; height: 256px; max-width: none; filter: saturate(.82) contrast(.96) sepia(.08); user-select: none; pointer-events: none; }
+.map-marker-layer { z-index: 2; pointer-events: none; }
+.map-attribution { position: absolute; right: 10px; bottom: 10px; z-index: 3; padding: 5px 7px; border-radius: 8px; color: #5d3d2c; background: rgba(255,255,255,.82); font-size: .72rem; font-weight: 800; text-decoration: none; }
+.map-status { position: absolute; left: 12px; top: 12px; z-index: 3; max-width: calc(100% - 24px); margin: 0; padding: 7px 10px; border-radius: 999px; color: #5d3d2c; background: rgba(255,255,255,.82); font-size: .78rem; font-weight: 900; }
+.map-status:empty { display: none; }
+.map-pin, .map-cluster { position: absolute; display: grid; place-items: center; border: 3px solid #fff; color: #fff; box-shadow: 0 16px 28px rgba(91,50,31,.3); font-weight: 900; pointer-events: auto; }
+.map-pin { width: 42px; height: 42px; border-radius: 50%; background: #c46d2c; transform: translate(-50%, -58%); }
+.map-pin::after { position: absolute; left: 50%; bottom: -7px; width: 13px; height: 13px; border-right: 3px solid #fff; border-bottom: 3px solid #fff; background: inherit; content: ''; transform: translateX(-50%) rotate(45deg); }
+.map-pin span { position: relative; z-index: 1; }
 .map-pin.confidence-a { background: #247a52; }
+.map-cluster { min-width: 40px; height: 40px; padding: 0 10px; border-radius: 999px; background: #5b321f; transform: translate(-50%, -50%); }
 .workflow-section, .cafe-section, .ops-grid, .admin-workspace { max-width: 1180px; margin: 0 auto; padding: 0 24px 64px; }
 .workflow-section, .cafe-grid, .ops-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
 .workflow-section article, .cafe-card, .empty-state, .panel, .admin-tool { border: 1px solid rgba(91,50,31,.1); background: rgba(255,255,255,.58); border-radius: 28px; padding: 24px; box-shadow: 0 20px 52px rgba(91,50,31,.11); }
