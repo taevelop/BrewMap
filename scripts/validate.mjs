@@ -10,14 +10,20 @@ const requiredFiles = [
   'docs/csv-format.md',
   'db/schema.sql',
   'data/seed-cafes.csv',
+  'scripts/check-seed-data.mjs',
+  'scripts/build.mjs',
 ];
 for (const file of requiredFiles) await access(file);
 
+const packageJson = await readFile('package.json', 'utf8');
+const buildScript = await readFile('scripts/build.mjs', 'utf8');
 const html = await readFile('index.html', 'utf8');
 const js = await readFile('src/main.js', 'utf8');
 const css = await readFile('src/styles.css', 'utf8');
 const scope = await readFile('docs/scope.md', 'utf8');
+const csvFormat = await readFile('docs/csv-format.md', 'utf8');
 const schema = await readFile('db/schema.sql', 'utf8');
+const seedCheck = await readFile('scripts/check-seed-data.mjs', 'utf8');
 const seedBytes = await readFile('data/seed-cafes.csv');
 const seed = seedBytes.toString('utf8');
 
@@ -34,6 +40,7 @@ const checks = [
   ['JavaScript wires Admin report review', js.includes('approveReport') && js.includes('rejectReport')],
   ['JavaScript wires Admin tag management', js.includes('saveTagFromAdmin') && js.includes('renderTagList')],
   ['JavaScript wires CSV validation and import', js.includes('validateCsvImportText') && js.includes('importCsvRows')],
+  ['JavaScript loads Seed CSV as cafe data source', js.includes('loadSeedCafes') && js.includes('./data/seed-cafes.csv')],
   ['JavaScript exposes all required map link outs', js.includes('mapLinksMarkup') && ['naver', 'kakao', 'google'].every((provider) => js.includes(provider))],
   ['JavaScript avoids review/rating data model', !js.includes('rating')],
   ['CSS defines responsive layout', css.includes('@media (max-width: 900px)')],
@@ -42,6 +49,10 @@ const checks = [
   ['Schema includes core tables', ['cafes', 'coffee_capabilities', 'cafe_capabilities', 'reports', 'admin_logs'].every((table) => schema.includes(`create table ${table}`))],
   ['Seed CSV is UTF-8 BOM for Excel', seedBytes[0] === 0xef && seedBytes[1] === 0xbb && seedBytes[2] === 0xbf],
   ['Seed CSV includes Busan MVP area rows', seed.includes('city,area') && ['busan', 'jeonpo', 'gwangan', 'haeundae'].every((area) => seed.includes(area))],
+  ['Package exposes seed data QA command', packageJson.includes('"data:check"') && packageJson.includes('scripts/check-seed-data.mjs')],
+  ['Build includes seed CSV data file', buildScript.includes('dist/data') && buildScript.includes('data/seed-cafes.csv')],
+  ['Seed data QA covers MVP readiness targets', seedCheck.includes('150') && seedCheck.includes('averageCoffeeCapabilities') && seedCheck.includes('mvpCapabilities')],
+  ['CSV docs explain seed data QA', csvFormat.includes('npm run data:check') && csvFormat.includes('Seed 데이터 QA')],
 ];
 
 const failed = checks.filter(([, ok]) => !ok);
