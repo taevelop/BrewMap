@@ -27,8 +27,13 @@
             <p class="metric-strip"><strong>목표</strong> 10주 부산 클로즈드 베타 · 12주 퍼블릭 MVP · 초기 카페 150~300개</p>
           </div>
           <section class="map-card" id="map" aria-label="BrewMap 카페 지도 미리보기">
-            <div class="map-toolbar"><span>현재 결과 <strong data-result-count aria-live="polite">0개 카페</strong></span><button type="button">내 위치</button></div>
-            <div class="map-surface" data-map-surface><span class="route-line route-line-a"></span><span class="route-line route-line-b"></span></div>
+            <div class="map-toolbar"><span>현재 결과 <strong data-result-count aria-live="polite">0개 카페</strong></span><button type="button" data-location-action>내 위치</button></div>
+            <div class="map-surface" data-map-surface>
+              <div class="map-tiles" data-map-tiles aria-hidden="true"></div>
+              <div class="map-marker-layer" data-map-marker-layer></div>
+              <a class="map-attribution" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap</a>
+              <p class="map-status" data-map-status aria-live="polite"></p>
+            </div>
           </section>
         </div>
       </section>

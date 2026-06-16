@@ -5,7 +5,7 @@ const requiredColumns = ['id', 'name', 'city', 'area', 'address', 'latitude', 'l
 const optionalColumns = ['verified_at', 'naver_map_url', 'kakao_map_url', 'google_map_url'];
 const allowedColumns = new Set([...requiredColumns, ...optionalColumns]);
 const allowedCities = new Set(['busan', 'seoul']);
-const busanAreas = new Set(['jeonpo', 'gwangan', 'haeundae', 'jung', 'yeongdo', 'dongnae', 'saha', 'gangseo', 'yeonje', 'geumjeong']);
+const busanAreas = new Set(['jeonpo', 'gwangan', 'haeundae', 'jung', 'yeongdo', 'dongnae', 'saha', 'gangseo', 'yeonje', 'geumjeong', 'buk', 'dong', 'nam', 'gijang', 'sasang']);
 const coffeeCapabilities = new Set([
   'filter_coffee',
   'cold_brew',
@@ -35,7 +35,7 @@ const verificationSourceLabels = {
   user_report: '사용자 제보',
   menu_photo: '메뉴 사진',
 };
-const busanBounds = { minLatitude: 35.0, maxLatitude: 35.3, minLongitude: 128.93, maxLongitude: 129.25 };
+const busanBounds = { minLatitude: 35.0, maxLatitude: 35.37, minLongitude: 128.8, maxLongitude: 129.27 };
 
 function parseCsvRows(text) {
   const rows = [];
