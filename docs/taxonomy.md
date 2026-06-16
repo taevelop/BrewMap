@@ -1,4 +1,4 @@
-# Coffee Taxonomy v1
+# Coffee & Option Taxonomy v1
 
 ## MVP 필터
 
@@ -10,6 +10,22 @@
 | 구매 | bean_sales, dripbag_sales |
 | 매장 | roastery, specialty_coffee |
 
+## 옵션 태그
+
+커피 태그가 아닌 매장 이용 조건과 편의성 태그입니다. 공개 MVP 필터 노출 여부는 별도로 결정하고, 데이터 수집/제보/Admin 관리에서는 같은 태그 체계 안에서 다룹니다.
+
+| 그룹 | 태그 | 의미 |
+| --- | --- | --- |
+| 동반 | pet_friendly | 애견 동반 가능 |
+| 동반 | kids_zone | 키즈존 또는 키즈 동반 가능 |
+| 동반 | no_kids_zone | 노키즈존 |
+| 좌석 | outdoor_seating | 야외 테이블 또는 야외 좌석 있음 |
+| 혜택 | discount_available | 할인 서비스 있음 |
+| 혜택 | rewards_available | 적립 서비스 있음 |
+
+- `kids_zone`과 `no_kids_zone`은 같은 카페에 동시에 부여하지 않습니다.
+- `discount_available`, `rewards_available`은 추후 제휴/멤버십 확장을 고려한 후보 태그로 두고, MVP에서는 정보 확인 가능 여부를 우선 기록합니다.
+
 ## 동의어 매핑
 
 | 입력어 | 표준 태그 |
@@ -19,6 +35,12 @@
 | 디카페인, 디카페인 커피 | decaf |
 | 싱글, 싱글오리진, single origin | single_origin |
 | 원두판매, 원두 구매, beans | bean_sales |
+| 애견동반, 반려견, 펫프렌들리 | pet_friendly |
+| 키즈존, 아이 동반, 유아 동반 | kids_zone |
+| 노키즈, 노키즈존 | no_kids_zone |
+| 야외좌석, 야외테이블, 테라스 | outdoor_seating |
+| 할인, 쿠폰 | discount_available |
+| 적립, 포인트, 멤버십 | rewards_available |
 
 ## 검증 상태
 

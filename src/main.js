@@ -1,12 +1,25 @@
 const capabilityCatalog = [
   { key: 'filter_coffee', label: '필터커피', group: '커피 종류', isMvpFilter: true },
-  { key: 'decaf', label: '디카페인', group: '커피 종류', isMvpFilter: true },
   { key: 'cold_brew', label: '콜드브루', group: '커피 종류', isMvpFilter: true },
+  { key: 'decaf', label: '디카페인', group: '커피 종류', isMvpFilter: true },
   { key: 'flat_white', label: '플랫화이트', group: '커피 종류', isMvpFilter: true },
+  { key: 'einspanner', label: '아인슈페너', group: '커피 종류', isMvpFilter: false },
   { key: 'single_origin', label: '싱글오리진', group: '원두', isMvpFilter: true },
-  { key: 'bean_sales', label: '원두구매', group: '구매', isMvpFilter: true },
+  { key: 'house_blend', label: '하우스 블렌드', group: '원두', isMvpFilter: false },
+  { key: 'decaf_bean', label: '디카페인 원두', group: '원두', isMvpFilter: false },
   { key: 'hand_drip', label: '핸드드립', group: '추출', isMvpFilter: false },
+  { key: 'batch_brew', label: '배치브루', group: '추출', isMvpFilter: false },
+  { key: 'espresso_machine', label: '에스프레소 머신', group: '추출', isMvpFilter: false },
+  { key: 'bean_sales', label: '원두구매', group: '구매', isMvpFilter: true },
+  { key: 'dripbag_sales', label: '드립백 판매', group: '구매', isMvpFilter: false },
   { key: 'roastery', label: '로스터리', group: '매장', isMvpFilter: false },
+  { key: 'specialty_coffee', label: '스페셜티 커피', group: '매장', isMvpFilter: false },
+  { key: 'pet_friendly', label: '애견 동반', group: '옵션', isMvpFilter: false },
+  { key: 'kids_zone', label: '키즈존', group: '옵션', isMvpFilter: false },
+  { key: 'no_kids_zone', label: '노키즈존', group: '옵션', isMvpFilter: false },
+  { key: 'outdoor_seating', label: '야외 좌석', group: '옵션', isMvpFilter: false },
+  { key: 'discount_available', label: '할인 가능', group: '옵션', isMvpFilter: false },
+  { key: 'rewards_available', label: '적립 가능', group: '옵션', isMvpFilter: false },
 ];
 
 const searchAliases = {
@@ -14,10 +27,23 @@ const searchAliases = {
   decaf: ['디카페인커피', 'decaf'],
   cold_brew: ['콜드브루커피', 'coldbrew'],
   flat_white: ['플랫 화이트', 'flatwhite', 'flat white'],
+  einspanner: ['아인슈페너', 'einspanner'],
   single_origin: ['싱글 오리진', 'singleorigin', 'single origin'],
+  house_blend: ['하우스블렌드', '블렌드', 'house blend'],
+  decaf_bean: ['디카페인 원두', '디카프 원두'],
   bean_sales: ['원두', '원두 판매', '원두구매', 'bean sales'],
+  dripbag_sales: ['드립백', 'dripbag', 'drip bag'],
   hand_drip: ['핸드 드립', 'handdrip', 'hand drip'],
+  batch_brew: ['배치브루', 'batchbrew', 'batch brew'],
+  espresso_machine: ['에스프레소머신', 'espresso machine'],
   roastery: ['로스팅', '로스터리카페', 'roastery'],
+  specialty_coffee: ['스페셜티', 'specialty'],
+  pet_friendly: ['애견동반', '반려견', '펫프렌들리'],
+  kids_zone: ['키즈존', '아이 동반', '유아 동반'],
+  no_kids_zone: ['노키즈', '노키즈존'],
+  outdoor_seating: ['야외좌석', '야외테이블', '테라스'],
+  discount_available: ['할인', '쿠폰'],
+  rewards_available: ['적립', '포인트', '멤버십'],
 };
 
 const reportTypeLabels = {
@@ -48,7 +74,7 @@ function mapLinksFor(address, name) {
   };
 }
 
-const cafes = [
+let cafes = [
   {
     id: 'jeonpo-archive',
     name: 'Archive Beans',
@@ -93,6 +119,25 @@ const cafes = [
     source: 'menu_photo',
     status: 'active',
     links: mapLinksFor('부산 해운대구 해운대로 620', 'Cold Lab Roastery'),
+  },
+  {
+    id: 'haeundae-tenpercent-centum-design',
+    name: '텐퍼센트커피 부산센텀디자인진흥원점',
+    city: '부산',
+    area: '해운대',
+    address: '부산 해운대구 센텀6로 21',
+    latitude: 35.1735161,
+    longitude: 129.1292664,
+    capabilities: ['espresso_machine', 'cold_brew', 'flat_white', 'einspanner'],
+    confidence: 'A',
+    verifiedAt: '2026-06-16',
+    source: 'admin_verified',
+    status: 'active',
+    links: {
+      naver: 'https://map.naver.com/p/entry/place/2018324444?lng=129.1292664&lat=35.1735161&placePath=%2Fhome&entry=plt&searchType=place',
+      kakao: 'https://map.kakao.com/link/search/%ED%85%90%ED%8D%BC%EC%84%BC%ED%8A%B8%EC%BB%A4%ED%94%BC%20%EB%B6%80%EC%82%B0%EC%84%BC%ED%85%80%EB%94%94%EC%9E%90%EC%9D%B8%EC%A7%84%ED%9D%A5%EC%9B%90%EC%A0%90',
+      google: 'https://www.google.com/maps/search/?api=1&query=%ED%85%90%ED%8D%BC%EC%84%BC%ED%8A%B8%EC%BB%A4%ED%94%BC%20%EB%B6%80%EC%82%B0%EC%84%BC%ED%85%80%EB%94%94%EC%9E%90%EC%9D%B8%EC%A7%84%ED%9D%A5%EC%9B%90%EC%A0%90',
+    },
   },
 ];
 
@@ -169,7 +214,7 @@ const adminTagFields = {
 };
 
 const selectedFilters = new Set();
-const savedCafeIds = readSavedCafeIds();
+let savedCafeIds = new Set();
 let searchQuery = '';
 let selectedAdminCafeId = '';
 let selectedAdminTagKey = '';
@@ -692,6 +737,7 @@ function cafeDataFromAdminForm() {
   if (!adminCafeFields.address.value.trim()) return { error: '주소를 입력해 주세요.' };
   if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return { error: '위도와 경도를 숫자로 입력해 주세요.' };
   if (!capabilities.length) return { error: '커피 태그를 1개 이상 선택해 주세요.' };
+  if (capabilities.includes('kids_zone') && capabilities.includes('no_kids_zone')) return { error: '키즈존과 노키즈존은 동시에 선택할 수 없습니다.' };
   if (![adminCafeFields.naver.value, adminCafeFields.kakao.value, adminCafeFields.google.value].every((url) => isValidExternalLink(url.trim()))) {
     return { error: '지도 링크는 http(s) URL 또는 #만 사용할 수 있습니다.' };
   }
@@ -920,6 +966,7 @@ function validateCsvImportText(text) {
 
     const rowCapabilities = record.capabilities.split('|').map((tag) => tag.trim()).filter(Boolean);
     if (!rowCapabilities.length) errors.push(`${rowNumber}행: capabilities가 비어 있습니다.`);
+    if (rowCapabilities.includes('kids_zone') && rowCapabilities.includes('no_kids_zone')) errors.push(`${rowNumber}행: kids_zone과 no_kids_zone은 동시에 사용할 수 없습니다.`);
     rowCapabilities.forEach((tag) => {
       if (!capabilityCatalog.some((capability) => capability.key === tag)) errors.push(`${rowNumber}행: 알 수 없는 capability ${tag}`);
     });
@@ -979,6 +1026,22 @@ function csvRecordToCafe(record) {
       google: record.google_map_url || '#',
     },
   };
+}
+
+async function loadSeedCafes() {
+  if (typeof fetch !== 'function') return;
+
+  try {
+    const response = await fetch('./data/seed-cafes.csv', { cache: 'no-store' });
+    if (!response.ok) throw new Error(`Seed CSV request failed with ${response.status}`);
+
+    const validation = validateCsvImportText(await response.text());
+    if (validation.errors.length) throw new Error(validation.errors.join('; '));
+
+    cafes = validation.validRows.map(csvRecordToCafe);
+  } catch (error) {
+    console.warn(`Using bundled cafe fallback data. ${error.message}`);
+  }
 }
 
 function importCsvRows() {
@@ -1085,6 +1148,8 @@ csvSample.addEventListener('click', loadCsvSample);
 csvValidate.addEventListener('click', validateCsvFromAdmin);
 csvImport.addEventListener('click', importCsvRows);
 
+await loadSeedCafes();
+savedCafeIds = readSavedCafeIds();
 resetCafeForm();
 resetTagForm();
 renderApp();
