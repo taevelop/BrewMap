@@ -5,13 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="마시고 싶은 커피가 있는 카페를 찾는 부산 커피맵 MVP" />
     <title>BrewMap | Coffee Map MVP</title>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <link rel="stylesheet" href="./src/styles.css" />
   </head>
   <body>
     <main class="app-shell">
-      <section class="hero-section">
+      <section class="hero-section" id="home">
         <nav class="top-nav" aria-label="BrewMap 주요 메뉴">
-          <div class="brand"><span class="brand-mark">☕</span><span>BrewMap</span></div>
+          <a class="brand" href="#home" aria-label="브루맵 홈으로 이동"><span class="brand-mark">☕</span><span>브루맵</span></a>
           <div class="nav-actions">
             <a href="#map">지도</a><a href="#saved">저장</a><a href="#report">제보</a><a href="#admin">Admin</a>
           </div>
@@ -19,7 +20,7 @@
         <div class="hero-grid">
           <div class="hero-copy">
             <p class="eyebrow">Web MVP / PWA First · 부산 우선 · 서울 확장 준비</p>
-            <h1>마시고 싶은 커피가 있는 카페를 찾는 지도</h1>
+            <h1>마시고 싶은 커피가 있는 카페를 찾을지도</h1>
             <p class="hero-description">리뷰와 별점 대신 필터커피, 디카페인, 콜드브루, 싱글오리진 같은 커피 가능 여부와 검증 상태를 먼저 보여주는 12주 MVP 실행 버전입니다.</p>
             <form class="search-card" role="search" data-search-form><span aria-hidden="true">⌕</span><input aria-label="카페 검색" placeholder="전포 필터커피, 광안리 디카페인" data-search-input /><button type="submit">검색</button></form>
             <div class="filter-row" aria-label="MVP 커피 필터" data-filter-row></div>
@@ -86,7 +87,7 @@
               <label>권역<input data-admin-cafe-area placeholder="전포" required /></label>
               <label>주소<input data-admin-cafe-address required /></label>
               <div class="form-pair"><label>위도<input data-admin-cafe-latitude inputmode="decimal" placeholder="35.1549000" required /></label><label>경도<input data-admin-cafe-longitude inputmode="decimal" placeholder="129.0632000" required /></label></div>
-              <div class="form-pair"><label>신뢰도<select data-admin-cafe-confidence><option>A</option><option>B</option><option>C</option><option>D</option><option>X</option></select></label><label>검증 출처<select data-admin-cafe-source><option value="admin_verified">admin_verified</option><option value="owner_verified">owner_verified</option><option value="user_report">user_report</option><option value="menu_photo">menu_photo</option></select></label></div>
+              <div class="form-pair"><label>신뢰도<select data-admin-cafe-confidence><option value="A">A 등급</option><option value="B">B 등급</option><option value="C">C 등급</option><option value="D">D 등급</option><option value="X">검증 필요</option></select></label><label>검증 출처<select data-admin-cafe-source><option value="admin_verified">관리자 확인</option><option value="owner_verified">사장님 확인</option><option value="user_report">사용자 제보</option><option value="menu_photo">메뉴 사진</option></select></label></div>
               <label>최근 확인일<input data-admin-cafe-verified-at type="date" /></label>
               <div class="capability-checklist" data-admin-cafe-capabilities></div>
               <div class="form-pair"><label>네이버 지도<input data-admin-cafe-naver placeholder="#" /></label><label>카카오맵<input data-admin-cafe-kakao placeholder="#" /></label></div>

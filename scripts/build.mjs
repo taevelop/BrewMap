@@ -4,6 +4,7 @@ await rm('dist', { recursive: true, force: true });
 await mkdir('dist/src', { recursive: true });
 await mkdir('dist/data', { recursive: true });
 await cp('index.html', 'dist/index.html');
+await cp('favicon.svg', 'dist/favicon.svg');
 await cp('src/styles.css', 'dist/src/styles.css');
 await cp('src/main.js', 'dist/src/main.js');
 await cp('data/seed-cafes.csv', 'dist/data/seed-cafes.csv');

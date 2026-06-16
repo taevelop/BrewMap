@@ -28,6 +28,13 @@ const allowedCapabilities = new Set([...coffeeCapabilities, ...optionCapabilitie
 const mvpCapabilities = new Set(['filter_coffee', 'decaf', 'cold_brew', 'flat_white', 'single_origin', 'bean_sales']);
 const confidenceLevels = new Set(['A', 'B', 'C', 'D', 'X']);
 const verificationSources = new Set(['owner_verified', 'admin_verified', 'user_report', 'menu_photo']);
+const confidenceLabels = { A: 'A 등급', B: 'B 등급', C: 'C 등급', D: 'D 등급', X: '검증 필요' };
+const verificationSourceLabels = {
+  owner_verified: '사장님 확인',
+  admin_verified: '관리자 확인',
+  user_report: '사용자 제보',
+  menu_photo: '메뉴 사진',
+};
 const busanBounds = { minLatitude: 35.0, maxLatitude: 35.3, minLongitude: 128.95, maxLongitude: 129.25 };
 
 function parseCsvRows(text) {
@@ -74,8 +81,8 @@ function inRange(value, min, max) {
   return Number.isFinite(value) && value >= min && value <= max;
 }
 
-function formatCountMap(map) {
-  return [...map.entries()].map(([key, count]) => `${key} ${count}`).join(', ') || '-';
+function formatCountMap(map, labels = {}) {
+  return [...map.entries()].map(([key, count]) => `${labels[key] || key} ${count}`).join(', ') || '-';
 }
 
 function addCount(map, key) {
@@ -183,8 +190,8 @@ console.log('BrewMap seed data check');
 console.log(`Rows: ${rowCount}`);
 console.log(`Areas: ${formatCountMap(areaCounts)}`);
 console.log(`Average coffee capabilities: ${averageCoffeeCapabilities.toFixed(1)}`);
-console.log(`Confidence: ${formatCountMap(confidenceCounts)}`);
-console.log(`Sources: ${formatCountMap(sourceCounts)}`);
+console.log(`Confidence: ${formatCountMap(confidenceCounts, confidenceLabels)}`);
+console.log(`Sources: ${formatCountMap(sourceCounts, verificationSourceLabels)}`);
 console.log(`MVP filter coverage: ${[...mvpCapabilities].filter((capability) => capabilityCounts.has(capability)).length}/${mvpCapabilities.size}`);
 
 if (warnings.length) {

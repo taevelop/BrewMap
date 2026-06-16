@@ -59,6 +59,36 @@ const cityCodes = { 부산: 'busan', 서울: 'seoul' };
 const areaLabels = { jeonpo: '전포', gwangan: '광안리', haeundae: '해운대' };
 const areaCodes = { 전포: 'jeonpo', 광안리: 'gwangan', 해운대: 'haeundae' };
 const statusLabels = { active: '운영중', closed: '폐업', hidden: '숨김' };
+const confidenceLabels = {
+  A: 'A 등급',
+  B: 'B 등급',
+  C: 'C 등급',
+  D: 'D 등급',
+  X: '검증 필요',
+};
+const verificationSourceLabels = {
+  owner_verified: '사장님 확인',
+  admin_verified: '관리자 확인',
+  user_report: '사용자 제보',
+  menu_photo: '메뉴 사진',
+};
+const adminActionLabels = {
+  seed: '초기 데이터',
+  create_report: '제보 접수',
+  approve_report: '제보 승인',
+  reject_report: '제보 반려',
+  create_cafe: '카페 등록',
+  update_cafe: '카페 수정',
+  delete_cafe: '카페 삭제',
+  update_tag: '태그 수정',
+  create_tag: '태그 등록',
+  csv_import: 'CSV 반영',
+};
+const adminTargetLabels = {
+  cafes: '카페',
+  reports: '제보',
+  coffee_capabilities: '커피 태그',
+};
 const confidenceLevels = ['A', 'B', 'C', 'D', 'X'];
 const verificationSources = ['owner_verified', 'admin_verified', 'user_report', 'menu_photo'];
 const csvRequiredColumns = ['id', 'name', 'city', 'area', 'address', 'latitude', 'longitude', 'capabilities', 'confidence', 'verification_source'];
@@ -125,17 +155,17 @@ let cafes = [
     name: '텐퍼센트커피 부산센텀디자인진흥원점',
     city: '부산',
     area: '해운대',
-    address: '부산 해운대구 센텀6로 21',
-    latitude: 35.1735161,
-    longitude: 129.1292664,
-    capabilities: ['espresso_machine', 'cold_brew', 'flat_white', 'einspanner'],
+    address: '부산 해운대구 센텀6로 21 1층 106호',
+    latitude: 35.1734975,
+    longitude: 129.1292795,
+    capabilities: ['espresso_machine', 'cold_brew', 'flat_white', 'einspanner', 'discount_available'],
     confidence: 'A',
     verifiedAt: '2026-06-16',
     source: 'admin_verified',
     status: 'active',
     links: {
       naver: 'https://map.naver.com/p/entry/place/2018324444?lng=129.1292664&lat=35.1735161&placePath=%2Fhome&entry=plt&searchType=place',
-      kakao: 'https://map.kakao.com/link/search/%ED%85%90%ED%8D%BC%EC%84%BC%ED%8A%B8%EC%BB%A4%ED%94%BC%20%EB%B6%80%EC%82%B0%EC%84%BC%ED%85%80%EB%94%94%EC%9E%90%EC%9D%B8%EC%A7%84%ED%9D%A5%EC%9B%90%EC%A0%90',
+      kakao: 'https://place.map.kakao.com/369792673',
       google: 'https://www.google.com/maps/search/?api=1&query=%ED%85%90%ED%8D%BC%EC%84%BC%ED%8A%B8%EC%BB%A4%ED%94%BC%20%EB%B6%80%EC%82%B0%EC%84%BC%ED%85%80%EB%94%94%EC%9E%90%EC%9D%B8%EC%A7%84%ED%9D%A5%EC%9B%90%EC%A0%90',
     },
   },
@@ -247,6 +277,22 @@ function safeUrl(value) {
 
 function tagLabel(tag) {
   return capabilityCatalog.find((capability) => capability.key === tag)?.label || tag;
+}
+
+function confidenceLabel(confidence) {
+  return confidenceLabels[confidence] || confidence;
+}
+
+function verificationSourceLabel(source) {
+  return verificationSourceLabels[source] || source;
+}
+
+function adminActionLabel(action) {
+  return adminActionLabels[action] || action;
+}
+
+function adminTargetLabel(targetTable) {
+  return adminTargetLabels[targetTable] || targetTable;
 }
 
 function mvpCapabilities() {
@@ -382,10 +428,10 @@ function renderCafe(cafe) {
   const card = document.createElement('article');
   card.className = 'cafe-card';
   card.innerHTML = `
-    <div class="cafe-card-topline"><span>${escapeHtml(cafe.city)} · ${escapeHtml(cafe.area)}</span><strong>신뢰도 ${escapeHtml(cafe.confidence)}</strong></div>
+    <div class="cafe-card-topline"><span>${escapeHtml(cafe.city)} · ${escapeHtml(cafe.area)}</span><strong>신뢰도 ${escapeHtml(confidenceLabel(cafe.confidence))}</strong></div>
     <h3>${escapeHtml(cafe.name)}</h3>
     <p>${escapeHtml(cafe.address)}</p>
-    <dl class="metadata"><div><dt>검증</dt><dd>${escapeHtml(cafe.source)}</dd></div><div><dt>최근 확인</dt><dd>${escapeHtml(cafe.verifiedAt || '-')}</dd></div></dl>
+    <dl class="metadata"><div><dt>검증</dt><dd>${escapeHtml(verificationSourceLabel(cafe.source))}</dd></div><div><dt>최근 확인</dt><dd>${escapeHtml(cafe.verifiedAt || '-')}</dd></div></dl>
     <div>${tagsMarkup(cafe)}</div>
     <div class="card-actions"><button type="button" data-detail-action>상세</button><button type="button" class="${isSaved ? 'is-saved' : ''}" aria-pressed="${isSaved}" data-save-action>${isSaved ? '저장됨' : '저장'}</button><button type="button" data-report-action>정보 제보</button>${mapLinksMarkup(cafe)}</div>
   `;
@@ -582,7 +628,7 @@ function renderDetail(cafe) {
     <p class="eyebrow">${escapeHtml(cafe.city)} · ${escapeHtml(cafe.area)}</p>
     <h2>${escapeHtml(cafe.name)}</h2>
     <p>${escapeHtml(cafe.address)}</p>
-    <dl class="metadata"><div><dt>검증 출처</dt><dd>${escapeHtml(cafe.source)}</dd></div><div><dt>최근 확인</dt><dd>${escapeHtml(cafe.verifiedAt || '-')}</dd></div><div><dt>신뢰도</dt><dd>${escapeHtml(cafe.confidence)}</dd></div><div><dt>저장 상태</dt><dd>${isSaved ? '저장됨' : '미저장'}</dd></div></dl>
+    <dl class="metadata"><div><dt>검증 출처</dt><dd>${escapeHtml(verificationSourceLabel(cafe.source))}</dd></div><div><dt>최근 확인</dt><dd>${escapeHtml(cafe.verifiedAt || '-')}</dd></div><div><dt>신뢰도</dt><dd>${escapeHtml(confidenceLabel(cafe.confidence))}</dd></div><div><dt>저장 상태</dt><dd>${isSaved ? '저장됨' : '미저장'}</dd></div></dl>
     <div>${tagsMarkup(cafe)}</div>
     <div class="modal-actions"><button type="button" class="${isSaved ? 'is-saved' : ''}" aria-pressed="${isSaved}" data-modal-save>${isSaved ? '저장됨' : '저장'}</button><button type="button" data-modal-report>정보 제보</button>${mapLinksMarkup(cafe)}</div>
   `;
@@ -682,7 +728,7 @@ function renderAdminLogs() {
     const item = document.createElement('li');
     const title = document.createElement('strong');
     const summary = document.createElement('span');
-    title.textContent = `${log.action} · ${log.targetTable}:${log.targetId}`;
+    title.textContent = `${adminActionLabel(log.action)} · ${adminTargetLabel(log.targetTable)}:${log.targetId}`;
     summary.textContent = `${log.summary} · ${log.at}`;
     item.append(title, summary);
     return item;

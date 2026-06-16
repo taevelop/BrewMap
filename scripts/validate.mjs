@@ -2,6 +2,7 @@ import { access, readFile } from 'node:fs/promises';
 
 const requiredFiles = [
   'index.html',
+  'favicon.svg',
   'src/main.js',
   'src/styles.css',
   'docs/mvp-plan.md',
@@ -29,7 +30,9 @@ const seed = seedBytes.toString('utf8');
 
 const checks = [
   ['HTML has Korean language metadata', html.includes('lang="ko"')],
-  ['HTML states the MVP mission', html.includes('마시고 싶은 커피가 있는 카페를 찾는 지도')],
+  ['HTML links BrewMap favicon', html.includes('rel="icon"') && html.includes('favicon.svg')],
+  ['HTML states the MVP mission', html.includes('마시고 싶은 커피가 있는 카페를 찾을지도')],
+  ['HTML links brand to home section', html.includes('id="home"') && html.includes('href="#home"') && html.includes('브루맵')],
   ['JavaScript defines MVP coffee capabilities', js.includes('filter_coffee') && js.includes('bean_sales')],
   ['JavaScript wires cafe search', js.includes('data-search-form') && js.includes('matchesSearch')],
   ['JavaScript wires saved cafes', js.includes('data-saved-list') && js.includes('toggleSaved')],
@@ -41,6 +44,8 @@ const checks = [
   ['JavaScript wires Admin tag management', js.includes('saveTagFromAdmin') && js.includes('renderTagList')],
   ['JavaScript wires CSV validation and import', js.includes('validateCsvImportText') && js.includes('importCsvRows')],
   ['JavaScript loads Seed CSV as cafe data source', js.includes('loadSeedCafes') && js.includes('./data/seed-cafes.csv')],
+  ['JavaScript labels internal status values for display', js.includes('verificationSourceLabel') && js.includes('adminActionLabel') && js.includes('관리자 확인')],
+  ['HTML labels Admin source choices for display', html.includes('관리자 확인') && html.includes('사용자 제보') && !html.includes('>admin_verified<')],
   ['JavaScript exposes all required map link outs', js.includes('mapLinksMarkup') && ['naver', 'kakao', 'google'].every((provider) => js.includes(provider))],
   ['JavaScript avoids review/rating data model', !js.includes('rating')],
   ['CSS defines responsive layout', css.includes('@media (max-width: 900px)')],
@@ -50,6 +55,7 @@ const checks = [
   ['Seed CSV is UTF-8 BOM for Excel', seedBytes[0] === 0xef && seedBytes[1] === 0xbb && seedBytes[2] === 0xbf],
   ['Seed CSV includes Busan MVP area rows', seed.includes('city,area') && ['busan', 'jeonpo', 'gwangan', 'haeundae'].every((area) => seed.includes(area))],
   ['Package exposes seed data QA command', packageJson.includes('"data:check"') && packageJson.includes('scripts/check-seed-data.mjs')],
+  ['Build includes favicon file', buildScript.includes('favicon.svg') && buildScript.includes('dist/favicon.svg')],
   ['Build includes seed CSV data file', buildScript.includes('dist/data') && buildScript.includes('data/seed-cafes.csv')],
   ['Seed data QA covers MVP readiness targets', seedCheck.includes('150') && seedCheck.includes('averageCoffeeCapabilities') && seedCheck.includes('mvpCapabilities')],
   ['CSV docs explain seed data QA', csvFormat.includes('npm run data:check') && csvFormat.includes('Seed 데이터 QA')],

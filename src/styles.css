@@ -8,7 +8,8 @@ a { color: inherit; }
 .hero-section { max-width: 1180px; margin: 0 auto; padding: 28px 24px 58px; }
 .top-nav, .nav-actions, .brand, .hero-grid, .map-toolbar, .search-card, .filter-row, .cafe-card-topline, .card-actions, .saved-summary, .modal-actions { display: flex; align-items: center; }
 .top-nav { justify-content: space-between; gap: 24px; margin-bottom: 64px; }
-.brand { gap: 10px; font-weight: 900; font-size: 1.3rem; }
+.brand { gap: 10px; color: #2f1a11; font-weight: 900; font-size: 1.3rem; text-decoration: none; }
+.brand:focus-visible { outline: 3px solid rgba(196,109,44,.45); outline-offset: 5px; border-radius: 16px; }
 .brand-mark { display: grid; place-items: center; width: 42px; height: 42px; color: #fff; background: #5b321f; border-radius: 14px; box-shadow: 0 14px 30px rgba(91,50,31,.24); }
 .nav-actions { flex-wrap: wrap; gap: 12px; }
 .nav-actions a { color: #6c4c3c; font-weight: 800; text-decoration: none; padding: 8px 10px; border-radius: 999px; background: rgba(255,255,255,.42); }
