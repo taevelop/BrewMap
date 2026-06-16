@@ -36,6 +36,7 @@ const verificationSourceLabels = {
   menu_photo: '메뉴 사진',
 };
 const busanBounds = { minLatitude: 35.0, maxLatitude: 35.37, minLongitude: 128.8, maxLongitude: 129.27 };
+const detailedAddressPattern = /(?:\bB\d|\uC9C0\uD558\s*\d*\uCE35|\d+(?:-\d+)?\uCE35|\d+(?:~\d+)?\uD638|[A-Z\uAC00-\uD7A3]\uB3D9\s*\d+\uD638)/;
 
 function parseCsvRows(text) {
   const rows = [];
@@ -138,6 +139,7 @@ if (!missingHeaders.length && !duplicateHeaders.length && !unknownHeaders.length
     if (record.id && !/^[a-z0-9-]+$/.test(record.id)) errors.push(`${rowNumber}: id must use lowercase letters, numbers, and hyphens.`);
     if (record.id && seenIds.has(record.id)) errors.push(`${rowNumber}: duplicate id ${record.id}.`);
     if (record.id) seenIds.add(record.id);
+    if (record.address && detailedAddressPattern.test(record.address)) errors.push(`${rowNumber}: address should stay road-level; remove floor or unit details.`);
 
     if (record.city && !allowedCities.has(record.city)) errors.push(`${rowNumber}: city must be busan or seoul.`);
     if (record.city === 'busan' && record.area && !busanAreas.has(record.area)) errors.push(`${rowNumber}: Busan area is not supported.`);
