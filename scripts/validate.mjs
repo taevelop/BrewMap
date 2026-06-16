@@ -49,6 +49,7 @@ const checks = [
   ['JavaScript exposes all required map link outs', js.includes('mapLinksMarkup') && ['naver', 'kakao', 'google'].every((provider) => js.includes(provider))],
   ['JavaScript avoids review/rating data model', !js.includes('rating')],
   ['CSS defines responsive layout', css.includes('@media (max-width: 900px)')],
+  ['CSS keeps Korean words together', css.includes('word-break: keep-all') && css.includes('overflow-wrap: break-word')],
   ['CSS styles Admin MVP workspace', css.includes('.admin-workspace') && css.includes('.admin-grid')],
   ['Scope includes required Admin work', scope.includes('관리자 페이지') && scope.includes('CSV Import')],
   ['Schema includes core tables', ['cafes', 'coffee_capabilities', 'cafe_capabilities', 'reports', 'admin_logs'].every((table) => schema.includes(`create table ${table}`))],
