@@ -31,7 +31,8 @@ const seed = seedBytes.toString('utf8');
 const checks = [
   ['HTML has Korean language metadata', html.includes('lang="ko"')],
   ['HTML links BrewMap favicon', html.includes('rel="icon"') && html.includes('favicon.svg')],
-  ['HTML states the MVP mission', html.includes('마시고 싶은 커피가 있는 카페를 찾는 지도')],
+  ['HTML states the MVP mission', html.includes('마시고 싶은 커피가 있는 카페를 찾을지도')],
+  ['HTML links brand to home section', html.includes('id="home"') && html.includes('href="#home"') && html.includes('브루맵')],
   ['JavaScript defines MVP coffee capabilities', js.includes('filter_coffee') && js.includes('bean_sales')],
   ['JavaScript wires cafe search', js.includes('data-search-form') && js.includes('matchesSearch')],
   ['JavaScript wires saved cafes', js.includes('data-saved-list') && js.includes('toggleSaved')],

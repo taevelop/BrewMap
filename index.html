@@ -10,9 +10,9 @@
   </head>
   <body>
     <main class="app-shell">
-      <section class="hero-section">
+      <section class="hero-section" id="home">
         <nav class="top-nav" aria-label="BrewMap 주요 메뉴">
-          <div class="brand"><span class="brand-mark">☕</span><span>BrewMap</span></div>
+          <a class="brand" href="#home" aria-label="브루맵 홈으로 이동"><span class="brand-mark">☕</span><span>브루맵</span></a>
           <div class="nav-actions">
             <a href="#map">지도</a><a href="#saved">저장</a><a href="#report">제보</a><a href="#admin">Admin</a>
           </div>
@@ -20,7 +20,7 @@
         <div class="hero-grid">
           <div class="hero-copy">
             <p class="eyebrow">Web MVP / PWA First · 부산 우선 · 서울 확장 준비</p>
-            <h1>마시고 싶은 커피가 있는 카페를 찾는 지도</h1>
+            <h1>마시고 싶은 커피가 있는 카페를 찾을지도</h1>
             <p class="hero-description">리뷰와 별점 대신 필터커피, 디카페인, 콜드브루, 싱글오리진 같은 커피 가능 여부와 검증 상태를 먼저 보여주는 12주 MVP 실행 버전입니다.</p>
             <form class="search-card" role="search" data-search-form><span aria-hidden="true">⌕</span><input aria-label="카페 검색" placeholder="전포 필터커피, 광안리 디카페인" data-search-input /><button type="submit">검색</button></form>
             <div class="filter-row" aria-label="MVP 커피 필터" data-filter-row></div>
