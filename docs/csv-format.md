@@ -51,6 +51,11 @@ BrewMap 카페 입력 CSV는 Excel에서 바로 열 수 있도록 **UTF-8 with B
 - `gangseo`
 - `yeonje`
 - `geumjeong`
+- `buk`
+- `dong`
+- `nam`
+- `gijang`
+- `sasang`
 
 ### `capabilities`
 

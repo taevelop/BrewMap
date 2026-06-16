@@ -67,6 +67,11 @@ const areaLabels = {
   gangseo: '강서',
   yeonje: '연제',
   geumjeong: '금정',
+  buk: '북구',
+  dong: '동구',
+  nam: '남구',
+  gijang: '기장',
+  sasang: '사상',
 };
 const areaCodes = Object.fromEntries(Object.entries(areaLabels).map(([code, label]) => [label, code]));
 const statusLabels = { active: '운영중', closed: '폐업', hidden: '숨김' };
@@ -254,8 +259,8 @@ function positionForCoordinates(latitude, longitude) {
   const lon = Number(longitude);
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) return { top: '50%', left: '50%' };
 
-  const top = clamp(82 - ((lat - 35.08) / 0.17) * 64, 12, 82);
-  const left = clamp(12 + ((lon - 128.93) / 0.26) * 76, 12, 84);
+  const top = clamp(82 - ((lat - 35.0) / 0.37) * 64, 12, 82);
+  const left = clamp(12 + ((lon - 128.8) / 0.47) * 76, 12, 84);
   return { top: `${top.toFixed(0)}%`, left: `${left.toFixed(0)}%` };
 }
 
