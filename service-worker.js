@@ -1,11 +1,12 @@
-const CACHE_NAME = 'brewmap-pwa-v3';
+const CACHE_NAME = 'brewmap-pwa-v4';
+const ASSET_VERSION = '20260617-2';
 const APP_SHELL = [
   './',
   './index.html',
   './favicon.svg',
   './manifest.webmanifest',
-  './src/styles.css',
-  './src/main.js',
+  `./src/styles.css?v=${ASSET_VERSION}`,
+  `./src/main.js?v=${ASSET_VERSION}`,
   './src/map-services.js',
   './data/seed-cafes.csv',
 ];
@@ -33,6 +34,12 @@ function cacheFreshResponse(request, response) {
   return response;
 }
 
+function networkFirst(request, fallbackRequest = request) {
+  return fetch(request)
+    .then((response) => cacheFreshResponse(request, response))
+    .catch(() => caches.match(request).then((cached) => cached || caches.match(fallbackRequest)));
+}
+
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const requestUrl = new URL(request.url);
@@ -40,20 +47,17 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET' || requestUrl.origin !== self.location.origin) return;
 
   if (request.mode === 'navigate') {
-    event.respondWith(
-      fetch(request)
-        .then((response) => cacheFreshResponse('./index.html', response))
-        .catch(() => caches.match('./index.html')),
-    );
+    event.respondWith(networkFirst(request, './index.html'));
     return;
   }
 
   if (requestUrl.pathname.endsWith('/data/seed-cafes.csv')) {
-    event.respondWith(
-      fetch(request)
-        .then((response) => cacheFreshResponse(request, response))
-        .catch(() => caches.match(request)),
-    );
+    event.respondWith(networkFirst(request));
+    return;
+  }
+
+  if (['script', 'style', 'worker'].includes(request.destination)) {
+    event.respondWith(networkFirst(request));
     return;
   }
 
