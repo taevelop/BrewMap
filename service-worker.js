@@ -4,6 +4,7 @@ const APP_SHELL = [
   './',
   './index.html',
   './favicon.svg',
+  './apple-touch-icon.png',
   './manifest.webmanifest',
   `./src/styles.css?v=${ASSET_VERSION}`,
   `./src/main.js?v=${ASSET_VERSION}`,
