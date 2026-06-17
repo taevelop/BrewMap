@@ -137,6 +137,7 @@ const adminLogs = [
 
 const searchForm = document.querySelector('[data-search-form]');
 const searchInput = document.querySelector('[data-search-input]');
+const locationInput = document.querySelector('[data-location-input]');
 const filterRow = document.querySelector('[data-filter-row]');
 const mapSurface = document.querySelector('[data-map-surface]');
 const mapBaseLayer = document.querySelector('[data-map-base-layer]');
@@ -497,6 +498,10 @@ function searchTokens() {
   return searchQuery.trim().split(/\s+/).map(normalize).filter(Boolean);
 }
 
+function readSearchQuery() {
+  return [searchInput.value, locationInput?.value].filter(Boolean).join(' ');
+}
+
 function searchIndex(cafe) {
   const capabilityTerms = cafe.capabilities.flatMap((tag) => [tagLabel(tag), tag, ...(searchAliases[tag] || [])]);
   return normalize([cafe.name, cafe.city, cafe.area, cafe.address, ...capabilityTerms].join(' '));
@@ -566,17 +571,20 @@ function toggleSaved(cafeId) {
   if (detailDialog.open) renderDetail(cafeById(cafeId));
 }
 
-function renderCafe(cafe) {
+function renderCafe(cafe, index = 0) {
   const isSaved = savedCafeIds.has(cafe.id);
   const card = document.createElement('article');
   card.className = 'cafe-card';
   card.innerHTML = `
-    <div class="cafe-card-topline"><span>${escapeHtml(cafe.city)} · ${escapeHtml(cafe.area)}</span><strong>신뢰도 ${escapeHtml(confidenceLabel(cafe.confidence))}</strong></div>
-    <h3>${escapeHtml(cafe.name)}</h3>
-    <p>${escapeHtml(cafe.address)}</p>
-    <dl class="metadata"><div><dt>검증</dt><dd>${escapeHtml(verificationSourceLabel(cafe.source))}</dd></div><div><dt>최근 확인</dt><dd>${escapeHtml(cafe.verifiedAt || '-')}</dd></div></dl>
-    <div>${tagsMarkup(cafe)}</div>
-    <div class="card-actions"><button type="button" data-detail-action>상세</button><button type="button" class="${isSaved ? 'is-saved' : ''}" aria-pressed="${isSaved}" data-save-action>${isSaved ? '저장됨' : '저장'}</button><button type="button" data-report-action>정보 제보</button>${mapLinksMarkup(cafe)}</div>
+    <div class="result-rank" aria-hidden="true">${String(index + 1).padStart(2, '0')}</div>
+    <div class="cafe-card-body">
+      <div class="cafe-card-topline"><span>${escapeHtml(cafe.city)} · ${escapeHtml(cafe.area)}</span><strong>신뢰도 ${escapeHtml(confidenceLabel(cafe.confidence))}</strong></div>
+      <h3>${escapeHtml(cafe.name)}</h3>
+      <p class="cafe-address">${escapeHtml(cafe.address)}</p>
+      <dl class="metadata"><div><dt>검증 출처</dt><dd>${escapeHtml(verificationSourceLabel(cafe.source))}</dd></div><div><dt>최근 확인</dt><dd>${escapeHtml(cafe.verifiedAt || '-')}</dd></div></dl>
+      <div class="tag-list">${tagsMarkup(cafe)}</div>
+      <div class="card-actions"><button type="button" data-detail-action>상세</button><button type="button" class="${isSaved ? 'is-saved' : ''}" aria-pressed="${isSaved}" data-save-action>${isSaved ? '저장됨' : '저장'}</button><button type="button" data-report-action>정보 제보</button>${mapLinksMarkup(cafe)}</div>
+    </div>
   `;
   card.querySelector('[data-detail-action]').addEventListener('click', () => openDetail(cafe.id));
   card.querySelector('[data-save-action]').addEventListener('click', () => toggleSaved(cafe.id));
@@ -587,7 +595,7 @@ function renderCafe(cafe) {
 function renderEmptyState() {
   const card = document.createElement('article');
   card.className = 'empty-state';
-  card.innerHTML = '<h3>조건에 맞는 카페가 없습니다</h3><p>검색어를 줄이거나 선택한 커피 필터를 해제해 보세요.</p>';
+  card.innerHTML = '<h3>조건에 맞는 카페가 없습니다</h3><p>선택 조건과 일치하는 검증 카페가 아직 없습니다.</p>';
   return card;
 }
 
@@ -1420,12 +1428,17 @@ function renderApp() {
 
 searchForm.addEventListener('submit', (event) => {
   event.preventDefault();
-  searchQuery = searchInput.value;
+  searchQuery = readSearchQuery();
   renderCafeResults();
 });
 
 searchInput.addEventListener('input', () => {
-  searchQuery = searchInput.value;
+  searchQuery = readSearchQuery();
+  renderCafeResults();
+});
+
+locationInput?.addEventListener('input', () => {
+  searchQuery = readSearchQuery();
   renderCafeResults();
 });
 
