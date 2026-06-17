@@ -51,6 +51,7 @@ git switch <target-branch>
 - `docs/scope.md`: P0/P1/P2 범위
 - `docs/taxonomy.md`: 커피 태그, 동의어, 검증/신뢰도 정책
 - `docs/search-layout-final-plan.md`: 검색 결과 중심 화면 전환 최종안
+- `docs/design-concepts.md`: 로컬 카페 앱 정체성을 위한 UI/UX 디자인 콘셉트
 - `docs/csv-format.md`: Excel 호환 CSV 입력 포맷
 - `db/schema.sql`: 핵심 DB 스키마 초안
 - `data/seed-cafes.csv`: Seed CSV 포맷
