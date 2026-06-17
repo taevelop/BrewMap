@@ -138,6 +138,7 @@ const adminLogs = [
 const searchForm = document.querySelector('[data-search-form]');
 const searchInput = document.querySelector('[data-search-input]');
 const locationInput = document.querySelector('[data-location-input]');
+const topLayer = document.querySelector('.top-layer');
 const filterRow = document.querySelector('[data-filter-row]');
 const mapSurface = document.querySelector('[data-map-surface]');
 const mapBaseLayer = document.querySelector('[data-map-base-layer]');
@@ -536,6 +537,13 @@ function setAdminCafeStatus(message) {
 
 function setAdminTagStatus(message) {
   adminTagStatus.textContent = message;
+}
+
+function updateTopLayerOffset() {
+  if (!topLayer) return;
+
+  const height = Math.ceil(topLayer.getBoundingClientRect().height);
+  if (height > 0) document.documentElement.style.setProperty('--top-layer-height', `${height}px`);
 }
 
 function renderFilters() {
@@ -1452,7 +1460,14 @@ detailDialog.addEventListener('click', (event) => {
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape' && detailDialog.open) closeDetail();
 });
-window.addEventListener('resize', () => renderMapPins(filteredCafes()));
+if (topLayer && typeof ResizeObserver !== 'undefined') {
+  const topLayerResizeObserver = new ResizeObserver(updateTopLayerOffset);
+  topLayerResizeObserver.observe(topLayer);
+}
+window.addEventListener('resize', () => {
+  updateTopLayerOffset();
+  renderMapPins(filteredCafes());
+});
 adminCafeForm.addEventListener('submit', saveCafeFromAdmin);
 adminCafeNew.addEventListener('click', resetCafeForm);
 adminCafeDelete.addEventListener('click', deleteSelectedCafe);
@@ -1462,6 +1477,7 @@ csvSample.addEventListener('click', loadCsvSample);
 csvValidate.addEventListener('click', validateCsvFromAdmin);
 csvImport.addEventListener('click', importCsvRows);
 
+updateTopLayerOffset();
 registerServiceWorker();
 await loadSeedCafes();
 savedCafeIds = readSavedCafeIds();
