@@ -1,0 +1,21 @@
+{
+  "name": "BrewMap - 부산 커피맵",
+  "short_name": "BrewMap",
+  "description": "마시고 싶은 커피가 있는 부산 카페를 지도와 커피 필터로 찾는 BrewMap MVP",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#fff7ed",
+  "theme_color": "#173f35",
+  "categories": ["food", "lifestyle", "travel"],
+  "icons": [
+    {
+      "src": "./favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

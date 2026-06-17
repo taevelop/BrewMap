@@ -1,3 +1,5 @@
+import { getMapProvider } from './map-services.js';
+
 const capabilityCatalog = [
   { key: 'filter_coffee', label: '필터커피', group: '커피 종류', isMvpFilter: true },
   { key: 'cold_brew', label: '콜드브루', group: '커피 종류', isMvpFilter: true },
@@ -110,9 +112,10 @@ const verificationSources = ['owner_verified', 'admin_verified', 'user_report', 
 const csvRequiredColumns = ['id', 'name', 'city', 'area', 'address', 'latitude', 'longitude', 'capabilities', 'confidence', 'verification_source'];
 const csvOptionalColumns = ['verified_at', 'naver_map_url', 'kakao_map_url', 'google_map_url'];
 const savedStorageKey = 'brewmap.savedCafes.v1';
-const mapTileSize = 256;
-const defaultMapViewport = { latitude: 35.17, longitude: 129.08, zoom: 10 };
-const mapZoomRange = { min: 9, max: 14 };
+const mapKeyboardPanStep = 96;
+const activeMapProvider = getMapProvider();
+const defaultMapViewport = activeMapProvider.defaultViewport;
+const mapZoomRange = activeMapProvider.zoomRange;
 let mapViewport = { ...defaultMapViewport };
 
 function mapLinksFor(address, name) {
@@ -136,9 +139,12 @@ const searchForm = document.querySelector('[data-search-form]');
 const searchInput = document.querySelector('[data-search-input]');
 const filterRow = document.querySelector('[data-filter-row]');
 const mapSurface = document.querySelector('[data-map-surface]');
-const mapTiles = document.querySelector('[data-map-tiles]');
+const mapBaseLayer = document.querySelector('[data-map-base-layer]');
 const mapMarkerLayer = document.querySelector('[data-map-marker-layer]');
 const locationAction = document.querySelector('[data-location-action]');
+const mapZoomInAction = document.querySelector('[data-map-zoom-in]');
+const mapZoomOutAction = document.querySelector('[data-map-zoom-out]');
+const mapAttribution = document.querySelector('[data-map-attribution]');
 const mapStatus = document.querySelector('[data-map-status]');
 const cafeGrid = document.querySelector('[data-cafe-grid]');
 const adminQueueEl = document.querySelector('[data-admin-queue]');
@@ -205,6 +211,7 @@ let selectedAdminCafeId = '';
 let selectedAdminTagKey = '';
 let lastCsvValidation = null;
 let lastCsvSource = '';
+let mapDragState = null;
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (char) => ({
@@ -271,18 +278,36 @@ function mapSurfaceSize() {
 }
 
 function projectCoordinates(latitude, longitude, zoom) {
-  const lat = clamp(Number(latitude), -85.05112878, 85.05112878);
-  const lon = Number(longitude);
-  if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
-    return projectCoordinates(defaultMapViewport.latitude, defaultMapViewport.longitude, zoom);
-  }
+  return activeMapProvider.project(latitude, longitude, zoom)
+    || activeMapProvider.project(defaultMapViewport.latitude, defaultMapViewport.longitude, zoom);
+}
 
-  const scale = mapTileSize * (2 ** zoom);
-  const sinLatitude = Math.sin((lat * Math.PI) / 180);
-  return {
-    x: ((lon + 180) / 360) * scale,
-    y: (0.5 - Math.log((1 + sinLatitude) / (1 - sinLatitude)) / (4 * Math.PI)) * scale,
-  };
+function unprojectCoordinates(point, zoom) {
+  return activeMapProvider.unproject(point, zoom) || { ...defaultMapViewport, zoom };
+}
+
+function setMapViewportFromCenterPoint(centerPoint, zoom = mapViewport.zoom) {
+  const nextZoom = clamp(Math.round(zoom), mapZoomRange.min, mapZoomRange.max);
+  const nextCenter = unprojectCoordinates(centerPoint, nextZoom);
+  mapViewport = activeMapProvider.normalizeViewport({ ...nextCenter, zoom: nextZoom });
+}
+
+function rerenderCurrentMap() {
+  renderMapPins(filteredCafes(), { keepViewport: true });
+}
+
+function updateMapZoomControlState() {
+  mapZoomInAction.disabled = mapViewport.zoom >= mapZoomRange.max;
+  mapZoomOutAction.disabled = mapViewport.zoom <= mapZoomRange.min;
+}
+
+function renderMapAttribution() {
+  const attribution = activeMapProvider.attribution;
+  mapAttribution.hidden = !attribution;
+  if (!attribution) return;
+
+  mapAttribution.textContent = attribution.label;
+  mapAttribution.href = attribution.url;
 }
 
 function zoomForBounds(bounds, size) {
@@ -330,41 +355,18 @@ function fitMapToItems(items) {
 
   const centerLatitude = (bounds.minLatitude + bounds.maxLatitude) / 2;
   const centerLongitude = (bounds.minLongitude + bounds.maxLongitude) / 2;
-  const zoom = coordinates.length === 1 ? 14 : zoomForBounds(bounds, mapSurfaceSize());
-  mapViewport = { latitude: centerLatitude, longitude: centerLongitude, zoom };
+  const zoom = coordinates.length === 1 ? mapZoomRange.max : zoomForBounds(bounds, mapSurfaceSize());
+  mapViewport = activeMapProvider.normalizeViewport({ latitude: centerLatitude, longitude: centerLongitude, zoom });
 }
 
-function renderMapTiles() {
-  const { width, height } = mapSurfaceSize();
-  const center = projectCoordinates(mapViewport.latitude, mapViewport.longitude, mapViewport.zoom);
-  const startX = center.x - (width / 2);
-  const startY = center.y - (height / 2);
-  const minTileX = Math.floor(startX / mapTileSize);
-  const maxTileX = Math.floor((center.x + (width / 2)) / mapTileSize);
-  const minTileY = Math.floor(startY / mapTileSize);
-  const maxTileY = Math.floor((center.y + (height / 2)) / mapTileSize);
-  const tileLimit = 2 ** mapViewport.zoom;
-  const tiles = [];
-
-  for (let tileX = minTileX; tileX <= maxTileX; tileX += 1) {
-    for (let tileY = minTileY; tileY <= maxTileY; tileY += 1) {
-      if (tileY < 0 || tileY >= tileLimit) continue;
-
-      const image = document.createElement('img');
-      const wrappedX = ((tileX % tileLimit) + tileLimit) % tileLimit;
-      image.className = 'map-tile';
-      image.alt = '';
-      image.decoding = 'async';
-      image.loading = 'lazy';
-      image.referrerPolicy = 'no-referrer';
-      image.src = `https://tile.openstreetmap.org/${mapViewport.zoom}/${wrappedX}/${tileY}.png`;
-      image.style.left = `${Math.round((tileX * mapTileSize) - startX)}px`;
-      image.style.top = `${Math.round((tileY * mapTileSize) - startY)}px`;
-      tiles.push(image);
-    }
-  }
-
-  mapTiles.replaceChildren(...tiles);
+function renderMapBaseLayer() {
+  renderMapAttribution();
+  activeMapProvider.renderBaseLayer({
+    container: mapBaseLayer,
+    viewport: mapViewport,
+    surfaceSize: mapSurfaceSize(),
+  });
+  updateMapZoomControlState();
 }
 
 function screenPositionForCoordinates(latitude, longitude) {
@@ -381,6 +383,31 @@ function setMapStatus(message) {
   mapStatus.textContent = message;
 }
 
+function panMapByPixels(deltaX, deltaY) {
+  const center = projectCoordinates(mapViewport.latitude, mapViewport.longitude, mapViewport.zoom);
+  setMapViewportFromCenterPoint({ x: center.x + deltaX, y: center.y + deltaY });
+  rerenderCurrentMap();
+}
+
+function zoomMapTo(nextZoom, clientX, clientY) {
+  const zoom = clamp(Math.round(nextZoom), mapZoomRange.min, mapZoomRange.max);
+  if (zoom === mapViewport.zoom) return;
+
+  const { width, height } = mapSurfaceSize();
+  const rect = mapSurface.getBoundingClientRect();
+  const offsetX = Number.isFinite(clientX) ? clientX - rect.left - (width / 2) : 0;
+  const offsetY = Number.isFinite(clientY) ? clientY - rect.top - (height / 2) : 0;
+  const center = projectCoordinates(mapViewport.latitude, mapViewport.longitude, mapViewport.zoom);
+  const anchor = unprojectCoordinates({ x: center.x + offsetX, y: center.y + offsetY }, mapViewport.zoom);
+  const nextAnchor = projectCoordinates(anchor.latitude, anchor.longitude, zoom);
+  setMapViewportFromCenterPoint({ x: nextAnchor.x - offsetX, y: nextAnchor.y - offsetY }, zoom);
+  rerenderCurrentMap();
+}
+
+function zoomMapBy(delta, clientX, clientY) {
+  zoomMapTo(mapViewport.zoom + delta, clientX, clientY);
+}
+
 function requestUserLocation() {
   if (!navigator.geolocation) {
     setMapStatus('현재 위치를 확인할 수 없습니다.');
@@ -389,11 +416,11 @@ function requestUserLocation() {
 
   setMapStatus('현재 위치 확인 중');
   navigator.geolocation.getCurrentPosition((position) => {
-    mapViewport = {
+    mapViewport = activeMapProvider.normalizeViewport({
       latitude: position.coords.latitude,
       longitude: position.coords.longitude,
-      zoom: 14,
-    };
+      zoom: mapZoomRange.max,
+    });
     renderMapPins(filteredCafes(), { keepViewport: true });
     setMapStatus('현재 위치 기준으로 지도를 이동했습니다.');
   }, () => {
@@ -566,7 +593,7 @@ function renderEmptyState() {
 
 function renderMapPins(items, options = {}) {
   if (!options.keepViewport) fitMapToItems(items);
-  renderMapTiles();
+  renderMapBaseLayer();
   mapMarkerLayer.replaceChildren();
 
   clusterMapItems(items).forEach((cluster) => {
@@ -586,11 +613,11 @@ function renderMapPins(items, options = {}) {
           return;
         }
 
-        mapViewport = {
+        mapViewport = activeMapProvider.normalizeViewport({
           latitude: cluster.latitude,
           longitude: cluster.longitude,
           zoom: Math.min(mapZoomRange.max, mapViewport.zoom + 2),
-        };
+        });
         setMapStatus(`${cluster.items.length}개 카페 권역으로 확대했습니다.`);
         renderMapPins(items, { keepViewport: true });
       });
@@ -606,9 +633,73 @@ function renderMapPins(items, options = {}) {
     pin.style.left = `${cluster.left.toFixed(1)}px`;
     pin.setAttribute('aria-label', `${cafe.name} 지도 핀`);
     pin.title = cafe.name;
-    pin.innerHTML = `<span>${escapeHtml(cafe.confidence)}</span>`;
+    pin.textContent = '';
     pin.addEventListener('click', () => openDetail(cafe.id));
     mapMarkerLayer.append(pin);
+  });
+}
+
+function bindMapInteractions() {
+  mapZoomInAction.addEventListener('click', () => zoomMapBy(1));
+  mapZoomOutAction.addEventListener('click', () => zoomMapBy(-1));
+
+  mapSurface.addEventListener('wheel', (event) => {
+    event.preventDefault();
+    zoomMapBy(event.deltaY < 0 ? 1 : -1, event.clientX, event.clientY);
+  }, { passive: false });
+
+  mapSurface.addEventListener('pointerdown', (event) => {
+    if (event.button !== 0 || event.target.closest('button, a')) return;
+
+    const center = projectCoordinates(mapViewport.latitude, mapViewport.longitude, mapViewport.zoom);
+    mapDragState = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      center,
+    };
+    mapSurface.classList.add('is-dragging');
+    mapSurface.setPointerCapture(event.pointerId);
+  });
+
+  mapSurface.addEventListener('pointermove', (event) => {
+    if (!mapDragState || mapDragState.pointerId !== event.pointerId) return;
+
+    const deltaX = event.clientX - mapDragState.startX;
+    const deltaY = event.clientY - mapDragState.startY;
+    setMapViewportFromCenterPoint({
+      x: mapDragState.center.x - deltaX,
+      y: mapDragState.center.y - deltaY,
+    });
+    rerenderCurrentMap();
+  });
+
+  const stopDragging = (event) => {
+    if (!mapDragState || mapDragState.pointerId !== event.pointerId) return;
+    mapDragState = null;
+    mapSurface.classList.remove('is-dragging');
+    if (mapSurface.hasPointerCapture(event.pointerId)) mapSurface.releasePointerCapture(event.pointerId);
+  };
+
+  mapSurface.addEventListener('pointerup', stopDragging);
+  mapSurface.addEventListener('pointercancel', stopDragging);
+
+  mapSurface.addEventListener('keydown', (event) => {
+    const keyActions = {
+      ArrowUp: () => panMapByPixels(0, -mapKeyboardPanStep),
+      ArrowDown: () => panMapByPixels(0, mapKeyboardPanStep),
+      ArrowLeft: () => panMapByPixels(-mapKeyboardPanStep, 0),
+      ArrowRight: () => panMapByPixels(mapKeyboardPanStep, 0),
+      '+': () => zoomMapBy(1),
+      '=': () => zoomMapBy(1),
+      '-': () => zoomMapBy(-1),
+      _: () => zoomMapBy(-1),
+    };
+
+    const action = keyActions[event.key];
+    if (!action) return;
+    event.preventDefault();
+    action();
   });
 }
 
@@ -1262,6 +1353,19 @@ function importCsvRows() {
   csvImport.disabled = true;
 }
 
+function registerServiceWorker() {
+  if (!('serviceWorker' in navigator)) return;
+
+  const register = () => {
+    navigator.serviceWorker.register('./service-worker.js').catch((error) => {
+      console.warn(`Service worker registration failed. ${error.message}`);
+    });
+  };
+
+  if (document.readyState === 'complete') register();
+  else window.addEventListener('load', register, { once: true });
+}
+
 function csvEscape(value) {
   const text = String(value ?? '');
   if (/[",\r\n]/.test(text)) return `"${text.replace(/"/g, '""')}"`;
@@ -1327,6 +1431,7 @@ searchInput.addEventListener('input', () => {
 
 reportForm.addEventListener('submit', submitReport);
 locationAction.addEventListener('click', requestUserLocation);
+bindMapInteractions();
 detailClose.addEventListener('click', closeDetail);
 detailDialog.addEventListener('click', (event) => {
   if (event.target === detailDialog) closeDetail();
@@ -1344,6 +1449,7 @@ csvSample.addEventListener('click', loadCsvSample);
 csvValidate.addEventListener('click', validateCsvFromAdmin);
 csvImport.addEventListener('click', importCsvRows);
 
+registerServiceWorker();
 await loadSeedCafes();
 savedCafeIds = readSavedCafeIds();
 resetCafeForm();

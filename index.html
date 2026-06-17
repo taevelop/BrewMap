@@ -4,8 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="마시고 싶은 커피가 있는 카페를 찾는 부산 커피맵 MVP" />
+    <meta name="theme-color" content="#173f35" />
     <title>BrewMap | Coffee Map MVP</title>
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="apple-touch-icon" href="./favicon.svg" />
+    <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="stylesheet" href="./src/styles.css" />
   </head>
   <body>
@@ -28,10 +31,14 @@
           </div>
           <section class="map-card" id="map" aria-label="BrewMap 카페 지도 미리보기">
             <div class="map-toolbar"><span>현재 결과 <strong data-result-count aria-live="polite">0개 카페</strong></span><button type="button" data-location-action>내 위치</button></div>
-            <div class="map-surface" data-map-surface>
-              <div class="map-tiles" data-map-tiles aria-hidden="true"></div>
+            <div class="map-surface" data-map-surface tabindex="0" role="application" aria-label="카페 지도. 드래그하거나 키보드로 이동할 수 있습니다.">
+              <div class="map-base-layer" data-map-base-layer aria-hidden="true"></div>
               <div class="map-marker-layer" data-map-marker-layer></div>
-              <a class="map-attribution" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap</a>
+              <div class="map-controls" aria-label="지도 확대/축소">
+                <button type="button" data-map-zoom-in aria-label="지도 확대" title="지도 확대">+</button>
+                <button type="button" data-map-zoom-out aria-label="지도 축소" title="지도 축소">-</button>
+              </div>
+              <a class="map-attribution" href="#" target="_blank" rel="noreferrer" data-map-attribution hidden>지도 데이터</a>
               <p class="map-status" data-map-status aria-live="polite"></p>
             </div>
           </section>
