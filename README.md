@@ -50,6 +50,7 @@ git switch <target-branch>
 - `docs/mvp-plan.md`: 12주 실행 계획과 MVP 판단 기준
 - `docs/scope.md`: P0/P1/P2 범위
 - `docs/taxonomy.md`: 커피 태그, 동의어, 검증/신뢰도 정책
+- `docs/search-layout-final-plan.md`: 검색 결과 중심 화면 전환 최종안
 - `docs/csv-format.md`: Excel 호환 CSV 입력 포맷
 - `db/schema.sql`: 핵심 DB 스키마 초안
 - `data/seed-cafes.csv`: Seed CSV 포맷

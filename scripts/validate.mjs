@@ -40,7 +40,7 @@ const checks = [
   ['HTML links BrewMap favicon', html.includes('rel="icon"') && html.includes('favicon.svg')],
   ['HTML links web app manifest', html.includes('rel="manifest"') && html.includes('manifest.webmanifest')],
   ['HTML defines PWA theme color', html.includes('name="theme-color"') && html.includes('#173f35')],
-  ['HTML states the MVP mission', html.includes('마시고 싶은 커피가 있는 카페를 찾을지도')],
+  ['HTML states the MVP mission', html.includes('마시고 싶은 커피를 찾을지도')],
   ['HTML links brand to home section', html.includes('id="home"') && html.includes('href="#home"') && html.includes('브루맵')],
   ['Manifest defines standalone BrewMap app', manifest.includes('"display": "standalone"') && manifest.includes('"start_url": "./"') && manifest.includes('"theme_color": "#173f35"')],
   ['JavaScript defines MVP coffee capabilities', js.includes('filter_coffee') && js.includes('bean_sales')],
