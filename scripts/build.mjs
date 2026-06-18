@@ -18,7 +18,9 @@ await cp('assets/brewmap-cafe-marker-selected.svg', 'dist/assets/brewmap-cafe-ma
 await cp('manifest.webmanifest', 'dist/manifest.webmanifest');
 await cp('service-worker.js', 'dist/service-worker.js');
 await cp('src/styles.css', 'dist/src/styles.css');
+await cp('src/retro-desktop.css', 'dist/src/retro-desktop.css');
 await cp('src/main.js', 'dist/src/main.js');
+await cp('src/retro-desktop.js', 'dist/src/retro-desktop.js');
 await cp('src/map-services.js', 'dist/src/map-services.js');
 await cp('data/seed-cafes.csv', 'dist/data/seed-cafes.csv');
 console.log('Built static BrewMap prototype to dist/');

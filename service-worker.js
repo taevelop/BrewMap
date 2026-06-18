@@ -1,5 +1,5 @@
-const CACHE_NAME = 'brewmap-pwa-v8';
-const ASSET_VERSION = '20260618-4';
+const CACHE_NAME = 'brewmap-pwa-v9';
+const ASSET_VERSION = '20260618-5';
 const APP_SHELL = [
   './',
   './index.html',
@@ -15,7 +15,9 @@ const APP_SHELL = [
   './assets/brewmap-cafe-marker-selected.svg',
   './manifest.webmanifest',
   `./src/styles.css?v=${ASSET_VERSION}`,
+  `./src/retro-desktop.css?v=${ASSET_VERSION}`,
   `./src/main.js?v=${ASSET_VERSION}`,
+  './src/retro-desktop.js',
   './src/map-services.js',
   './data/seed-cafes.csv',
 ];

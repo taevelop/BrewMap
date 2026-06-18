@@ -1,4 +1,5 @@
 import { getMapProvider } from './map-services.js';
+import { createRetroDesktop } from './retro-desktop.js';
 
 const capabilityCatalog = [
   { key: 'filter_coffee', label: '필터커피', group: '커피 종류', isMvpFilter: true },
@@ -141,6 +142,7 @@ const locationInput = document.querySelector('[data-location-input]');
 const topLayer = document.querySelector('.top-layer');
 const filterRow = document.querySelector('[data-filter-row]');
 const locationPresetActions = document.querySelectorAll('[data-location-preset]');
+const retroDesktopRoot = document.querySelector('[data-retro-desktop]');
 const mapSurface = document.querySelector('[data-map-surface]');
 const mapBaseLayer = document.querySelector('[data-map-base-layer]');
 const mapMarkerLayer = document.querySelector('[data-map-marker-layer]');
@@ -215,6 +217,7 @@ let selectedAdminTagKey = '';
 let lastCsvValidation = null;
 let lastCsvSource = '';
 let mapDragState = null;
+let retroDesktop = null;
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (char) => ({
@@ -577,6 +580,7 @@ function toggleSaved(cafeId) {
   persistSavedCafeIds();
   renderCafeResults();
   renderSavedList();
+  retroDesktop?.render();
   if (detailDialog.open) renderDetail(cafeById(cafeId));
 }
 
@@ -1435,6 +1439,7 @@ function renderAdmin() {
 function renderApp() {
   renderPublic();
   renderAdmin();
+  retroDesktop?.render();
 }
 
 searchForm.addEventListener('submit', (event) => {
@@ -1493,6 +1498,17 @@ updateTopLayerOffset();
 registerServiceWorker();
 await loadSeedCafes();
 savedCafeIds = readSavedCafeIds();
+retroDesktop = createRetroDesktop({
+  root: retroDesktopRoot,
+  standardRoots: document.querySelectorAll('.search-shell, .ops-grid, .admin-workspace'),
+  getCafes: () => cafes,
+  getSavedCafeIds: () => savedCafeIds,
+  getFilters: () => mvpCapabilities(),
+  toggleSaved,
+  tagLabel,
+  confidenceLabel,
+  verificationSourceLabel,
+});
 resetCafeForm();
 resetTagForm();
 renderApp();

@@ -12,7 +12,8 @@
     <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
     <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="stylesheet" href="./src/styles.css?v=20260618-4" />
+    <link rel="stylesheet" href="./src/styles.css?v=20260618-5" />
+    <link rel="stylesheet" href="./src/retro-desktop.css?v=20260618-5" />
   </head>
   <body>
     <main class="app-shell">
@@ -20,7 +21,7 @@
         <nav class="top-nav" aria-label="BrewMap 주요 메뉴">
           <a class="brand" href="#home" aria-label="브루맵 홈으로 이동"><img class="brand-mark" src="./assets/brewmap-brand-icon.svg" alt="" width="38" height="38" /><span>브루맵</span></a>
           <div class="nav-actions">
-            <a href="#cafes">결과</a><a href="#map">지도</a><a href="#saved">저장</a><a href="#report">제보</a><a href="#admin">Admin</a>
+            <a href="#cafes">결과</a><a href="#map">지도</a><a href="#saved">저장</a><a href="#report">제보</a><a href="#admin">Admin</a><a href="#retro-desktop">Retro</a>
           </div>
         </nav>
       </div>
@@ -179,6 +180,8 @@
           </article>
         </div>
       </section>
+
+      <section class="retro-desktop-route" id="retro-desktop" data-retro-desktop hidden aria-label="BrewMap Retro Desktop 실험실"></section>
     </main>
     <dialog class="detail-dialog" data-detail-dialog>
       <div class="detail-modal">
@@ -186,6 +189,6 @@
         <div data-detail-body></div>
       </div>
     </dialog>
-    <script type="module" src="./src/main.js?v=20260618-4"></script>
+    <script type="module" src="./src/main.js?v=20260618-5"></script>
   </body>
 </html>
