@@ -1,0 +1,645 @@
+/* Retro desktop experimental route */
+body.is-retro-desktop-route .top-layer {
+  display: none;
+}
+
+body.is-retro-desktop-route .app-shell {
+  padding-top: 0;
+}
+
+.retro-desktop-route[hidden] {
+  display: none !important;
+}
+
+.retro-desktop-route {
+  min-height: 100vh;
+  color: var(--brewmap-ink);
+  background:
+    repeating-linear-gradient(90deg, transparent 0 23px, color-mix(in srgb, var(--brewmap-muted) 16%, transparent) 23px 24px),
+    repeating-linear-gradient(0deg, transparent 0 23px, color-mix(in srgb, var(--brewmap-muted) 12%, transparent) 23px 24px),
+    linear-gradient(135deg, var(--brewmap-bg) 0%, var(--brewmap-cream) 100%);
+}
+
+.retro-desktop {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: 38px minmax(0, 1fr) 42px;
+  overflow: hidden;
+}
+
+.retro-desktop button,
+.retro-desktop a {
+  font: inherit;
+}
+
+.retro-desktop button {
+  border: 1px solid var(--brewmap-espresso);
+  border-radius: 2px;
+  color: var(--brewmap-ink);
+  background: var(--brewmap-cream);
+  box-shadow:
+    inset 1px 1px 0 var(--brewmap-bg),
+    inset -1px -1px 0 color-mix(in srgb, var(--brewmap-espresso) 24%, transparent);
+  font-weight: 900;
+}
+
+.retro-desktop button:active {
+  transform: translate(1px, 1px);
+}
+
+.retro-desktop-topbar,
+.retro-taskbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border-color: var(--brewmap-espresso);
+  background: var(--brewmap-soft-strong);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: .82rem;
+  font-weight: 900;
+}
+
+.retro-desktop-topbar {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--brewmap-espresso);
+}
+
+.retro-desktop-topbar a,
+.retro-desktop-topbar nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.retro-desktop-topbar a {
+  text-decoration: none;
+}
+
+.retro-desktop-topbar img {
+  border-radius: 3px;
+  background: var(--brewmap-espresso);
+}
+
+.retro-desktop-topbar nav button {
+  border: 0;
+  padding: 4px 6px;
+  background: transparent;
+  box-shadow: none;
+}
+
+.retro-desktop-canvas {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  padding: 16px;
+}
+
+.retro-shortcuts {
+  position: relative;
+  z-index: 5;
+  display: grid;
+  width: 150px;
+  gap: 16px;
+}
+
+.retro-shortcut {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  width: 120px;
+  min-height: 92px;
+  padding: 8px 6px;
+  text-align: center;
+}
+
+.retro-shortcut.is-open {
+  background: var(--brewmap-soft);
+}
+
+.retro-shortcut-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--brewmap-espresso);
+  background: var(--brewmap-surface);
+}
+
+.retro-shortcut small {
+  color: var(--brewmap-muted);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: .68rem;
+}
+
+.retro-window {
+  position: absolute;
+  display: grid;
+  grid-template-rows: 32px 28px minmax(0, 1fr) 24px;
+  min-width: 320px;
+  min-height: 320px;
+  overflow: hidden;
+  border: 1px solid var(--brewmap-espresso);
+  border-radius: 2px;
+  background: var(--brewmap-surface);
+  box-shadow: 3px 3px 0 var(--brewmap-espresso);
+}
+
+.retro-window[data-mode="maximized"] {
+  inset: 12px;
+  width: auto !important;
+  height: auto !important;
+}
+
+.retro-window[data-active="false"] {
+  box-shadow: 2px 2px 0 color-mix(in srgb, var(--brewmap-espresso) 72%, transparent);
+}
+
+.retro-titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 6px 0 10px;
+  border-bottom: 1px solid var(--brewmap-espresso);
+  color: var(--brewmap-cream);
+  background: var(--brewmap-espresso);
+  cursor: move;
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: .82rem;
+  font-weight: 900;
+  user-select: none;
+}
+
+.retro-window[data-active="false"] .retro-titlebar {
+  color: var(--brewmap-ink);
+  background: var(--brewmap-soft-strong);
+}
+
+.retro-window-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.retro-window-controls button {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 22px;
+  padding: 0;
+  line-height: 1;
+}
+
+.retro-menubar {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 6px;
+  border-bottom: 1px solid var(--brewmap-border);
+  background: var(--brewmap-bg);
+}
+
+.retro-menubar button {
+  border: 0;
+  padding: 3px 7px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--brewmap-muted);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: .72rem;
+}
+
+.retro-program-body {
+  min-height: 0;
+  overflow: auto;
+  padding: 12px;
+}
+
+.retro-statusbar {
+  overflow: hidden;
+  border-top: 1px solid var(--brewmap-border);
+  padding: 4px 8px;
+  color: var(--brewmap-muted);
+  background: var(--brewmap-bg);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: .72rem;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.retro-taskbar {
+  padding: 5px 8px;
+  border-top: 1px solid var(--brewmap-espresso);
+}
+
+.retro-taskbar > div {
+  display: flex;
+  min-width: 0;
+  gap: 6px;
+  overflow: auto;
+}
+
+.retro-taskbar button {
+  position: relative;
+  min-height: 30px;
+  padding: 5px 10px;
+  white-space: nowrap;
+}
+
+.retro-taskbar button.is-active {
+  background: var(--brewmap-orange);
+  color: var(--brewmap-surface);
+}
+
+.retro-taskbar strong {
+  position: absolute;
+  top: -6px;
+  right: -5px;
+  min-width: 18px;
+  border: 1px solid var(--brewmap-espresso);
+  border-radius: 999px;
+  padding: 1px 4px;
+  background: var(--brewmap-danger);
+  color: var(--brewmap-surface);
+  font-size: .68rem;
+}
+
+.retro-kicker {
+  margin: 0 0 8px;
+  color: var(--brewmap-orange);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: .78rem;
+  font-weight: 900;
+}
+
+.retro-action-row,
+.story-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.retro-action-row {
+  margin-top: 14px;
+}
+
+.retro-action-row a,
+.retro-action-row button,
+.story-controls button,
+.retro-secondary-action {
+  min-height: 38px;
+  padding: 8px 11px;
+  text-decoration: none;
+}
+
+.retro-action-row a {
+  border: 1px solid var(--brewmap-espresso);
+  border-radius: 2px;
+  color: var(--brewmap-ink);
+  background: var(--brewmap-bg);
+  font-weight: 900;
+}
+
+.retro-action-row .is-saved,
+.retro-desktop button.is-saved {
+  color: var(--brewmap-surface);
+  background: var(--brewmap-espresso);
+}
+
+.retro-empty {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  min-height: 220px;
+  gap: 10px;
+  padding: 18px;
+  border: 1px dashed var(--brewmap-border);
+}
+
+.retro-empty h2,
+.retro-empty h3,
+.retro-empty p {
+  margin: 0;
+}
+
+.local-zine-program {
+  display: grid;
+  gap: 12px;
+}
+
+.local-zine-program h2 {
+  max-width: 460px;
+  font-size: 2rem;
+}
+
+.local-zine-program p {
+  margin: 0;
+}
+
+.zine-cover {
+  display: grid;
+  place-items: center;
+  min-height: 250px;
+  border: 1px solid var(--brewmap-espresso);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--brewmap-orange) 20%, transparent), transparent 46%),
+    repeating-linear-gradient(90deg, transparent 0 15px, color-mix(in srgb, var(--brewmap-border) 70%, transparent) 15px 16px),
+    var(--brewmap-soft);
+}
+
+.zine-cover img {
+  width: 72px;
+  height: 72px;
+  padding: 8px;
+  border: 1px solid var(--brewmap-espresso);
+  background: var(--brewmap-espresso);
+}
+
+.zine-cover span {
+  margin-top: 12px;
+  font-weight: 900;
+}
+
+.zine-summary {
+  max-width: 520px;
+  color: var(--brewmap-muted);
+  line-height: 1.58;
+}
+
+.story-controls {
+  justify-content: space-between;
+  margin-top: 6px;
+  padding-top: 12px;
+  border-top: 1px solid var(--brewmap-border);
+}
+
+.cafe-index-program,
+.brew-log-program {
+  display: grid;
+  grid-template-columns: 180px minmax(220px, .96fr) minmax(260px, 1.1fr);
+  min-height: 100%;
+  border: 1px solid var(--brewmap-border);
+}
+
+.cafe-index-program > *,
+.brew-log-program > * {
+  min-width: 0;
+  padding: 10px;
+}
+
+.index-filter-panel,
+.folder-tree {
+  border-right: 1px solid var(--brewmap-border);
+  background: var(--brewmap-bg);
+}
+
+.index-detail-panel,
+.log-detail {
+  border-left: 1px solid var(--brewmap-border);
+  background: var(--brewmap-soft);
+}
+
+.index-filter-panel h3,
+.index-record-list h3,
+.index-detail-panel h3,
+.folder-tree h3,
+.saved-record-list h3,
+.log-detail h3 {
+  margin: 0 0 10px;
+  font-size: .9rem;
+}
+
+.index-filter-panel div,
+.folder-tree,
+.index-record-list,
+.saved-record-list {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+}
+
+.index-filter-panel button,
+.folder-tree button,
+.cafe-record,
+.saved-record {
+  width: 100%;
+  min-height: 38px;
+  padding: 8px;
+  text-align: left;
+}
+
+.index-filter-panel button.is-active,
+.cafe-record.is-active,
+.saved-record.is-active {
+  color: var(--brewmap-surface);
+  background: var(--brewmap-orange);
+}
+
+.cafe-record,
+.saved-record {
+  display: grid;
+  gap: 3px;
+}
+
+.cafe-record span,
+.saved-record span,
+.cafe-record small,
+.empty-note {
+  color: var(--brewmap-muted);
+}
+
+.cafe-record.is-active span,
+.cafe-record.is-active small,
+.saved-record.is-active span {
+  color: var(--brewmap-surface);
+}
+
+.record-photo {
+  display: grid;
+  place-items: center;
+  min-height: 140px;
+  margin-bottom: 12px;
+  border: 1px solid var(--brewmap-espresso);
+  background:
+    linear-gradient(45deg, transparent 48%, var(--brewmap-border) 49% 51%, transparent 52%),
+    var(--brewmap-bg);
+  color: var(--brewmap-muted);
+  font-weight: 900;
+}
+
+.retro-data-grid {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 0;
+}
+
+.retro-data-grid div {
+  display: grid;
+  gap: 2px;
+  border: 1px solid var(--brewmap-border);
+  padding: 8px;
+  background: var(--brewmap-surface);
+}
+
+.retro-data-grid dt {
+  color: var(--brewmap-orange);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: .72rem;
+  font-weight: 900;
+}
+
+.retro-data-grid dd {
+  margin: 0;
+  font-weight: 800;
+}
+
+.brewmap-program {
+  display: grid;
+  grid-template-columns: minmax(300px, 1fr) 260px;
+  gap: 12px;
+  min-height: 100%;
+}
+
+.retro-map-surface {
+  position: relative;
+  min-height: 430px;
+  overflow: hidden;
+  border: 1px solid var(--brewmap-espresso);
+  background:
+    linear-gradient(31deg, transparent 47%, var(--brewmap-map-road) 48% 51%, transparent 52%),
+    linear-gradient(90deg, transparent 47%, var(--brewmap-map-road-minor) 48% 51%, transparent 52%),
+    var(--brewmap-map-bg);
+}
+
+.retro-map-grid {
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 35px, color-mix(in srgb, var(--brewmap-muted) 18%, transparent) 35px 36px),
+    repeating-linear-gradient(0deg, transparent 0 35px, color-mix(in srgb, var(--brewmap-muted) 14%, transparent) 35px 36px);
+}
+
+.retro-map-pin {
+  position: absolute;
+  width: 32px;
+  height: 40px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  transform: translate(-50%, -100%);
+}
+
+.retro-map-pin::before {
+  position: absolute;
+  inset: 0;
+  background: url("../assets/brewmap-cafe-marker.svg") center / contain no-repeat;
+  content: "";
+}
+
+.retro-map-pin.is-active::before {
+  background-image: url("../assets/brewmap-cafe-marker-selected.svg");
+}
+
+.map-record {
+  border: 1px solid var(--brewmap-border);
+  padding: 12px;
+  background: var(--brewmap-bg);
+}
+
+.folder-tree button {
+  background: var(--brewmap-bg);
+}
+
+.log-note {
+  margin: 14px 0 0;
+  color: var(--brewmap-muted);
+  line-height: 1.58;
+}
+
+@media (max-width: 1023px) {
+  .retro-window {
+    min-width: 0;
+  }
+
+  .cafe-index-program,
+  .brew-log-program,
+  .brewmap-program {
+    grid-template-columns: 1fr;
+  }
+
+  .index-filter-panel,
+  .index-detail-panel,
+  .folder-tree,
+  .log-detail {
+    border: 0;
+    border-bottom: 1px solid var(--brewmap-border);
+  }
+}
+
+@media (max-width: 767px) {
+  .retro-desktop {
+    grid-template-rows: 38px minmax(0, 1fr) 54px;
+  }
+
+  .retro-desktop-canvas {
+    padding: 0;
+  }
+
+  .retro-shortcuts {
+    display: none;
+  }
+
+  .retro-window {
+    display: none;
+  }
+
+  .retro-window[data-active="true"] {
+    inset: 0 !important;
+    display: grid;
+    width: auto !important;
+    height: auto !important;
+    min-height: 0;
+    border-right: 0;
+    border-left: 0;
+    box-shadow: none;
+  }
+
+  .retro-menubar {
+    overflow: auto;
+  }
+
+  .retro-taskbar {
+    align-items: stretch;
+  }
+
+  .retro-taskbar > div {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    flex: 1 1 auto;
+  }
+
+  .retro-taskbar button {
+    min-width: 0;
+    padding: 5px 4px;
+    font-size: .68rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .retro-taskbar > button,
+  .retro-taskbar time {
+    display: none;
+  }
+
+  .local-zine-program h2 {
+    font-size: 1.45rem;
+  }
+
+  .zine-cover,
+  .retro-map-surface {
+    min-height: 250px;
+  }
+}
