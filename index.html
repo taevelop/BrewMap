@@ -9,7 +9,7 @@
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
     <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="stylesheet" href="./src/styles.css?v=20260617-2" />
+    <link rel="stylesheet" href="./src/styles.css?v=20260618-1" />
   </head>
   <body>
     <main class="app-shell">
@@ -17,16 +17,22 @@
         <nav class="top-nav" aria-label="BrewMap 주요 메뉴">
           <a class="brand" href="#home" aria-label="브루맵 홈으로 이동"><img class="brand-mark" src="./apple-touch-icon.png" alt="" width="38" height="38" /><span>브루맵</span></a>
           <div class="nav-actions">
-            <a href="#cafes">결과</a><a href="#map">지도</a><a href="#saved">저장</a><a href="#report">제보</a><a href="#admin">Admin</a>
+            <a href="#cafes">결과</a><a href="#map">지도</a><a href="#design-lab">디자인</a><a href="#saved">저장</a><a href="#report">제보</a><a href="#admin">Admin</a>
           </div>
         </nav>
       </div>
 
       <section class="search-shell" id="home">
         <header class="search-header">
-          <div>
+          <div class="search-intro">
             <p class="eyebrow">FIND YOUR COFFEE</p>
             <h1>마시고 싶은 커피를 찾을지도</h1>
+            <p>부산 권역에서 원하는 커피가 실제로 가능한지, 최근 검증 정보와 함께 빠르게 확인하세요.</p>
+            <div class="hero-proof" aria-label="BrewMap 핵심 기준">
+              <span><strong>별점 없음</strong> 커피 가능 여부 우선</span>
+              <span><strong>검증 표시</strong> 출처 · 최근 확인일</span>
+              <span><strong>부산 베타</strong> 서울 확장 준비</span>
+            </div>
           </div>
           <form class="search-card" role="search" data-search-form>
             <label><span>커피</span><input aria-label="카페 또는 커피 검색" placeholder="필터커피, 디카페인, 카페명" data-search-input /></label>
@@ -34,6 +40,15 @@
             <button type="submit">검색</button>
           </form>
         </header>
+
+        <nav class="area-rail" aria-label="부산 권역 빠른 탐색">
+          <span>부산 권역</span>
+          <button type="button" data-location-preset="전포">전포</button>
+          <button type="button" data-location-preset="광안리">광안리</button>
+          <button type="button" data-location-preset="해운대">해운대</button>
+          <button type="button" data-location-preset="영도">영도</button>
+          <button type="button" data-location-preset="동래">동래</button>
+        </nav>
 
         <div class="search-layout">
           <aside class="filter-panel" aria-labelledby="filter-heading">
@@ -74,6 +89,22 @@
             </div>
           </section>
         </div>
+      </section>
+
+      <section class="design-lab" id="design-lab" aria-label="BrewMap 디자인 샘플 비교">
+        <div class="design-lab-heading">
+          <div>
+            <p class="eyebrow">Design Samples</p>
+            <h2>브루맵 디자인 샘플 3안</h2>
+          </div>
+          <p>검색 첫 화면 기준으로 비교할 수 있는 세 가지 방향입니다.</p>
+        </div>
+        <div class="theme-switcher" role="tablist" aria-label="디자인 샘플 선택">
+          <button type="button" class="is-active" role="tab" aria-selected="true" data-design-theme="verification">A. 검증 지도형</button>
+          <button type="button" role="tab" aria-selected="false" data-design-theme="neighborhood">B. 부산 권역형</button>
+          <button type="button" role="tab" aria-selected="false" data-design-theme="specialty">C. 스페셜티 보드형</button>
+        </div>
+        <div class="theme-sample-stage" data-design-stage aria-live="polite"></div>
       </section>
 
       <section class="ops-grid">
@@ -168,6 +199,6 @@
         <div data-detail-body></div>
       </div>
     </dialog>
-    <script type="module" src="./src/main.js?v=20260617-2"></script>
+    <script type="module" src="./src/main.js?v=20260618-1"></script>
   </body>
 </html>
