@@ -720,7 +720,7 @@ function toggleSaved(cafeId) {
 
 function renderCafe(cafe, index = 0) {
   const isSaved = savedCafeIds.has(cafe.id);
-  const primaryTags = cafe.capabilities.slice(0, 3).map(capabilityLabel).join(' · ');
+  const primaryTags = cafe.capabilities.slice(0, 3).map(tagLabel).join(' · ');
   const card = document.createElement('article');
   card.className = 'cafe-card';
   card.innerHTML = `
