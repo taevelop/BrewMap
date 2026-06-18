@@ -23,6 +23,7 @@ const requiredFiles = [
   'docs/scope.md',
   'docs/taxonomy.md',
   'docs/csv-format.md',
+  'docs/retro-ux-checklist.md',
   'db/schema.sql',
   'data/seed-cafes.csv',
   'scripts/check-seed-data.mjs',
@@ -37,6 +38,7 @@ const html = await readFile('index.html', 'utf8');
 const js = await readFile('src/main.js', 'utf8');
 const mapServices = await readFile('src/map-services.js', 'utf8');
 const retroDesktopCss = await readFile('src/retro-desktop.css', 'utf8');
+const retroUxChecklist = await readFile('docs/retro-ux-checklist.md', 'utf8');
 const retroDesktopJs = await readFile('src/retro-desktop.js', 'utf8');
 const css = await readFile('src/styles.css', 'utf8');
 const manifest = await readFile('manifest.webmanifest', 'utf8');
@@ -109,9 +111,10 @@ const checks = [
   ['Build includes PWA assets', buildScript.includes('manifest.webmanifest') && buildScript.includes('service-worker.js')],
   ['Build includes map service module', buildScript.includes('src/map-services.js') && buildScript.includes('dist/src/map-services.js')],
   ['Build includes seed CSV data file', buildScript.includes('dist/data') && buildScript.includes('data/seed-cafes.csv')],
-  ['HTML keeps legacy workspace mounted below retro desktop', html.includes('class="legacy-app-mounts" id="workspace"') && !html.includes('class="legacy-app-mounts" hidden')],
-  ['Retro desktop links to existing Search, Map, Saved, Report, and Admin sections', ['#legacy-home', '#map', '#saved', '#report', '#admin'].every((target) => retroDesktopJs.includes(`data-retro-scroll-target="${target}"`))],
-  ['Retro desktop keeps existing workspace roots visible', retroDesktopJs.includes('element.hidden = false') && !retroDesktopJs.includes('element.hidden = true')],
+  ['HTML keeps legacy workspace mounted for shared app state', html.includes('class="legacy-app-mounts" id="workspace"')],
+  ['Retro desktop menu opens native retro programs instead of scrolling into legacy UI', ['cafe-index', 'brewmap-map', 'brew-log', 'local-zine'].every((target) => retroDesktopJs.includes(`data-open-program="${target}"`)) && !retroDesktopJs.includes('data-retro-scroll-target="#legacy-home"')],
+  ['Retro desktop hides legacy workspace from retro-first visual flow', retroDesktopJs.includes('legacyMount.hidden = true') && retroDesktopJs.includes("aria-hidden', 'true") && retroDesktopCss.includes('body.is-retro-main .legacy-app-mounts')],
+  ['Retro UX checklist documents parity and completion checks', retroUxChecklist.includes('점검 항목') && retroUxChecklist.includes('이전 테스트/레거시 UI가 노출되지 않는다') && retroUxChecklist.includes('모바일')],
   ['Retro desktop top menu remains usable on narrow screens', retroDesktopCss.includes('.retro-desktop-topbar nav') && retroDesktopCss.includes('overflow-x: auto')],
   ['Seed data QA covers MVP readiness targets', seedCheck.includes('150') && seedCheck.includes('averageCoffeeCapabilities') && seedCheck.includes('mvpCapabilities')],
   ['CSV docs explain seed data QA', csvFormat.includes('npm run data:check') && csvFormat.includes('Seed 데이터 QA')],
