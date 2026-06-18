@@ -141,8 +141,6 @@ const locationInput = document.querySelector('[data-location-input]');
 const topLayer = document.querySelector('.top-layer');
 const filterRow = document.querySelector('[data-filter-row]');
 const locationPresetActions = document.querySelectorAll('[data-location-preset]');
-const designThemeActions = document.querySelectorAll('[data-design-theme]');
-const designThemeStage = document.querySelector('[data-design-stage]');
 const mapSurface = document.querySelector('[data-map-surface]');
 const mapBaseLayer = document.querySelector('[data-map-base-layer]');
 const mapMarkerLayer = document.querySelector('[data-map-marker-layer]');
@@ -209,81 +207,6 @@ const adminTagFields = {
   isMvp: document.querySelector('[data-admin-tag-mvp]'),
 };
 
-const designThemeSamples = {
-  verification: {
-    kicker: 'Sample A',
-    title: '검증 중심 지도형',
-    description: '별점 없이 커피 가능 여부, 출처, 최근 확인일을 가장 앞에 두는 현재 MVP 기본 방향입니다.',
-    bestFor: '검색 신뢰와 빠른 판단',
-    mood: 'Espresso, Cream, Brew Orange',
-    windowTitle: 'BrewMap Verified',
-    hero: '마시고 싶은 커피를 찾을지도',
-    search: '필터커피 · 부산 전포',
-    cta: '검증 카페 보기',
-    mapLabel: '검증 핀 28개',
-    palette: ['#fffaf2', '#2d1b12', '#f8ebd2', '#d96b2b'],
-    pills: ['별점 없음', '출처 표시', '최근 확인일'],
-    metrics: [
-      { value: 'A', label: '신뢰도' },
-      { value: '28', label: '부산 카페' },
-      { value: '3일', label: '최근 확인' },
-    ],
-    cards: [
-      { area: '전포', name: '베리어스 브루', match: '필터커피 · 싱글오리진', meta: '관리자 확인 · 2026-06-15' },
-      { area: '영도', name: '모모스커피', match: '콜드브루 · 원두구매', meta: '메뉴 사진 · 2026-06-12' },
-    ],
-    pins: [{ left: 62, top: 32 }, { left: 44, top: 54 }, { left: 72, top: 63 }],
-  },
-  neighborhood: {
-    kicker: 'Sample B',
-    title: '부산 권역형',
-    description: '전포, 광안리, 해운대처럼 동네를 먼저 고르고 그 안에서 커피 조건을 좁히는 탐색형 화면입니다.',
-    bestFor: '부산 베타와 로컬 확장',
-    mood: 'Cream 바탕, Espresso 정보, Orange 권역 강조',
-    windowTitle: 'BrewMap Busan',
-    hero: '오늘 갈 동네에서 가능한 커피',
-    search: '광안리 · 디카페인',
-    cta: '권역 열기',
-    mapLabel: '광안리 주변',
-    palette: ['#f8ebd2', '#2d1b12', '#d96b2b', '#725d50'],
-    pills: ['전포', '광안리', '해운대', '영도'],
-    metrics: [
-      { value: '5', label: '권역' },
-      { value: '12', label: '디카페인' },
-      { value: '4', label: '해변 근처' },
-    ],
-    cards: [
-      { area: '광안리', name: '웨이브온 로스터스', match: '디카페인 · 플랫화이트', meta: '사장님 확인 · 2026-06-14' },
-      { area: '해운대', name: '오션 브루 바', match: '콜드브루 · 야외 좌석', meta: '사용자 제보 · 검토 중' },
-    ],
-    pins: [{ left: 58, top: 42 }, { left: 76, top: 35 }, { left: 36, top: 68 }],
-  },
-  specialty: {
-    kicker: 'Sample C',
-    title: '스페셜티 보드형',
-    description: '메뉴판처럼 커피 태그와 원두 정보를 밀도 있게 보여줘 커피 취향이 분명한 사용자에게 맞는 화면입니다.',
-    bestFor: '고관여 커피 사용자',
-    mood: 'Espresso 고대비, Cream 카드, Orange 선택 상태',
-    windowTitle: 'BrewMap Specialty',
-    hero: '원하는 추출과 원두를 먼저 고르기',
-    search: '싱글오리진 · 배치브루',
-    cta: '보드 필터',
-    mapLabel: '스페셜티 클러스터',
-    palette: ['#140c08', '#f8ebd2', '#f28a45', '#80604c'],
-    pills: ['싱글오리진', '배치브루', '원두구매'],
-    metrics: [
-      { value: '19', label: '스페셜티' },
-      { value: '7', label: '배치브루' },
-      { value: '11', label: '원두 판매' },
-    ],
-    cards: [
-      { area: '전포', name: '브루잉 데스크', match: '배치브루 · 하우스 블렌드', meta: '관리자 확인 · 2026-06-16' },
-      { area: '동래', name: '노트 로스터스', match: '싱글오리진 · 원두구매', meta: '메뉴 사진 · 2026-06-10' },
-    ],
-    pins: [{ left: 48, top: 30 }, { left: 66, top: 58 }, { left: 28, top: 50 }],
-  },
-};
-
 const selectedFilters = new Set();
 let savedCafeIds = new Set();
 let searchQuery = '';
@@ -301,67 +224,6 @@ function escapeHtml(value) {
     '"': '&quot;',
     "'": '&#39;',
   }[char]));
-}
-
-function renderDesignThemeSample(themeKey = 'verification') {
-  if (!designThemeStage) return;
-
-  const sample = designThemeSamples[themeKey] || designThemeSamples.verification;
-  designThemeStage.dataset.designTheme = themeKey;
-  designThemeActions.forEach((button) => {
-    const isActive = button.dataset.designTheme === themeKey;
-    button.classList.toggle('is-active', isActive);
-    button.setAttribute('aria-selected', String(isActive));
-  });
-
-  const swatches = sample.palette.map((color) => `<span class="sample-swatch" style="--swatch-color: ${escapeHtml(color)}"></span>`).join('');
-  const pills = sample.pills.map((pill) => `<span>${escapeHtml(pill)}</span>`).join('');
-  const metrics = sample.metrics.map((metric) => `<span><strong>${escapeHtml(metric.value)}</strong>${escapeHtml(metric.label)}</span>`).join('');
-  const cards = sample.cards.map((card) => `
-    <article class="sample-result-card">
-      <span>${escapeHtml(card.area)}</span>
-      <h4>${escapeHtml(card.name)}</h4>
-      <p>${escapeHtml(card.match)}</p>
-      <small>${escapeHtml(card.meta)}</small>
-    </article>
-  `).join('');
-  const pins = sample.pins.map((pin) => `<span class="sample-pin" style="left: ${pin.left}%; top: ${pin.top}%"></span>`).join('');
-
-  designThemeStage.innerHTML = `
-    <aside class="sample-brief">
-      <span class="sample-kicker">${escapeHtml(sample.kicker)}</span>
-      <h3>${escapeHtml(sample.title)}</h3>
-      <p>${escapeHtml(sample.description)}</p>
-      <dl>
-        <div><dt>추천 용도</dt><dd>${escapeHtml(sample.bestFor)}</dd></div>
-        <div><dt>시각 톤</dt><dd>${escapeHtml(sample.mood)}</dd></div>
-      </dl>
-      <div class="sample-palette" aria-label="${escapeHtml(sample.title)} 색상 팔레트">${swatches}</div>
-    </aside>
-    <article class="sample-capture" aria-label="${escapeHtml(sample.title)} 샘플 화면">
-      <div class="sample-browser-bar"><span></span><span></span><span></span><strong>${escapeHtml(sample.windowTitle)}</strong></div>
-      <div class="sample-capture-nav">
-        <div><img src="./assets/brewmap-brand-icon.svg" alt="" width="32" height="32" /><strong>브루맵</strong></div>
-        <button type="button">${escapeHtml(sample.cta)}</button>
-      </div>
-      <div class="sample-capture-hero">
-        <div>
-          <p class="eyebrow">BrewMap Preview</p>
-          <h3>${escapeHtml(sample.hero)}</h3>
-        </div>
-        <div class="sample-search-strip"><span>검색</span><strong>${escapeHtml(sample.search)}</strong></div>
-      </div>
-      <div class="sample-pill-row">${pills}</div>
-      <div class="sample-metrics">${metrics}</div>
-      <div class="sample-workspace">
-        <div class="sample-results">${cards}</div>
-        <div class="sample-map-panel">
-          <strong>${escapeHtml(sample.mapLabel)}</strong>
-          <div class="sample-map-grid">${pins}</div>
-        </div>
-      </div>
-    </article>
-  `;
 }
 
 function clamp(value, min, max) {
@@ -1600,12 +1462,6 @@ locationPresetActions.forEach((button) => {
   });
 });
 
-designThemeActions.forEach((button) => {
-  button.addEventListener('click', () => {
-    renderDesignThemeSample(button.dataset.designTheme);
-  });
-});
-
 reportForm.addEventListener('submit', submitReport);
 locationAction.addEventListener('click', requestUserLocation);
 bindMapInteractions();
@@ -1634,7 +1490,6 @@ csvValidate.addEventListener('click', validateCsvFromAdmin);
 csvImport.addEventListener('click', importCsvRows);
 
 updateTopLayerOffset();
-renderDesignThemeSample();
 registerServiceWorker();
 await loadSeedCafes();
 savedCafeIds = readSavedCafeIds();
