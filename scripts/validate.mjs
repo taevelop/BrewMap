@@ -16,6 +16,8 @@ const requiredFiles = [
   'service-worker.js',
   'src/main.js',
   'src/map-services.js',
+  'src/retro-desktop.css',
+  'src/retro-desktop.js',
   'src/styles.css',
   'docs/mvp-plan.md',
   'docs/scope.md',
@@ -34,6 +36,8 @@ const serveScript = await readFile('scripts/serve.mjs', 'utf8');
 const html = await readFile('index.html', 'utf8');
 const js = await readFile('src/main.js', 'utf8');
 const mapServices = await readFile('src/map-services.js', 'utf8');
+const retroDesktopCss = await readFile('src/retro-desktop.css', 'utf8');
+const retroDesktopJs = await readFile('src/retro-desktop.js', 'utf8');
 const css = await readFile('src/styles.css', 'utf8');
 const manifest = await readFile('manifest.webmanifest', 'utf8');
 const serviceWorker = await readFile('service-worker.js', 'utf8');
@@ -105,6 +109,10 @@ const checks = [
   ['Build includes PWA assets', buildScript.includes('manifest.webmanifest') && buildScript.includes('service-worker.js')],
   ['Build includes map service module', buildScript.includes('src/map-services.js') && buildScript.includes('dist/src/map-services.js')],
   ['Build includes seed CSV data file', buildScript.includes('dist/data') && buildScript.includes('data/seed-cafes.csv')],
+  ['HTML keeps legacy workspace mounted below retro desktop', html.includes('class="legacy-app-mounts" id="workspace"') && !html.includes('class="legacy-app-mounts" hidden')],
+  ['Retro desktop links to existing Search, Map, Saved, Report, and Admin sections', ['#legacy-home', '#map', '#saved', '#report', '#admin'].every((target) => retroDesktopJs.includes(`data-retro-scroll-target="${target}"`))],
+  ['Retro desktop keeps existing workspace roots visible', retroDesktopJs.includes('element.hidden = false') && !retroDesktopJs.includes('element.hidden = true')],
+  ['Retro desktop top menu remains usable on narrow screens', retroDesktopCss.includes('.retro-desktop-topbar nav') && retroDesktopCss.includes('overflow-x: auto')],
   ['Seed data QA covers MVP readiness targets', seedCheck.includes('150') && seedCheck.includes('averageCoffeeCapabilities') && seedCheck.includes('mvpCapabilities')],
   ['CSV docs explain seed data QA', csvFormat.includes('npm run data:check') && csvFormat.includes('Seed 데이터 QA')],
 ];

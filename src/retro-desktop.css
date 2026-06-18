@@ -67,6 +67,7 @@ body.is-retro-main .top-layer {
 .retro-desktop-topbar {
   padding: 6px 10px;
   border-bottom: 1px solid var(--brewmap-espresso);
+  min-width: 0;
 }
 
 .retro-desktop-topbar .retro-brand,
@@ -74,6 +75,16 @@ body.is-retro-main .top-layer {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
+}
+
+.retro-desktop-topbar nav {
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.retro-desktop-topbar > span {
+  flex: 0 0 auto;
 }
 
 .retro-desktop-topbar img {
@@ -82,6 +93,7 @@ body.is-retro-main .top-layer {
 }
 
 .retro-desktop-topbar nav button {
+  flex: 0 0 auto;
   border: 0;
   padding: 4px 6px;
   background: transparent;
@@ -582,6 +594,26 @@ body.is-retro-main .top-layer {
 @media (max-width: 767px) {
   .retro-desktop {
     grid-template-rows: 38px minmax(0, 1fr) 54px;
+  }
+
+  .retro-desktop-topbar {
+    gap: 6px;
+    padding-inline: 6px;
+  }
+
+  .retro-desktop-topbar .retro-brand {
+    flex: 0 0 auto;
+    font-size: 0;
+    gap: 0;
+  }
+
+  .retro-desktop-topbar nav {
+    gap: 3px;
+  }
+
+  .retro-desktop-topbar nav button {
+    padding-inline: 5px;
+    font-size: .7rem;
   }
 
   .retro-desktop-canvas {
