@@ -1,10 +1,18 @@
-const CACHE_NAME = 'brewmap-pwa-v5';
-const ASSET_VERSION = '20260618-1';
+const CACHE_NAME = 'brewmap-pwa-v7';
+const ASSET_VERSION = '20260618-3';
 const APP_SHELL = [
   './',
   './index.html',
+  './favicon.ico',
   './favicon.svg',
+  './favicon-16x16.png',
+  './favicon-32x32.png',
   './apple-touch-icon.png',
+  './android-chrome-192x192.png',
+  './android-chrome-512x512.png',
+  './assets/brewmap-brand-icon.svg',
+  './assets/brewmap-cafe-marker.svg',
+  './assets/brewmap-cafe-marker-selected.svg',
   './manifest.webmanifest',
   `./src/styles.css?v=${ASSET_VERSION}`,
   `./src/main.js?v=${ASSET_VERSION}`,

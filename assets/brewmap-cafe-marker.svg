@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="640" viewBox="0 0 512 640">
+  <title>BrewMap cafe map marker</title>
+  <desc>A flat map marker in which an espresso location pin and a cream coffee cup form one integrated silhouette.</desc>
+  <!-- Espresso pin silhouette -->
+  <path d="M256 34
+           C135 34 68 111 68 218
+           C68 350 174 465 256 590
+           C338 465 444 350 444 218
+           C444 111 377 34 256 34 Z"
+        fill="#2D1B12"/>
+
+  <!-- Handle: espresso outer contour, cream inner contour -->
+  <path d="M361 174
+           C431 157 469 198 462 253
+           C456 305 414 334 366 310"
+        fill="none" stroke="#2D1B12" stroke-width="72"
+        stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M361 174
+           C431 157 469 198 462 253
+           C456 305 414 334 366 310"
+        fill="none" stroke="#F8EBD2" stroke-width="38"
+        stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Cream cup body -->
+  <path d="M120 151
+           C126 286 166 347 247 347
+           C329 347 368 286 374 151 Z"
+        fill="#F8EBD2"/>
+
+  <!-- Rim and coffee -->
+  <ellipse cx="247" cy="151" rx="127" ry="53" fill="#F8EBD2"/>
+  <ellipse cx="247" cy="154" rx="94" ry="31" fill="#2D1B12"/>
+
+  <!-- Brew Orange accent, kept intentionally small -->
+  <path d="M289 144 C307 149 317 157 318 167"
+        fill="none" stroke="#D96B2B" stroke-width="10"
+        stroke-linecap="round"/>
+</svg>
