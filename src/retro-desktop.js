@@ -150,7 +150,7 @@ export function createRetroDesktop({
     visits: readJsonStorage(visitStorageKey, {}),
     clock: new Date(),
   };
-  let routeActive = false;
+  let routeActive = true;
   let clockTimer = null;
   let dragState = null;
 
@@ -533,8 +533,6 @@ export function createRetroDesktop({
   }
 
   function render() {
-    if (!routeActive) return;
-
     const items = activeCafes();
     if (!state.selectedCafeId && items[0]) state.selectedCafeId = items[0].id;
     if (items.length) state.storyIndex = clamp(state.storyIndex, 0, items.length - 1);
@@ -547,7 +545,7 @@ export function createRetroDesktop({
     root.innerHTML = `
       <div class="retro-desktop" data-retro-shell>
         <header class="retro-desktop-topbar">
-          <a href="#home" data-retro-exit><img src="./assets/brewmap-brand-icon.svg" alt="" width="24" height="24" />BREWMAP</a>
+          <strong class="retro-brand"><img src="./assets/brewmap-brand-icon.svg" alt="" width="24" height="24" />BREWMAP</strong>
           <nav aria-label="Retro desktop 메뉴"><button type="button">FILE</button><button type="button">VIEW</button><button type="button">WINDOW</button></nav>
           <span>BUSAN&nbsp;&nbsp;${escapeHtml(time)}</span>
         </header>
@@ -585,13 +583,6 @@ export function createRetroDesktop({
   }
 
   function handleClick(event) {
-    const exit = event.target.closest('[data-retro-exit]');
-    if (exit) {
-      routeActive = false;
-      syncRoute();
-      return;
-    }
-
     const windowAction = event.target.closest('[data-window-action]');
     if (windowAction) {
       const programId = windowAction.dataset.programId;
@@ -714,25 +705,20 @@ export function createRetroDesktop({
   }
 
   function syncRoute() {
-    routeActive = window.location.hash === '#retro-desktop';
-    root.hidden = !routeActive;
+    routeActive = true;
+    root.hidden = false;
     standardRoots.forEach((element) => {
-      element.hidden = routeActive;
+      element.hidden = true;
     });
-    document.body.classList.toggle('is-retro-desktop-route', routeActive);
+    document.body.classList.add('is-retro-main');
 
-    if (routeActive) {
-      if (!clockTimer) {
-        clockTimer = window.setInterval(() => {
-          state.clock = new Date();
-          render();
-        }, 30000);
-      }
-      render();
-    } else if (clockTimer) {
-      window.clearInterval(clockTimer);
-      clockTimer = null;
+    if (!clockTimer) {
+      clockTimer = window.setInterval(() => {
+        state.clock = new Date();
+        render();
+      }, 30000);
     }
+    render();
   }
 
   root.addEventListener('click', handleClick);
@@ -740,7 +726,6 @@ export function createRetroDesktop({
   window.addEventListener('pointermove', continueDrag);
   window.addEventListener('pointerup', stopDrag);
   window.addEventListener('pointercancel', stopDrag);
-  window.addEventListener('hashchange', syncRoute);
   window.addEventListener('resize', () => {
     if (routeActive) render();
   });
