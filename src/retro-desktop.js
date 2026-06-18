@@ -72,7 +72,7 @@ function writeJsonStorage(key, value) {
 
 function defaultWindowState(definition) {
   return {
-    isOpen: definition.id === 'local-zine',
+    isOpen: definition.id === 'local-zine' || definition.id === 'cafe-index',
     mode: 'normal',
     position: { x: definition.defaultRect.x, y: definition.defaultRect.y },
     size: { width: definition.defaultRect.width, height: definition.defaultRect.height },
@@ -141,8 +141,8 @@ export function createRetroDesktop({
   const windows = Object.fromEntries(programDefinitions.map((definition) => [definition.id, defaultWindowState(definition)]));
   const state = {
     windows,
-    zOrder: ['local-zine'],
-    activeProgramId: 'local-zine',
+    zOrder: ['local-zine', 'cafe-index'],
+    activeProgramId: 'cafe-index',
     selectedCafeId: null,
     storyIndex: 0,
     activeFilters: new Set(),
@@ -234,8 +234,8 @@ export function createRetroDesktop({
     programDefinitions.forEach((definition) => {
       state.windows[definition.id] = defaultWindowState(definition);
     });
-    state.zOrder = ['local-zine'];
-    state.activeProgramId = 'local-zine';
+    state.zOrder = ['local-zine', 'cafe-index'];
+    state.activeProgramId = 'cafe-index';
     state.taskbarBadges = { 'brew-log': 0 };
     render();
   }
@@ -449,7 +449,8 @@ export function createRetroDesktop({
             <p>${escapeHtml(selected.address)}</p>
             <div class="retro-action-row">
               <button type="button" data-open-program="cafe-index" data-retro-select-cafe="${escapeHtml(selected.id)}">인덱스 열기</button>
-              <button type="button" data-retro-save="${escapeHtml(selected.id)}">장부에 저장</button>
+              <button type="button" class="${savedCafeIds().has(selected.id) ? 'is-saved' : ''}" aria-pressed="${savedCafeIds().has(selected.id)}" data-retro-save="${escapeHtml(selected.id)}">${savedCafeIds().has(selected.id) ? '저장됨' : '장부에 저장'}</button>
+              <a href="${escapeHtml(safeMapLink(selected))}" target="_blank" rel="noreferrer">외부 지도</a>
             </div>
           ` : '<div class="retro-empty"><h3>NO LOCATION</h3><p>카페를 선택하면 지도 핀이 강조됩니다.</p></div>'}
         </aside>
@@ -548,11 +549,10 @@ export function createRetroDesktop({
           <strong class="retro-brand"><img src="./assets/brewmap-brand-icon.svg" alt="" width="24" height="24" />BREWMAP</strong>
           <nav aria-label="Retro desktop 메뉴">
             <button type="button">FILE</button>
-            <button type="button" data-retro-scroll-target="#legacy-home">SEARCH</button>
-            <button type="button" data-retro-scroll-target="#map">MAP</button>
-            <button type="button" data-retro-scroll-target="#saved">SAVED</button>
-            <button type="button" data-retro-scroll-target="#report">REPORT</button>
-            <button type="button" data-retro-scroll-target="#admin">ADMIN</button>
+            <button type="button" data-open-program="cafe-index">SEARCH</button>
+            <button type="button" data-open-program="brewmap-map">MAP</button>
+            <button type="button" data-open-program="brew-log">SAVED</button>
+            <button type="button" data-open-program="local-zine">TODAY</button>
           </nav>
           <span>BUSAN&nbsp;&nbsp;${escapeHtml(time)}</span>
         </header>
@@ -594,7 +594,7 @@ export function createRetroDesktop({
     if (scrollAction) {
       event.preventDefault();
       const target = document.querySelector(scrollAction.dataset.retroScrollTarget);
-      target?.scrollIntoView({ behavior: 'auto', block: 'start' });
+      if (target && !target.closest('.legacy-app-mounts[hidden]')) target.scrollIntoView({ behavior: 'auto', block: 'start' });
       return;
     }
 
@@ -724,11 +724,11 @@ export function createRetroDesktop({
     root.hidden = false;
     const legacyMount = root.parentElement?.querySelector('.legacy-app-mounts');
     if (legacyMount) {
-      legacyMount.hidden = false;
-      legacyMount.removeAttribute('aria-hidden');
+      legacyMount.hidden = true;
+      legacyMount.setAttribute('aria-hidden', 'true');
     }
     standardRoots.forEach((element) => {
-      element.hidden = false;
+      element.hidden = true;
     });
     document.body.classList.add('is-retro-main');
 
