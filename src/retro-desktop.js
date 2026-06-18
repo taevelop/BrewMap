@@ -546,7 +546,14 @@ export function createRetroDesktop({
       <div class="retro-desktop" data-retro-shell>
         <header class="retro-desktop-topbar">
           <strong class="retro-brand"><img src="./assets/brewmap-brand-icon.svg" alt="" width="24" height="24" />BREWMAP</strong>
-          <nav aria-label="Retro desktop 메뉴"><button type="button">FILE</button><button type="button">VIEW</button><button type="button">WINDOW</button></nav>
+          <nav aria-label="Retro desktop 메뉴">
+            <button type="button">FILE</button>
+            <button type="button" data-retro-scroll-target="#legacy-home">SEARCH</button>
+            <button type="button" data-retro-scroll-target="#map">MAP</button>
+            <button type="button" data-retro-scroll-target="#saved">SAVED</button>
+            <button type="button" data-retro-scroll-target="#report">REPORT</button>
+            <button type="button" data-retro-scroll-target="#admin">ADMIN</button>
+          </nav>
           <span>BUSAN&nbsp;&nbsp;${escapeHtml(time)}</span>
         </header>
         <div class="retro-desktop-canvas" data-retro-canvas>
@@ -583,6 +590,14 @@ export function createRetroDesktop({
   }
 
   function handleClick(event) {
+    const scrollAction = event.target.closest('[data-retro-scroll-target]');
+    if (scrollAction) {
+      event.preventDefault();
+      const target = document.querySelector(scrollAction.dataset.retroScrollTarget);
+      target?.scrollIntoView({ behavior: 'auto', block: 'start' });
+      return;
+    }
+
     const windowAction = event.target.closest('[data-window-action]');
     if (windowAction) {
       const programId = windowAction.dataset.programId;
@@ -707,8 +722,13 @@ export function createRetroDesktop({
   function syncRoute() {
     routeActive = true;
     root.hidden = false;
+    const legacyMount = root.parentElement?.querySelector('.legacy-app-mounts');
+    if (legacyMount) {
+      legacyMount.hidden = false;
+      legacyMount.removeAttribute('aria-hidden');
+    }
     standardRoots.forEach((element) => {
-      element.hidden = true;
+      element.hidden = false;
     });
     document.body.classList.add('is-retro-main');
 
