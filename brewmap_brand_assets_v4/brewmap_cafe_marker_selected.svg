@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="680" viewBox="0 0 512 680">
+  <title>BrewMap selected cafe map marker</title>
+  <desc>The BrewMap cafe marker with a Brew Orange active-location ring.</desc>
+  <ellipse cx="256" cy="626" rx="82" ry="25" fill="none" stroke="#D96B2B" stroke-width="18" opacity="0.95"/>
+  <ellipse cx="256" cy="626" rx="25" ry="9" fill="#2D1B12" opacity="0.22"/>
+  <g transform="translate(0 0)">
+    <path d="M256 34 C135 34 68 111 68 218 C68 350 174 465 256 590 C338 465 444 350 444 218 C444 111 377 34 256 34 Z" fill="#2D1B12"/>
+    <path d="M361 174 C431 157 469 198 462 253 C456 305 414 334 366 310" fill="none" stroke="#2D1B12" stroke-width="72" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M361 174 C431 157 469 198 462 253 C456 305 414 334 366 310" fill="none" stroke="#F8EBD2" stroke-width="38" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M120 151 C126 286 166 347 247 347 C329 347 368 286 374 151 Z" fill="#F8EBD2"/>
+    <ellipse cx="247" cy="151" rx="127" ry="53" fill="#F8EBD2"/>
+    <ellipse cx="247" cy="154" rx="94" ry="31" fill="#2D1B12"/>
+    <path d="M289 144 C307 149 317 157 318 167" fill="none" stroke="#D96B2B" stroke-width="10" stroke-linecap="round"/>
+  </g>
+</svg>

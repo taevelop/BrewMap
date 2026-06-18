@@ -215,13 +215,13 @@ const designThemeSamples = {
     title: '검증 중심 지도형',
     description: '별점 없이 커피 가능 여부, 출처, 최근 확인일을 가장 앞에 두는 현재 MVP 기본 방향입니다.',
     bestFor: '검색 신뢰와 빠른 판단',
-    mood: '크림, 커피 브라운, 검증 그린',
+    mood: 'Espresso, Cream, Brew Orange',
     windowTitle: 'BrewMap Verified',
     hero: '마시고 싶은 커피를 찾을지도',
     search: '필터커피 · 부산 전포',
     cta: '검증 카페 보기',
     mapLabel: '검증 핀 28개',
-    palette: ['#fff8ee', '#173f35', '#c46d2c', '#2f66d0'],
+    palette: ['#fffaf2', '#2d1b12', '#f8ebd2', '#d96b2b'],
     pills: ['별점 없음', '출처 표시', '최근 확인일'],
     metrics: [
       { value: 'A', label: '신뢰도' },
@@ -239,13 +239,13 @@ const designThemeSamples = {
     title: '부산 권역형',
     description: '전포, 광안리, 해운대처럼 동네를 먼저 고르고 그 안에서 커피 조건을 좁히는 탐색형 화면입니다.',
     bestFor: '부산 베타와 로컬 확장',
-    mood: '바다 블루, 산호색, 밝은 종이 톤',
+    mood: 'Cream 바탕, Espresso 정보, Orange 권역 강조',
     windowTitle: 'BrewMap Busan',
     hero: '오늘 갈 동네에서 가능한 커피',
     search: '광안리 · 디카페인',
     cta: '권역 열기',
     mapLabel: '광안리 주변',
-    palette: ['#f7fbff', '#166d8f', '#ef7d5b', '#f3c742'],
+    palette: ['#f8ebd2', '#2d1b12', '#d96b2b', '#725d50'],
     pills: ['전포', '광안리', '해운대', '영도'],
     metrics: [
       { value: '5', label: '권역' },
@@ -263,13 +263,13 @@ const designThemeSamples = {
     title: '스페셜티 보드형',
     description: '메뉴판처럼 커피 태그와 원두 정보를 밀도 있게 보여줘 커피 취향이 분명한 사용자에게 맞는 화면입니다.',
     bestFor: '고관여 커피 사용자',
-    mood: '먹색, 라임 그린, 따뜻한 아이보리',
+    mood: 'Espresso 고대비, Cream 카드, Orange 선택 상태',
     windowTitle: 'BrewMap Specialty',
     hero: '원하는 추출과 원두를 먼저 고르기',
     search: '싱글오리진 · 배치브루',
     cta: '보드 필터',
     mapLabel: '스페셜티 클러스터',
-    palette: ['#f6f1e8', '#222522', '#9ccf5a', '#d96c45'],
+    palette: ['#140c08', '#f8ebd2', '#f28a45', '#80604c'],
     pills: ['싱글오리진', '배치브루', '원두구매'],
     metrics: [
       { value: '19', label: '스페셜티' },
@@ -341,7 +341,7 @@ function renderDesignThemeSample(themeKey = 'verification') {
     <article class="sample-capture" aria-label="${escapeHtml(sample.title)} 샘플 화면">
       <div class="sample-browser-bar"><span></span><span></span><span></span><strong>${escapeHtml(sample.windowTitle)}</strong></div>
       <div class="sample-capture-nav">
-        <div><img src="./apple-touch-icon.png" alt="" width="32" height="32" /><strong>브루맵</strong></div>
+        <div><img src="./assets/brewmap-brand-icon.svg" alt="" width="32" height="32" /><strong>브루맵</strong></div>
         <button type="button">${escapeHtml(sample.cta)}</button>
       </div>
       <div class="sample-capture-hero">

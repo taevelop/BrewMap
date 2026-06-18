@@ -1,0 +1,457 @@
+/* BrewMap Brand Tokens & Components
+   Official brand colors and dark-mode alternatives.
+   Theme control:
+   - automatic: omit data-theme on <html>
+   - force light: <html data-theme="light">
+   - force dark:  <html data-theme="dark">
+*/
+
+:root {
+  color-scheme: light;
+
+  /* Official brand palette */
+  --brewmap-espresso: #2d1b12;
+  --brewmap-cream: #f8ebd2;
+  --brewmap-orange: #d96b2b;
+
+  /* Dark-mode alternative palette */
+  --brewmap-dark-roast: #140c08;
+  --brewmap-dark-surface: #2d1b12;
+  --brewmap-dark-cream: #f8ebd2;
+  --brewmap-dark-orange: #f28a45;
+  --brewmap-dark-muted: #cdbea6;
+  --brewmap-dark-border: #80604c;
+
+  /* Semantic UI tokens — light */
+  --bm-bg: #fffaf2;
+  --bm-surface: #ffffff;
+  --bm-text: var(--brewmap-espresso);
+  --bm-text-muted: #725d50;
+  --bm-accent: var(--brewmap-orange);
+  --bm-accent-contrast: #ffffff;
+  --bm-border: #e8d8c2;
+  --bm-map-bg: #f3f6f8;
+  --bm-map-road: #cdd8df;
+  --bm-map-road-minor: #dce4e9;
+  --bm-marker-outline: var(--brewmap-cream);
+  --bm-marker-shadow: rgb(45 27 18 / 24%);
+  --bm-marker-filter: drop-shadow(0 5px 6px var(--bm-marker-shadow));
+  --bm-marker-selected-filter: drop-shadow(0 7px 10px var(--bm-marker-shadow));
+  --bm-selected-halo: rgb(217 107 43 / 28%);
+
+  /* Sizing */
+  --bm-radius-sm: 12px;
+  --bm-radius-md: 20px;
+  --bm-radius-lg: 32px;
+  --bm-shadow: 0 18px 50px rgb(45 27 18 / 12%);
+}
+
+/* Automatic dark mode unless light is explicitly forced. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bm-bg: var(--brewmap-dark-roast);
+    --bm-surface: var(--brewmap-dark-surface);
+    --bm-text: var(--brewmap-dark-cream);
+    --bm-text-muted: var(--brewmap-dark-muted);
+    --bm-accent: var(--brewmap-dark-orange);
+    --bm-accent-contrast: var(--brewmap-dark-roast);
+    --bm-border: var(--brewmap-dark-border);
+    --bm-map-bg: #171c20;
+    --bm-map-road: #3e4a52;
+    --bm-map-road-minor: #293239;
+    --bm-marker-outline: var(--brewmap-dark-cream);
+    --bm-marker-shadow: rgb(0 0 0 / 42%);
+    --bm-marker-filter:
+      drop-shadow(1px 0 0 var(--brewmap-dark-cream))
+      drop-shadow(-1px 0 0 var(--brewmap-dark-cream))
+      drop-shadow(0 1px 0 var(--brewmap-dark-cream))
+      drop-shadow(0 -1px 0 var(--brewmap-dark-cream))
+      drop-shadow(0 6px 7px var(--bm-marker-shadow));
+    --bm-marker-selected-filter:
+      drop-shadow(1px 0 0 var(--brewmap-dark-cream))
+      drop-shadow(-1px 0 0 var(--brewmap-dark-cream))
+      drop-shadow(0 1px 0 var(--brewmap-dark-cream))
+      drop-shadow(0 -1px 0 var(--brewmap-dark-cream))
+      drop-shadow(0 8px 12px var(--bm-marker-shadow));
+    --bm-selected-halo: rgb(242 138 69 / 28%);
+    --bm-shadow: 0 18px 56px rgb(0 0 0 / 34%);
+  }
+}
+
+/* Explicit dark mode always wins. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bm-bg: var(--brewmap-dark-roast);
+  --bm-surface: var(--brewmap-dark-surface);
+  --bm-text: var(--brewmap-dark-cream);
+  --bm-text-muted: var(--brewmap-dark-muted);
+  --bm-accent: var(--brewmap-dark-orange);
+  --bm-accent-contrast: var(--brewmap-dark-roast);
+  --bm-border: var(--brewmap-dark-border);
+  --bm-map-bg: #171c20;
+  --bm-map-road: #3e4a52;
+  --bm-map-road-minor: #293239;
+  --bm-marker-outline: var(--brewmap-dark-cream);
+  --bm-marker-shadow: rgb(0 0 0 / 42%);
+  --bm-marker-filter:
+    drop-shadow(1px 0 0 var(--brewmap-dark-cream))
+    drop-shadow(-1px 0 0 var(--brewmap-dark-cream))
+    drop-shadow(0 1px 0 var(--brewmap-dark-cream))
+    drop-shadow(0 -1px 0 var(--brewmap-dark-cream))
+    drop-shadow(0 6px 7px var(--bm-marker-shadow));
+  --bm-marker-selected-filter:
+    drop-shadow(1px 0 0 var(--brewmap-dark-cream))
+    drop-shadow(-1px 0 0 var(--brewmap-dark-cream))
+    drop-shadow(0 1px 0 var(--brewmap-dark-cream))
+    drop-shadow(0 -1px 0 var(--brewmap-dark-cream))
+    drop-shadow(0 8px 12px var(--bm-marker-shadow));
+  --bm-selected-halo: rgb(242 138 69 / 28%);
+  --bm-shadow: 0 18px 56px rgb(0 0 0 / 34%);
+}
+
+/* Base page */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--bm-bg);
+}
+
+body {
+  margin: 0;
+  color: var(--bm-text);
+  background: var(--bm-bg);
+  font-family: Pretendard, "Noto Sans KR", Inter, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.55;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+/* Main brand icon */
+.brewmap-brand-icon {
+  display: block;
+  width: var(--icon-size, 160px);
+  height: var(--icon-size, 160px);
+  border-radius: 21.5%;
+  object-fit: contain;
+}
+
+/* Map marker — anchor is bottom center (50% 100%). */
+.brewmap-map-marker {
+  display: block;
+  width: auto;
+  height: var(--marker-height, 56px);
+  filter: var(--bm-marker-filter);
+  transform-origin: 50% 100%;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.brewmap-map-marker--small {
+  --marker-height: 40px;
+}
+
+.brewmap-map-marker--large,
+.brewmap-map-marker--selected {
+  --marker-height: 72px;
+}
+
+.brewmap-map-marker--selected {
+  filter: var(--bm-marker-selected-filter);
+}
+
+/* Optional CSS-only selected halo for the default marker asset. */
+.brewmap-marker-wrap {
+  position: relative;
+  display: inline-grid;
+  place-items: end center;
+}
+
+.brewmap-marker-wrap.is-selected::after {
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  width: calc(var(--marker-height, 56px) * 0.45);
+  height: calc(var(--marker-height, 56px) * 0.13);
+  border: 3px solid var(--bm-accent);
+  border-radius: 50%;
+  content: "";
+  opacity: 0.95;
+  transform: translateX(-50%);
+}
+
+/* Reusable brand UI primitives */
+.brewmap-card {
+  border: 1px solid var(--bm-border);
+  border-radius: var(--bm-radius-md);
+  background: var(--bm-surface);
+  box-shadow: var(--bm-shadow);
+}
+
+.brewmap-button {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 999px;
+  color: var(--bm-accent-contrast);
+  background: var(--bm-accent);
+  font: inherit;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.brewmap-button:focus-visible,
+.brewmap-map-marker:focus-visible {
+  outline: 3px solid var(--bm-accent);
+  outline-offset: 4px;
+}
+
+/* Guide layout */
+.brand-guide {
+  width: min(1180px, calc(100% - 36px));
+  margin-inline: auto;
+  padding: 64px 0 84px;
+}
+
+.brand-guide__header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 32px;
+  align-items: center;
+  margin-bottom: 40px;
+}
+
+.brand-guide__eyebrow {
+  margin: 0 0 8px;
+  color: var(--bm-accent);
+  font-size: 0.8rem;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.brand-guide h1,
+.brand-guide h2,
+.brand-guide h3,
+.brand-guide p {
+  margin-top: 0;
+}
+
+.brand-guide h1 {
+  margin-bottom: 12px;
+  font-size: clamp(2rem, 5vw, 4.6rem);
+  line-height: 1.02;
+  letter-spacing: -0.045em;
+}
+
+.brand-guide h2 {
+  margin-bottom: 18px;
+  font-size: clamp(1.45rem, 3vw, 2.25rem);
+  letter-spacing: -0.035em;
+}
+
+.brand-guide__lead {
+  max-width: 680px;
+  margin-bottom: 0;
+  color: var(--bm-text-muted);
+  font-size: clamp(1rem, 1.7vw, 1.18rem);
+}
+
+.guide-section {
+  margin-top: 24px;
+  padding: 30px;
+}
+
+.asset-grid,
+.mode-grid,
+.palette-grid,
+.usage-grid {
+  display: grid;
+  gap: 18px;
+}
+
+.asset-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.asset-card {
+  min-height: 360px;
+  padding: 30px;
+}
+
+.asset-card__visual {
+  display: grid;
+  min-height: 220px;
+  place-items: center;
+  margin-bottom: 24px;
+  overflow: hidden;
+  border-radius: var(--bm-radius-md);
+  background: var(--bm-bg);
+}
+
+.asset-card__meta {
+  margin: 0;
+  color: var(--bm-text-muted);
+}
+
+.map-preview {
+  position: relative;
+  display: grid;
+  min-height: 220px;
+  place-items: center;
+  overflow: hidden;
+  background-color: var(--bm-map-bg);
+  background-image:
+    linear-gradient(31deg, transparent 47%, var(--bm-map-road) 48% 51%, transparent 52%),
+    linear-gradient(90deg, transparent 47%, var(--bm-map-road-minor) 48% 51%, transparent 52%),
+    linear-gradient(-34deg, transparent 47%, var(--bm-map-road-minor) 48% 51%, transparent 52%);
+  background-size: 190px 150px, 150px 150px, 240px 180px;
+  background-position: 0 0, 30px -20px, -35px 22px;
+}
+
+.map-preview::before {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 22% 26%, var(--bm-accent) 0 4px, transparent 5px),
+    radial-gradient(circle at 78% 70%, var(--bm-accent) 0 4px, transparent 5px);
+  content: "";
+  opacity: 0.55;
+}
+
+.map-preview > * {
+  position: relative;
+  z-index: 1;
+}
+
+.mode-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.mode-card {
+  min-height: 260px;
+  padding: 26px;
+  border-radius: var(--bm-radius-md);
+}
+
+.mode-card--light {
+  color: #2d1b12;
+  background: #fffaf2;
+}
+
+.mode-card--dark {
+  --bm-accent: #f28a45;
+  --bm-marker-filter:
+    drop-shadow(1px 0 0 #f8ebd2)
+    drop-shadow(-1px 0 0 #f8ebd2)
+    drop-shadow(0 1px 0 #f8ebd2)
+    drop-shadow(0 -1px 0 #f8ebd2)
+    drop-shadow(0 6px 7px rgb(0 0 0 / 42%));
+  color: #f8ebd2;
+  background: #140c08;
+}
+
+.mode-card__icons {
+  display: flex;
+  min-height: 170px;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+}
+
+.palette-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.swatch {
+  overflow: hidden;
+  border: 1px solid var(--bm-border);
+  border-radius: var(--bm-radius-sm);
+  background: var(--bm-surface);
+}
+
+.swatch__color {
+  min-height: 92px;
+  background: var(--swatch);
+}
+
+.swatch__body {
+  padding: 15px 16px 17px;
+}
+
+.swatch__name {
+  display: block;
+  font-weight: 800;
+}
+
+.swatch__code {
+  color: var(--bm-text-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9rem;
+}
+
+.usage-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.usage-item {
+  padding: 20px;
+  border: 1px solid var(--bm-border);
+  border-radius: var(--bm-radius-sm);
+}
+
+.usage-item strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.usage-item span {
+  color: var(--bm-text-muted);
+}
+
+.code-block {
+  overflow-x: auto;
+  margin: 0;
+  padding: 20px;
+  border: 1px solid var(--bm-border);
+  border-radius: var(--bm-radius-sm);
+  color: var(--bm-text);
+  background: var(--bm-bg);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.88rem;
+  line-height: 1.65;
+  white-space: pre;
+}
+
+@media (max-width: 780px) {
+  .brand-guide {
+    padding-top: 36px;
+  }
+
+  .brand-guide__header,
+  .asset-grid,
+  .mode-grid,
+  .palette-grid,
+  .usage-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .brand-guide__header .brewmap-brand-icon {
+    --icon-size: 96px;
+  }
+
+  .guide-section,
+  .asset-card {
+    padding: 22px;
+  }
+}

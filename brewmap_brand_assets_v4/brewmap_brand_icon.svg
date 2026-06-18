@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <title>BrewMap main brand icon</title>
+  <desc>A cream coffee cup containing three unbent straight map roads that meet at one common junction beneath a large orange location pin, on an espresso app tile.</desc>
+  <rect width="1024" height="1024" rx="220" fill="#2D1B12"/>
+  <defs>
+    <clipPath id="cupBodyClip">
+      <path d="M180 270 Q180 220 230 220 H690 Q740 220 740 270 V545 C740 705 620 790 460 790 C300 790 180 705 180 545 Z"/>
+    </clipPath>
+  </defs>
+  <!-- Cream cup handle behind the body -->
+  <path d="M716 350 C850 328 900 402 892 500 C884 615 812 672 708 646"
+        fill="none" stroke="#F8EBD2" stroke-width="72" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Cream cup body -->
+  <path d="M180 270 Q180 220 230 220 H690 Q740 220 740 270 V545 C740 705 620 790 460 790 C300 790 180 705 180 545 Z"
+        fill="#F8EBD2"/>
+  <!-- Three completely straight roads, sharing only one junction at 460,500 -->
+  <g clip-path="url(#cupBodyClip)" fill="none" stroke="#2D1B12" stroke-width="28" stroke-linecap="round">
+    <line x1="120" y1="500" x2="800" y2="500"/>
+    <line x1="460" y1="150" x2="460" y2="850"/>
+    <line x1="140" y1="740" x2="780" y2="260"/>
+  </g>
+  <!-- Large centered Brew Orange pin, placed over the common road junction -->
+  <path d="M460 366 C380 366 323 423 323 497 C323 596 460 720 460 720 C460 720 597 596 597 497 C597 423 540 366 460 366 Z"
+        fill="#D96B2B"/>
+  <circle cx="460" cy="491" r="42" fill="#2D1B12"/>
+</svg>
