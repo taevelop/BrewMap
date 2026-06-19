@@ -16,7 +16,9 @@ body.is-retro-main .top-layer {
 }
 
 .retro-desktop-root {
-  min-height: 100vh;
+  height: 100vh;
+  min-height: 100svh;
+  overflow: hidden;
   color: var(--brewmap-ink);
   background:
     repeating-linear-gradient(90deg, transparent 0 23px, color-mix(in srgb, var(--brewmap-muted) 16%, transparent) 23px 24px),
@@ -25,7 +27,8 @@ body.is-retro-main .top-layer {
 }
 
 .retro-desktop {
-  min-height: 100vh;
+  height: 100%;
+  min-height: 0;
   display: grid;
   grid-template-rows: 38px minmax(0, 1fr) 42px;
   overflow: hidden;
@@ -148,8 +151,8 @@ body.is-retro-main .top-layer {
   position: absolute;
   display: grid;
   grid-template-rows: 32px 28px minmax(0, 1fr) 24px;
-  min-width: 320px;
-  min-height: 320px;
+  min-width: min(320px, calc(100vw - 24px));
+  min-height: min(320px, calc(100svh - 104px));
   overflow: hidden;
   border: 1px solid var(--brewmap-espresso);
   border-radius: 2px;
@@ -517,7 +520,7 @@ body.is-retro-main .top-layer {
 
 .retro-map-surface {
   position: relative;
-  min-height: 430px;
+  min-height: clamp(260px, 52vh, 430px);
   overflow: hidden;
   border: 1px solid var(--brewmap-espresso);
   background:
