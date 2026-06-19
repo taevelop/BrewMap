@@ -851,25 +851,6 @@ export function createRetroDesktop({
       return;
     }
 
-    const mapLocate = event.target.closest('[data-retro-map-locate]');
-    if (mapLocate) {
-      requestRetroUserLocation();
-      return;
-    }
-
-    const mapFit = event.target.closest('[data-retro-map-fit]');
-    if (mapFit) {
-      fitRetroMapToItems(activeCafes());
-      render();
-      return;
-    }
-
-    const mapZoom = event.target.closest('[data-retro-map-zoom]');
-    if (mapZoom) {
-      zoomRetroMapBy(mapZoom.dataset.retroMapZoom === 'in' ? 1 : -1);
-      return;
-    }
-
     const windowAction = event.target.closest('[data-window-action]');
     if (windowAction) {
       const programId = windowAction.dataset.programId;
