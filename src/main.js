@@ -113,7 +113,8 @@ const verificationSources = ['owner_verified', 'admin_verified', 'user_report', 
 const csvRequiredColumns = ['id', 'name', 'city', 'area', 'address', 'latitude', 'longitude', 'capabilities', 'confidence', 'verification_source'];
 const csvOptionalColumns = ['verified_at', 'naver_map_url', 'kakao_map_url', 'google_map_url'];
 const savedStorageKey = 'brewmap.savedCafes.v1';
-const mapKeyboardPanStep = 96;
+const neighborhoodMapZoom = 16;
+const clusterBreakoutZoom = 16;
 const activeMapProvider = getMapProvider();
 const defaultMapViewport = activeMapProvider.defaultViewport;
 const mapZoomRange = activeMapProvider.zoomRange;
@@ -216,7 +217,6 @@ let selectedAdminCafeId = '';
 let selectedAdminTagKey = '';
 let lastCsvValidation = null;
 let lastCsvSource = '';
-let mapDragState = null;
 let retroDesktop = null;
 
 function escapeHtml(value) {
@@ -361,7 +361,7 @@ function fitMapToItems(items) {
 
   const centerLatitude = (bounds.minLatitude + bounds.maxLatitude) / 2;
   const centerLongitude = (bounds.minLongitude + bounds.maxLongitude) / 2;
-  const zoom = coordinates.length === 1 ? mapZoomRange.max : zoomForBounds(bounds, mapSurfaceSize());
+  const zoom = coordinates.length === 1 ? neighborhoodMapZoom : Math.min(neighborhoodMapZoom, zoomForBounds(bounds, mapSurfaceSize()));
   mapViewport = activeMapProvider.normalizeViewport({ latitude: centerLatitude, longitude: centerLongitude, zoom });
 }
 
@@ -389,24 +389,11 @@ function setMapStatus(message) {
   mapStatus.textContent = message;
 }
 
-function panMapByPixels(deltaX, deltaY) {
-  const center = projectCoordinates(mapViewport.latitude, mapViewport.longitude, mapViewport.zoom);
-  setMapViewportFromCenterPoint({ x: center.x + deltaX, y: center.y + deltaY });
-  rerenderCurrentMap();
-}
-
-function zoomMapTo(nextZoom, clientX, clientY) {
+function zoomMapTo(nextZoom) {
   const zoom = clamp(Math.round(nextZoom), mapZoomRange.min, mapZoomRange.max);
   if (zoom === mapViewport.zoom) return;
 
-  const { width, height } = mapSurfaceSize();
-  const rect = mapSurface.getBoundingClientRect();
-  const offsetX = Number.isFinite(clientX) ? clientX - rect.left - (width / 2) : 0;
-  const offsetY = Number.isFinite(clientY) ? clientY - rect.top - (height / 2) : 0;
-  const center = projectCoordinates(mapViewport.latitude, mapViewport.longitude, mapViewport.zoom);
-  const anchor = unprojectCoordinates({ x: center.x + offsetX, y: center.y + offsetY }, mapViewport.zoom);
-  const nextAnchor = projectCoordinates(anchor.latitude, anchor.longitude, zoom);
-  setMapViewportFromCenterPoint({ x: nextAnchor.x - offsetX, y: nextAnchor.y - offsetY }, zoom);
+  mapViewport = activeMapProvider.normalizeViewport({ ...mapViewport, zoom });
   rerenderCurrentMap();
 }
 
@@ -425,7 +412,7 @@ function requestUserLocation() {
     mapViewport = activeMapProvider.normalizeViewport({
       latitude: position.coords.latitude,
       longitude: position.coords.longitude,
-      zoom: mapZoomRange.max,
+      zoom: neighborhoodMapZoom,
     });
     renderMapPins(filteredCafes(), { keepViewport: true });
     setMapStatus('현재 위치 기준으로 지도를 이동했습니다.');
@@ -435,7 +422,16 @@ function requestUserLocation() {
 }
 
 function clusterMapItems(items) {
-  const cellSize = mapViewport.zoom >= 13 ? 38 : 58;
+  if (mapViewport.zoom >= clusterBreakoutZoom) {
+    return items.map((cafe) => ({
+      items: [cafe],
+      ...screenPositionForCoordinates(cafe.latitude, cafe.longitude),
+      latitude: Number(cafe.latitude),
+      longitude: Number(cafe.longitude),
+    }));
+  }
+
+  const cellSize = mapViewport.zoom >= 13 ? 44 : 64;
   const clusters = new Map();
 
   items.forEach((cafe) => {
@@ -614,6 +610,29 @@ function renderEmptyState() {
   return card;
 }
 
+
+function renderCafeNeighborhoodMap(cafe) {
+  const mapEl = detailBody.querySelector('[data-cafe-neighborhood-map]');
+  if (!mapEl) return;
+
+  const baseLayer = mapEl.querySelector('[data-cafe-neighborhood-base]');
+  const markerLayer = mapEl.querySelector('[data-cafe-neighborhood-marker]');
+  const size = { width: mapEl.clientWidth || 520, height: mapEl.clientHeight || 240 };
+  const viewport = activeMapProvider.normalizeViewport({
+    latitude: Number(cafe.latitude),
+    longitude: Number(cafe.longitude),
+    zoom: neighborhoodMapZoom,
+  });
+
+  activeMapProvider.renderBaseLayer({ container: baseLayer, viewport, surfaceSize: size });
+  const pin = document.createElement('span');
+  pin.className = `map-pin cafe-neighborhood-pin confidence-${cafe.confidence.toLowerCase()}`;
+  pin.setAttribute('aria-hidden', 'true');
+  pin.style.left = '50%';
+  pin.style.top = '50%';
+  markerLayer.replaceChildren(pin);
+}
+
 function renderMapPins(items, options = {}) {
   if (!options.keepViewport) fitMapToItems(items);
   renderMapBaseLayer();
@@ -673,46 +692,11 @@ function bindMapInteractions() {
 
   mapSurface.addEventListener('pointerdown', (event) => {
     if (event.button !== 0 || event.target.closest('button, a')) return;
-
-    const center = projectCoordinates(mapViewport.latitude, mapViewport.longitude, mapViewport.zoom);
-    mapDragState = {
-      pointerId: event.pointerId,
-      startX: event.clientX,
-      startY: event.clientY,
-      center,
-    };
-    mapSurface.classList.add('is-dragging');
-    mapSurface.setPointerCapture(event.pointerId);
+    setMapStatus('브루맵 지도는 선택한 카페 주변만 보이도록 고정되어 있습니다.');
   });
-
-  mapSurface.addEventListener('pointermove', (event) => {
-    if (!mapDragState || mapDragState.pointerId !== event.pointerId) return;
-
-    const deltaX = event.clientX - mapDragState.startX;
-    const deltaY = event.clientY - mapDragState.startY;
-    setMapViewportFromCenterPoint({
-      x: mapDragState.center.x - deltaX,
-      y: mapDragState.center.y - deltaY,
-    });
-    rerenderCurrentMap();
-  });
-
-  const stopDragging = (event) => {
-    if (!mapDragState || mapDragState.pointerId !== event.pointerId) return;
-    mapDragState = null;
-    mapSurface.classList.remove('is-dragging');
-    if (mapSurface.hasPointerCapture(event.pointerId)) mapSurface.releasePointerCapture(event.pointerId);
-  };
-
-  mapSurface.addEventListener('pointerup', stopDragging);
-  mapSurface.addEventListener('pointercancel', stopDragging);
 
   mapSurface.addEventListener('keydown', (event) => {
     const keyActions = {
-      ArrowUp: () => panMapByPixels(0, -mapKeyboardPanStep),
-      ArrowDown: () => panMapByPixels(0, mapKeyboardPanStep),
-      ArrowLeft: () => panMapByPixels(-mapKeyboardPanStep, 0),
-      ArrowRight: () => panMapByPixels(mapKeyboardPanStep, 0),
       '+': () => zoomMapBy(1),
       '=': () => zoomMapBy(1),
       '-': () => zoomMapBy(-1),
@@ -892,8 +876,15 @@ function renderDetail(cafe) {
     <p>${escapeHtml(cafe.address)}</p>
     <dl class="metadata"><div><dt>검증 출처</dt><dd>${escapeHtml(verificationSourceLabel(cafe.source))}</dd></div><div><dt>최근 확인</dt><dd>${escapeHtml(cafe.verifiedAt || '-')}</dd></div><div><dt>신뢰도</dt><dd>${escapeHtml(confidenceLabel(cafe.confidence))}</dd></div><div><dt>저장 상태</dt><dd>${isSaved ? '저장됨' : '미저장'}</dd></div></dl>
     <div>${tagsMarkup(cafe)}</div>
+    <div class="detail-neighborhood-map map-surface" data-cafe-neighborhood-map aria-label="${escapeHtml(cafe.name)} 주변 고정 동네 지도">
+      <div class="map-base-layer" data-cafe-neighborhood-base aria-hidden="true"></div>
+      <div class="map-marker-layer" data-cafe-neighborhood-marker></div>
+      <span class="map-status">주변 동네 고정 지도</span>
+      <a class="map-attribution" href="${escapeHtml(activeMapProvider.attribution?.url || '#')}" target="_blank" rel="noreferrer">${escapeHtml(activeMapProvider.attribution?.label || '지도 데이터')}</a>
+    </div>
     <div class="modal-actions"><button type="button" class="${isSaved ? 'is-saved' : ''}" aria-pressed="${isSaved}" data-modal-save>${isSaved ? '저장됨' : '저장'}</button><button type="button" data-modal-report>정보 제보</button>${mapLinksMarkup(cafe)}</div>
   `;
+  renderCafeNeighborhoodMap(cafe);
   detailBody.querySelector('[data-modal-save]').addEventListener('click', () => toggleSaved(cafe.id));
   detailBody.querySelector('[data-modal-report]').addEventListener('click', () => {
     closeDetail();

@@ -935,3 +935,43 @@ body.is-retro-main .retro-desktop {
     min-height: 240px;
   }
 }
+
+/* Fixed OSM nearby-map styling */
+.retro-map-surface,
+.retro-map-surface.is-dragging {
+  cursor: default;
+  touch-action: auto;
+}
+
+.retro-map-base::after {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(255, 250, 242, .32), rgba(248, 235, 210, .22)),
+    radial-gradient(circle at 22% 18%, rgba(217, 107, 43, .12), transparent 38%);
+  mix-blend-mode: multiply;
+  content: "";
+}
+
+.retro-map-base .map-tile {
+  filter: sepia(.18) saturate(.74) contrast(.94) brightness(1.04);
+}
+
+.retro-map-cluster {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 8px;
+  border: 2px solid var(--brewmap-cream);
+  border-radius: 4px;
+  color: var(--brewmap-cream);
+  background: var(--brewmap-espresso);
+  box-shadow: 3px 3px 0 rgba(45, 27, 18, .18);
+  font-weight: 900;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+}
