@@ -936,11 +936,28 @@ body.is-retro-main .retro-desktop {
   }
 }
 
-/* Fixed OSM nearby-map styling */
-.retro-map-surface,
+/* OSM map styling */
+.retro-map-surface {
+  cursor: grab;
+  touch-action: none;
+}
+
 .retro-map-surface.is-dragging {
-  cursor: default;
-  touch-action: auto;
+  cursor: grabbing;
+}
+
+.cafe-osm-surface {
+  background: var(--brewmap-map-bg);
+}
+
+.cafe-osm-pin {
+  display: grid;
+  place-items: center;
+  color: transparent;
+}
+
+.cafe-osm-pin.is-active {
+  color: var(--brewmap-surface);
 }
 
 .retro-map-base::after {

@@ -307,14 +307,18 @@ export function createRetroDesktop({
     state.mapViewport = retroMapProvider.normalizeViewport({ ...nextCenter, zoom: nextZoom });
   }
 
-  function screenPositionForCafe(cafe) {
-    const { width, height } = mapSurfaceSize();
-    const center = projectMap(state.mapViewport.latitude, state.mapViewport.longitude);
-    const point = projectMap(cafe.latitude, cafe.longitude);
+  function screenPositionForCafeInViewport(cafe, viewport, surfaceSize) {
+    const { width, height } = surfaceSize;
+    const center = projectMap(viewport.latitude, viewport.longitude, viewport.zoom);
+    const point = projectMap(cafe.latitude, cafe.longitude, viewport.zoom);
     return {
       left: width / 2 + point.x - center.x,
       top: height / 2 + point.y - center.y,
     };
+  }
+
+  function screenPositionForCafe(cafe) {
+    return screenPositionForCafeInViewport(cafe, state.mapViewport, mapSurfaceSize());
   }
 
   function fitRetroMapToItems(items) {
@@ -427,6 +431,42 @@ export function createRetroDesktop({
       cafePins.push(userPin);
     }
     markerLayer.replaceChildren(...cafePins);
+  }
+
+
+  function hydrateCafeOsmMaps() {
+    root.querySelectorAll('[data-cafe-osm-map]').forEach((surface) => {
+      const selected = selectedCafe();
+      const baseLayer = surface.querySelector('[data-cafe-osm-base]');
+      const markerLayer = surface.querySelector('[data-cafe-osm-markers]');
+      if (!selected || !baseLayer || !markerLayer) return;
+
+      const items = [selected, ...activeCafes()
+        .filter((cafe) => cafe.id !== selected.id && cafe.area === selected.area)
+        .slice(0, 4)];
+      const viewport = retroMapProvider.normalizeViewport({
+        latitude: selected.latitude,
+        longitude: selected.longitude,
+        zoom: retroNeighborhoodMapZoom,
+      });
+      const rect = surface.getBoundingClientRect();
+      const surfaceSize = { width: rect.width || surface.clientWidth || 560, height: rect.height || surface.clientHeight || 360 };
+      retroMapProvider.renderBaseLayer({ container: baseLayer, viewport, surfaceSize });
+      const pins = items.map((cafe, index) => {
+        const position = screenPositionForCafeInViewport(cafe, viewport, surfaceSize);
+        const pin = document.createElement('button');
+        pin.type = 'button';
+        pin.className = `retro-map-pin cafe-osm-pin ${cafe.id === selected.id ? 'is-active' : ''}`;
+        pin.style.left = `${position.left.toFixed(1)}px`;
+        pin.style.top = `${position.top.toFixed(1)}px`;
+        pin.title = cafe.name;
+        pin.setAttribute('aria-label', `${cafe.name} OSM 지도 핀`);
+        pin.dataset.retroSelectCafe = cafe.id;
+        pin.textContent = cafe.id === selected.id ? '★' : String(index).padStart(2, '0');
+        return pin;
+      });
+      markerLayer.replaceChildren(...pins);
+    });
   }
 
   function programStatus(programId) {
@@ -592,21 +632,6 @@ export function createRetroDesktop({
     const nearbyItems = selected ? items
       .filter((cafe) => cafe.id !== selected.id && cafe.area === selected.area)
       .slice(0, 4) : [];
-    const guidePins = selected ? [selected, ...nearbyItems].map((cafe, index) => {
-      const isSelected = cafe.id === selected.id;
-      const position = isSelected ? { left: 50, top: 48 } : cafePosition(cafe, [selected, ...nearbyItems]);
-      return `
-        <button
-          type="button"
-          class="cafe-sketch-pin ${isSelected ? 'is-active' : ''}"
-          style="left: ${position.left.toFixed(2)}%; top: ${position.top.toFixed(2)}%;"
-          title="${escapeHtml(cafe.name)}"
-          aria-label="${escapeHtml(cafe.name)} 약도 핀"
-          data-retro-select-cafe="${escapeHtml(cafe.id)}"
-        >${isSelected ? '★' : String(index).padStart(2, '0')}</button>
-      `;
-    }).join('') : '';
-
     return `
       <section class="cafe-sketch-program">
         <div class="cafe-sketch-panel">
@@ -614,15 +639,12 @@ export function createRetroDesktop({
             <span>CAFE GUIDE MAP</span>
             <button type="button" data-open-program="nearby-map">주변 일반 지도 열기</button>
           </div>
-          <div class="cafe-sketch-surface" role="img" aria-label="선택한 카페 주변 약도">
-            <div class="cafe-sketch-road cafe-sketch-road-main" aria-hidden="true"></div>
-            <div class="cafe-sketch-road cafe-sketch-road-sub" aria-hidden="true"></div>
-            <div class="cafe-sketch-block block-a" aria-hidden="true">ROASTERY</div>
-            <div class="cafe-sketch-block block-b" aria-hidden="true">STATION</div>
-            <div class="cafe-sketch-block block-c" aria-hidden="true">MARKET</div>
-            ${guidePins}
+          <div class="cafe-sketch-surface cafe-osm-surface" role="img" aria-label="OpenStreetMap 배경으로 표시한 선택 카페 주변 지도" data-cafe-osm-map>
+            <div class="retro-map-base" data-cafe-osm-base aria-hidden="true"></div>
+            <div class="retro-map-markers" data-cafe-osm-markers></div>
+            <a class="retro-map-attribution" href="${escapeHtml(retroMapProvider.attribution?.url || '#')}" target="_blank" rel="noreferrer">${escapeHtml(retroMapProvider.attribution?.label || '지도 데이터')}</a>
           </div>
-          <p class="cafe-sketch-caption">BREWMAP.EXE는 선택한 카페를 중심으로 빠르게 위치감을 잡는 약도입니다. 내 위치 기준 탐색은 NEARBY_MAP.EXE에서 확인합니다.</p>
+          <p class="cafe-sketch-caption">BREWMAP.EXE는 선택한 카페를 중심으로 OpenStreetMap 배경을 표시합니다. 핀치 줌과 드래그 탐색은 NEARBY_MAP.EXE에서 사용할 수 있습니다.</p>
         </div>
         <aside class="map-record">
           ${selected ? `
@@ -801,6 +823,7 @@ export function createRetroDesktop({
       </div>
     `;
     hydrateRetroMap();
+    hydrateCafeOsmMaps();
   }
 
   function clampWindowsToCanvas() {
@@ -1030,16 +1053,67 @@ export function createRetroDesktop({
   }
 
 
-  function handleMapPointerDown(event) {
-    const surface = event.target.closest('[data-retro-map-surface]');
-    if (!surface || event.button !== 0 || event.target.closest('button, a')) return;
-    state.locationStatus = '지도는 선택한 카페 주변만 보이도록 고정되어 있습니다.';
-    render();
+  function activeTouchPoints() {
+    return [...(mapDragState?.points?.values() || [])];
   }
 
-  function handleMapPointerMove() {}
+  function midpoint(points) {
+    return { x: (points[0].clientX + points[1].clientX) / 2, y: (points[0].clientY + points[1].clientY) / 2 };
+  }
 
-  function stopMapDrag() {
+  function distance(points) {
+    return Math.hypot(points[0].clientX - points[1].clientX, points[0].clientY - points[1].clientY);
+  }
+
+  function handleMapPointerDown(event) {
+    const surface = event.target.closest('[data-retro-map-surface]');
+    if (!surface || event.target.closest('button, a')) return;
+    surface.setPointerCapture?.(event.pointerId);
+    const center = projectMap(state.mapViewport.latitude, state.mapViewport.longitude);
+    if (!mapDragState) mapDragState = { surface, points: new Map(), originCenter: center, originZoom: state.mapViewport.zoom };
+    mapDragState.points.set(event.pointerId, { clientX: event.clientX, clientY: event.clientY });
+    mapDragState.originCenter = center;
+    mapDragState.originZoom = state.mapViewport.zoom;
+    const points = activeTouchPoints();
+    if (points.length >= 2) {
+      mapDragState.originDistance = distance(points);
+      mapDragState.originMidpoint = midpoint(points);
+    } else {
+      mapDragState.startX = event.clientX;
+      mapDragState.startY = event.clientY;
+    }
+    surface.classList.add('is-dragging');
+    event.preventDefault();
+  }
+
+  function handleMapPointerMove(event) {
+    if (!mapDragState?.points?.has(event.pointerId)) return;
+    mapDragState.points.set(event.pointerId, { clientX: event.clientX, clientY: event.clientY });
+    const points = activeTouchPoints();
+    if (points.length >= 2 && mapDragState.originDistance) {
+      const scale = distance(points) / mapDragState.originDistance;
+      const nextZoom = clamp(Math.round(mapDragState.originZoom + Math.log2(scale)), retroMapZoomRange.min, retroMapZoomRange.max);
+      const currentMidpoint = midpoint(points);
+      const zoomScale = 2 ** (nextZoom - mapDragState.originZoom);
+      setRetroMapViewportFromCenterPoint({
+        x: mapDragState.originCenter.x * zoomScale - (currentMidpoint.x - mapDragState.originMidpoint.x),
+        y: mapDragState.originCenter.y * zoomScale - (currentMidpoint.y - mapDragState.originMidpoint.y),
+      }, nextZoom);
+    } else {
+      setRetroMapViewportFromCenterPoint({
+        x: mapDragState.originCenter.x - (event.clientX - mapDragState.startX),
+        y: mapDragState.originCenter.y - (event.clientY - mapDragState.startY),
+      });
+    }
+    render();
+    event.preventDefault();
+  }
+
+  function stopMapDrag(event) {
+    if (!mapDragState) return;
+    if (event?.pointerId != null) mapDragState.points.delete(event.pointerId);
+    if (mapDragState.points.size) return;
+    mapDragState.surface?.classList.remove('is-dragging');
     mapDragState = null;
   }
 
