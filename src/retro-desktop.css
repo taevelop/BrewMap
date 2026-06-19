@@ -675,3 +675,243 @@ body.is-retro-main .top-layer {
     min-height: 250px;
   }
 }
+
+body.is-retro-main {
+  overflow: hidden;
+}
+
+body.is-retro-main .app-shell,
+body.is-retro-main .retro-desktop-root,
+body.is-retro-main .retro-desktop {
+  width: 100%;
+  height: 100dvh;
+  min-height: 100dvh;
+}
+
+.retro-map-shell {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto minmax(260px, 1fr);
+  min-width: 0;
+  min-height: 0;
+  gap: 8px;
+}
+
+.retro-map-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.retro-map-toolbar span,
+.retro-map-attribution {
+  color: var(--brewmap-muted);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: .72rem;
+  font-weight: 900;
+}
+
+.retro-map-surface {
+  cursor: grab;
+  touch-action: none;
+}
+
+.retro-map-surface.is-dragging {
+  cursor: grabbing;
+}
+
+.retro-map-base,
+.retro-map-markers {
+  position: absolute;
+  inset: 0;
+}
+
+.retro-map-base .map-tile {
+  position: absolute;
+  width: 256px;
+  height: 256px;
+  user-select: none;
+}
+
+.retro-map-markers {
+  z-index: 2;
+  pointer-events: none;
+}
+
+.retro-map-markers .retro-map-pin {
+  pointer-events: auto;
+}
+
+.retro-map-attribution {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  z-index: 3;
+  padding: 3px 5px;
+  border: 1px solid var(--brewmap-border);
+  background: rgba(255, 250, 242, .9);
+  text-decoration: none;
+}
+
+@media (max-width: 767px) {
+  .retro-program-body {
+    padding: 8px;
+  }
+
+  .retro-map-shell {
+    grid-template-rows: auto minmax(220px, 42vh);
+  }
+
+  .map-record {
+    min-height: 0;
+  }
+}
+
+.cafe-sketch-program {
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) 280px;
+  gap: 12px;
+  min-height: 100%;
+}
+
+.cafe-sketch-panel {
+  display: grid;
+  grid-template-rows: auto minmax(280px, 1fr) auto;
+  min-width: 0;
+  min-height: 0;
+  gap: 10px;
+}
+
+.cafe-sketch-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cafe-sketch-toolbar span,
+.cafe-sketch-caption,
+.nearby-status {
+  color: var(--brewmap-muted);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: .76rem;
+  font-weight: 900;
+}
+
+.cafe-sketch-surface {
+  position: relative;
+  min-height: 360px;
+  overflow: hidden;
+  border: 1px solid var(--brewmap-espresso);
+  background:
+    repeating-linear-gradient(90deg, transparent 0 42px, color-mix(in srgb, var(--brewmap-border) 72%, transparent) 42px 43px),
+    repeating-linear-gradient(0deg, transparent 0 42px, color-mix(in srgb, var(--brewmap-border) 62%, transparent) 42px 43px),
+    var(--brewmap-soft);
+}
+
+.cafe-sketch-road {
+  position: absolute;
+  border: 1px solid color-mix(in srgb, var(--brewmap-espresso) 28%, transparent);
+  background: color-mix(in srgb, var(--brewmap-map-road) 78%, var(--brewmap-bg));
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--brewmap-bg) 82%, transparent);
+}
+
+.cafe-sketch-road-main {
+  left: -8%;
+  top: 46%;
+  width: 116%;
+  height: 34px;
+  transform: rotate(-8deg);
+}
+
+.cafe-sketch-road-sub {
+  left: 47%;
+  top: -8%;
+  width: 28px;
+  height: 116%;
+  transform: rotate(13deg);
+}
+
+.cafe-sketch-block {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--brewmap-border);
+  background: rgba(255, 250, 242, .88);
+  color: var(--brewmap-muted);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: .7rem;
+  font-weight: 900;
+}
+
+.cafe-sketch-block.block-a {
+  left: 8%;
+  top: 12%;
+  width: 24%;
+  height: 22%;
+}
+
+.cafe-sketch-block.block-b {
+  right: 9%;
+  top: 13%;
+  width: 23%;
+  height: 20%;
+}
+
+.cafe-sketch-block.block-c {
+  right: 12%;
+  bottom: 10%;
+  width: 30%;
+  height: 20%;
+}
+
+.cafe-sketch-pin {
+  position: absolute;
+  z-index: 3;
+  min-width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.cafe-sketch-pin.is-active {
+  min-width: 46px;
+  height: 46px;
+  color: var(--brewmap-surface);
+  background: var(--brewmap-orange);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--brewmap-orange) 22%, transparent);
+}
+
+.retro-user-pin {
+  position: absolute;
+  z-index: 4;
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--brewmap-surface);
+  border-radius: 50%;
+  background: #2f66d0;
+  box-shadow: 0 0 0 4px rgba(47, 102, 208, .22), 0 3px 8px rgba(45, 27, 18, .28);
+  transform: translate(-50%, -50%);
+}
+
+@media (max-width: 1023px) {
+  .cafe-sketch-program {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 767px) {
+  .retro-taskbar > div {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .cafe-sketch-panel {
+    grid-template-rows: auto minmax(240px, 40vh) auto;
+  }
+
+  .cafe-sketch-surface {
+    min-height: 240px;
+  }
+}
