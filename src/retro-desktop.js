@@ -619,16 +619,16 @@ export function createRetroDesktop({
     return `
       <section class="brewmap-program nearby-map-program">
         <div class="retro-map-shell">
-          <div class="retro-map-toolbar" aria-label="주변 지도 제어">
-            <button type="button" data-retro-map-locate>내 위치</button>
-            <button type="button" data-retro-map-fit>전체 보기</button>
-            <button type="button" data-retro-map-zoom="in" aria-label="지도 확대">+</button>
-            <button type="button" data-retro-map-zoom="out" aria-label="지도 축소">-</button>
-            <span>ZOOM ${escapeHtml(state.mapViewport.zoom)}</span>
-          </div>
           <div class="retro-map-surface" role="application" tabindex="0" aria-label="내 주변 카페 지도. 드래그하거나 방향키로 이동할 수 있습니다." data-retro-map-surface>
             <div class="retro-map-base" data-retro-map-base aria-hidden="true"></div>
             <div class="retro-map-markers" data-retro-map-markers></div>
+            <div class="retro-map-toolbar" aria-label="주변 지도 제어">
+              <button type="button" data-retro-map-locate>내 위치</button>
+              <button type="button" data-retro-map-fit>전체 보기</button>
+              <button type="button" data-retro-map-zoom="in" aria-label="지도 확대">+</button>
+              <button type="button" data-retro-map-zoom="out" aria-label="지도 축소">-</button>
+              <span>ZOOM ${escapeHtml(state.mapViewport.zoom)}</span>
+            </div>
           </div>
           <a class="retro-map-attribution" href="${escapeHtml(retroMapProvider.attribution?.url || '#')}" target="_blank" rel="noreferrer">${escapeHtml(retroMapProvider.attribution?.label || '지도 데이터')}</a>
         </div>
