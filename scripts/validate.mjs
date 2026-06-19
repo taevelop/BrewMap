@@ -23,6 +23,7 @@ const requiredFiles = [
   'docs/scope.md',
   'docs/taxonomy.md',
   'docs/csv-format.md',
+  'docs/retro-ux-checklist.md',
   'db/schema.sql',
   'data/seed-cafes.csv',
   'scripts/check-seed-data.mjs',
@@ -37,6 +38,7 @@ const html = await readFile('index.html', 'utf8');
 const js = await readFile('src/main.js', 'utf8');
 const mapServices = await readFile('src/map-services.js', 'utf8');
 const retroDesktopCss = await readFile('src/retro-desktop.css', 'utf8');
+const retroUxChecklist = await readFile('docs/retro-ux-checklist.md', 'utf8');
 const retroDesktopJs = await readFile('src/retro-desktop.js', 'utf8');
 const css = await readFile('src/styles.css', 'utf8');
 const manifest = await readFile('manifest.webmanifest', 'utf8');
