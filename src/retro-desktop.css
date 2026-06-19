@@ -539,12 +539,12 @@ body.is-retro-main .top-layer {
 
 .retro-map-pin {
   position: absolute;
-  width: 32px;
-  height: 40px;
+  width: 34px;
+  height: 28px;
   border: 0;
   background: transparent;
   box-shadow: none;
-  transform: translate(-50%, -100%);
+  transform: translate(-50%, -50%);
 }
 
 .retro-map-pin::before {
@@ -552,6 +552,11 @@ body.is-retro-main .top-layer {
   inset: 0;
   background: url("../assets/brewmap-cafe-marker.svg") center / contain no-repeat;
   content: "";
+}
+
+.retro-map-pin.is-active {
+  width: 42px;
+  height: 32px;
 }
 
 .retro-map-pin.is-active::before {
@@ -694,17 +699,25 @@ body.is-retro-main .retro-desktop {
 .retro-map-shell {
   position: relative;
   display: grid;
-  grid-template-rows: auto minmax(260px, 1fr);
+  grid-template-rows: minmax(260px, 1fr);
   min-width: 0;
   min-height: 0;
-  gap: 8px;
 }
 
 .retro-map-toolbar {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 4;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 6px;
+  max-width: calc(100% - 16px);
+  padding: 6px;
+  border: 1px solid var(--brewmap-border);
+  background: rgba(255, 250, 242, .92);
+  box-shadow: 3px 3px 0 rgba(45, 27, 18, .18);
 }
 
 .retro-map-toolbar span,
@@ -763,7 +776,11 @@ body.is-retro-main .retro-desktop {
   }
 
   .retro-map-shell {
-    grid-template-rows: auto minmax(220px, 42vh);
+    grid-template-rows: minmax(220px, 42vh);
+  }
+
+  .retro-map-toolbar {
+    right: 8px;
   }
 
   .map-record {
