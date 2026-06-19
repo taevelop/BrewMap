@@ -86,7 +86,7 @@ function writeJsonStorage(key, value) {
 
 function defaultWindowState(definition) {
   return {
-    isOpen: definition.id === 'local-zine',
+    isOpen: definition.id === 'local-zine' || definition.id === 'cafe-index',
     mode: 'normal',
     position: { x: definition.defaultRect.x, y: definition.defaultRect.y },
     size: { width: definition.defaultRect.width, height: definition.defaultRect.height },
@@ -155,8 +155,8 @@ export function createRetroDesktop({
   const windows = Object.fromEntries(programDefinitions.map((definition) => [definition.id, defaultWindowState(definition)]));
   const state = {
     windows,
-    zOrder: ['local-zine'],
-    activeProgramId: 'local-zine',
+    zOrder: ['local-zine', 'cafe-index'],
+    activeProgramId: 'cafe-index',
     selectedCafeId: null,
     storyIndex: 0,
     activeFilters: new Set(),
@@ -252,8 +252,8 @@ export function createRetroDesktop({
     programDefinitions.forEach((definition) => {
       state.windows[definition.id] = defaultWindowState(definition);
     });
-    state.zOrder = ['local-zine'];
-    state.activeProgramId = 'local-zine';
+    state.zOrder = ['local-zine', 'cafe-index'];
+    state.activeProgramId = 'cafe-index';
     state.taskbarBadges = { 'brew-log': 0 };
     render();
   }
@@ -828,7 +828,26 @@ export function createRetroDesktop({
     if (scrollAction) {
       event.preventDefault();
       const target = document.querySelector(scrollAction.dataset.retroScrollTarget);
-      target?.scrollIntoView({ behavior: 'auto', block: 'start' });
+      if (target && !target.closest('.legacy-app-mounts[hidden]')) target.scrollIntoView({ behavior: 'auto', block: 'start' });
+      return;
+    }
+
+    const mapLocate = event.target.closest('[data-retro-map-locate]');
+    if (mapLocate) {
+      requestRetroUserLocation();
+      return;
+    }
+
+    const mapFit = event.target.closest('[data-retro-map-fit]');
+    if (mapFit) {
+      fitRetroMapToItems(activeCafes());
+      render();
+      return;
+    }
+
+    const mapZoom = event.target.closest('[data-retro-map-zoom]');
+    if (mapZoom) {
+      zoomRetroMapBy(mapZoom.dataset.retroMapZoom === 'in' ? 1 : -1);
       return;
     }
 
