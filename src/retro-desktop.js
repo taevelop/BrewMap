@@ -2,7 +2,8 @@ import { getMapProvider } from './map-services.js';
 
 const retroMapProvider = getMapProvider();
 const retroMapZoomRange = retroMapProvider.zoomRange;
-const retroMapPanStep = 96;
+const retroNeighborhoodMapZoom = 16;
+const retroClusterBreakoutZoom = 16;
 
 const programDefinitions = [
   {
@@ -339,27 +340,42 @@ export function createRetroDesktop({
       latitude: (bounds.minLatitude + bounds.maxLatitude) / 2,
       longitude: (bounds.minLongitude + bounds.maxLongitude) / 2,
     };
-    state.mapViewport = retroMapProvider.normalizeViewport({ ...center, zoom: coordinates.length === 1 ? retroMapZoomRange.max : 12 });
+    state.mapViewport = retroMapProvider.normalizeViewport({ ...center, zoom: coordinates.length === 1 ? retroNeighborhoodMapZoom : 12 });
   }
 
-  function zoomRetroMapBy(delta, clientX, clientY) {
+  function zoomRetroMapBy(delta) {
     const zoom = clamp(state.mapViewport.zoom + delta, retroMapZoomRange.min, retroMapZoomRange.max);
     if (zoom === state.mapViewport.zoom) return;
-    const { width, height } = mapSurfaceSize();
-    const rect = root.querySelector('[data-retro-map-surface]')?.getBoundingClientRect();
-    const offsetX = rect && Number.isFinite(clientX) ? clientX - rect.left - (width / 2) : 0;
-    const offsetY = rect && Number.isFinite(clientY) ? clientY - rect.top - (height / 2) : 0;
-    const center = projectMap(state.mapViewport.latitude, state.mapViewport.longitude);
-    const anchor = unprojectMap({ x: center.x + offsetX, y: center.y + offsetY });
-    const nextAnchor = projectMap(anchor.latitude, anchor.longitude, zoom);
-    setRetroMapViewportFromCenterPoint({ x: nextAnchor.x - offsetX, y: nextAnchor.y - offsetY }, zoom);
+    state.mapViewport = retroMapProvider.normalizeViewport({ ...state.mapViewport, zoom });
     render();
   }
 
-  function panRetroMapBy(deltaX, deltaY) {
-    const center = projectMap(state.mapViewport.latitude, state.mapViewport.longitude);
-    setRetroMapViewportFromCenterPoint({ x: center.x + deltaX, y: center.y + deltaY });
-    render();
+  function clusterRetroMapItems(items) {
+    if (state.mapViewport.zoom >= retroClusterBreakoutZoom) {
+      return items.map((cafe) => ({ items: [cafe], ...screenPositionForCafe(cafe) }));
+    }
+
+    const cellSize = state.mapViewport.zoom >= 13 ? 44 : 64;
+    const clusters = new Map();
+    items.forEach((cafe) => {
+      const position = screenPositionForCafe(cafe);
+      const key = `${Math.floor(position.left / cellSize)}:${Math.floor(position.top / cellSize)}`;
+      const cluster = clusters.get(key) || { items: [], left: 0, top: 0, latitude: 0, longitude: 0 };
+      cluster.items.push(cafe);
+      cluster.left += position.left;
+      cluster.top += position.top;
+      cluster.latitude += Number(cafe.latitude);
+      cluster.longitude += Number(cafe.longitude);
+      clusters.set(key, cluster);
+    });
+
+    return [...clusters.values()].map((cluster) => ({
+      items: cluster.items,
+      left: cluster.left / cluster.items.length,
+      top: cluster.top / cluster.items.length,
+      latitude: cluster.latitude / cluster.items.length,
+      longitude: cluster.longitude / cluster.items.length,
+    }));
   }
 
   function hydrateRetroMap() {
@@ -369,13 +385,33 @@ export function createRetroDesktop({
     if (!surface || !baseLayer || !markerLayer) return;
 
     retroMapProvider.renderBaseLayer({ container: baseLayer, viewport: state.mapViewport, surfaceSize: mapSurfaceSize() });
-    const cafePins = activeCafes().map((cafe) => {
-      const position = screenPositionForCafe(cafe);
+    const cafePins = clusterRetroMapItems(activeCafes()).map((cluster) => {
+      if (cluster.items.length > 1) {
+        const clusterButton = document.createElement('button');
+        clusterButton.type = 'button';
+        clusterButton.className = 'retro-map-cluster';
+        clusterButton.style.left = `${cluster.left.toFixed(1)}px`;
+        clusterButton.style.top = `${cluster.top.toFixed(1)}px`;
+        clusterButton.textContent = cluster.items.length;
+        clusterButton.title = cluster.items.slice(0, 3).map((cafe) => cafe.name).join(', ');
+        clusterButton.setAttribute('aria-label', `${cluster.items.length}개 카페 지도 묶음`);
+        clusterButton.addEventListener('click', () => {
+          state.mapViewport = retroMapProvider.normalizeViewport({
+            latitude: cluster.latitude,
+            longitude: cluster.longitude,
+            zoom: Math.min(retroMapZoomRange.max, state.mapViewport.zoom + 2),
+          });
+          render();
+        });
+        return clusterButton;
+      }
+
+      const [cafe] = cluster.items;
       const pin = document.createElement('button');
       pin.type = 'button';
       pin.className = `retro-map-pin ${state.selectedCafeId === cafe.id ? 'is-active' : ''}`;
-      pin.style.left = `${position.left.toFixed(1)}px`;
-      pin.style.top = `${position.top.toFixed(1)}px`;
+      pin.style.left = `${cluster.left.toFixed(1)}px`;
+      pin.style.top = `${cluster.top.toFixed(1)}px`;
       pin.title = cafe.name;
       pin.setAttribute('aria-label', `${cafe.name} 지도 핀`);
       pin.dataset.retroSelectCafe = cafe.id;
@@ -619,7 +655,7 @@ export function createRetroDesktop({
     return `
       <section class="brewmap-program nearby-map-program">
         <div class="retro-map-shell">
-          <div class="retro-map-surface" role="application" tabindex="0" aria-label="내 주변 카페 지도. 드래그하거나 방향키로 이동할 수 있습니다." data-retro-map-surface>
+          <div class="retro-map-surface" role="application" tabindex="0" aria-label="내 주변 카페 지도. 카페 주변만 보이도록 고정되어 있으며 확대와 축소만 할 수 있습니다." data-retro-map-surface>
             <div class="retro-map-base" data-retro-map-base aria-hidden="true"></div>
             <div class="retro-map-markers" data-retro-map-markers></div>
             <div class="retro-map-toolbar" aria-label="주변 지도 제어">
@@ -997,26 +1033,13 @@ export function createRetroDesktop({
   function handleMapPointerDown(event) {
     const surface = event.target.closest('[data-retro-map-surface]');
     if (!surface || event.button !== 0 || event.target.closest('button, a')) return;
-    const center = projectMap(state.mapViewport.latitude, state.mapViewport.longitude);
-    mapDragState = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, center };
-    surface.classList.add('is-dragging');
-    surface.setPointerCapture(event.pointerId);
-  }
-
-  function handleMapPointerMove(event) {
-    if (!mapDragState || mapDragState.pointerId !== event.pointerId) return;
-    setRetroMapViewportFromCenterPoint({
-      x: mapDragState.center.x - (event.clientX - mapDragState.startX),
-      y: mapDragState.center.y - (event.clientY - mapDragState.startY),
-    });
+    state.locationStatus = '지도는 선택한 카페 주변만 보이도록 고정되어 있습니다.';
     render();
   }
 
-  function stopMapDrag(event) {
-    if (!mapDragState || (event?.pointerId && mapDragState.pointerId !== event.pointerId)) return;
-    const surface = root.querySelector('[data-retro-map-surface]');
-    surface?.classList.remove('is-dragging');
-    if (event && surface?.hasPointerCapture(event.pointerId)) surface.releasePointerCapture(event.pointerId);
+  function handleMapPointerMove() {}
+
+  function stopMapDrag() {
     mapDragState = null;
   }
 
@@ -1029,10 +1052,6 @@ export function createRetroDesktop({
   function handleMapKeydown(event) {
     if (!event.target.closest('[data-retro-map-surface]')) return;
     const actions = {
-      ArrowUp: () => panRetroMapBy(0, -retroMapPanStep),
-      ArrowDown: () => panRetroMapBy(0, retroMapPanStep),
-      ArrowLeft: () => panRetroMapBy(-retroMapPanStep, 0),
-      ArrowRight: () => panRetroMapBy(retroMapPanStep, 0),
       '+': () => zoomRetroMapBy(1),
       '=': () => zoomRetroMapBy(1),
       '-': () => zoomRetroMapBy(-1),
