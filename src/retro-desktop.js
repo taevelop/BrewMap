@@ -2,6 +2,7 @@ const programDefinitions = [
   {
     id: 'local-zine',
     label: '오늘의 발견',
+    mobileLabel: '발견',
     file: 'LOCAL_ZINE',
     title: 'LOCAL_ZINE.EXE',
     menu: ['FILE', 'ISSUE', 'NEIGHBORHOOD', 'VIEW'],
@@ -10,6 +11,7 @@ const programDefinitions = [
   {
     id: 'cafe-index',
     label: '카페 인덱스',
+    mobileLabel: '인덱스',
     file: 'CAFE_INDEX',
     title: 'CAFE_INDEX.EXE',
     menu: ['FILE', 'SEARCH', 'FILTER', 'MAP', 'VIEW'],
@@ -18,6 +20,7 @@ const programDefinitions = [
   {
     id: 'brewmap-map',
     label: '지도',
+    mobileLabel: '지도',
     file: 'BREWMAP',
     title: 'BREWMAP.EXE',
     menu: ['FILE', 'MAP', 'LOCATION', 'VIEW'],
@@ -26,6 +29,7 @@ const programDefinitions = [
   {
     id: 'brew-log',
     label: '나의 단골 장부',
+    mobileLabel: '장부',
     file: 'BREW_LOG',
     title: 'BREW_LOG.EXE',
     menu: ['FILE', 'FOLDER', 'STAMP', 'EXPORT', 'VIEW'],
@@ -148,6 +152,7 @@ export function createRetroDesktop({
     activeFilters: new Set(),
     taskbarBadges: { 'brew-log': 0 },
     visits: readJsonStorage(visitStorageKey, {}),
+    visitDraftCafeId: null,
     clock: new Date(),
   };
   let routeActive = true;
@@ -186,6 +191,7 @@ export function createRetroDesktop({
     if (windowState.mode === 'minimized') windowState.mode = 'normal';
     state.zOrder = [...state.zOrder.filter((id) => id !== programId), programId];
     state.activeProgramId = programId;
+    if (programId === 'brew-log') state.taskbarBadges['brew-log'] = 0;
   }
 
   function openProgram(programId) {
@@ -237,6 +243,7 @@ export function createRetroDesktop({
     state.zOrder = ['local-zine'];
     state.activeProgramId = 'local-zine';
     state.taskbarBadges = { 'brew-log': 0 };
+    state.visitDraftCafeId = null;
     render();
   }
 
@@ -254,12 +261,31 @@ export function createRetroDesktop({
     render();
   }
 
-  function stampVisit(cafeId) {
-    const today = new Date().toISOString().slice(0, 10);
+  function openVisitForm(cafeId) {
+    selectCafe(cafeId);
+    state.visitDraftCafeId = cafeId;
+    focusProgram('brew-log');
+    render();
+  }
+
+  function closeVisitForm() {
+    state.visitDraftCafeId = null;
+    render();
+  }
+
+  function stampVisit(cafeId, payload = {}) {
+    const today = payload.visitedAt || new Date().toISOString().slice(0, 10);
     const current = state.visits[cafeId] || { count: 0, lastVisitedAt: '' };
-    state.visits[cafeId] = { count: current.count + 1, lastVisitedAt: today };
+    state.visits[cafeId] = {
+      count: Number(current.count || 0) + 1,
+      lastVisitedAt: today,
+      lastVisitType: payload.visitType || current.lastVisitType || '방문',
+      favoriteMenu: payload.favoriteMenu || current.favoriteMenu || '',
+      memo: payload.memo || current.memo || '',
+    };
     writeJsonStorage(visitStorageKey, state.visits);
     state.taskbarBadges['brew-log'] = 0;
+    state.visitDraftCafeId = null;
     render();
   }
 
@@ -421,6 +447,7 @@ export function createRetroDesktop({
   function renderMapProgram() {
     const items = activeCafes();
     const selected = selectedCafe();
+    const isSaved = selected ? savedCafeIds().has(selected.id) : false;
     const pins = items.map((cafe) => {
       const position = cafePosition(cafe, items);
       return `
@@ -449,7 +476,7 @@ export function createRetroDesktop({
             <p>${escapeHtml(selected.address)}</p>
             <div class="retro-action-row">
               <button type="button" data-open-program="cafe-index" data-retro-select-cafe="${escapeHtml(selected.id)}">인덱스 열기</button>
-              <button type="button" data-retro-save="${escapeHtml(selected.id)}">장부에 저장</button>
+              <button type="button" class="${isSaved ? 'is-saved' : ''}" aria-pressed="${isSaved}" data-retro-save="${escapeHtml(selected.id)}">${isSaved ? '저장됨' : '장부에 저장'}</button>
             </div>
           ` : '<div class="retro-empty"><h3>NO LOCATION</h3><p>카페를 선택하면 지도 핀이 강조됩니다.</p></div>'}
         </aside>
@@ -492,21 +519,54 @@ export function createRetroDesktop({
   function renderLogDetail(cafe) {
     const visit = state.visits[cafe.id] || { count: 0, lastVisitedAt: '' };
     const isSaved = savedCafeIds().has(cafe.id);
+    const favoriteMenu = visit.favoriteMenu || primaryTags(cafe, tagLabel);
+    const memo = visit.memo || `${cafe.area}에서 다시 확인할 로컬 커피 기록`;
+    const visitType = visit.lastVisitType || '-';
 
     return `
       <p class="retro-kicker">CAFE_${escapeHtml(cafe.confidence || 'X')}.LOG</p>
       <h3>${escapeHtml(cafe.name)}</h3>
+      ${state.visitDraftCafeId === cafe.id ? renderVisitStampForm(cafe, visit) : ''}
       <dl class="retro-data-grid">
         <div><dt>저장 상태</dt><dd>${isSaved ? '저장됨' : '미저장'}</dd></div>
         <div><dt>방문</dt><dd>${Number(visit.count || 0)}회</dd></div>
         <div><dt>마지막 방문</dt><dd>${escapeHtml(visit.lastVisitedAt || '-')}</dd></div>
-        <div><dt>기억할 커피</dt><dd>${escapeHtml(primaryTags(cafe, tagLabel))}</dd></div>
+        <div><dt>방문 형태</dt><dd>${escapeHtml(visitType)}</dd></div>
+        <div><dt>기억할 커피</dt><dd>${escapeHtml(favoriteMenu)}</dd></div>
       </dl>
-      <p class="log-note">"${escapeHtml(cafe.area)}에서 다시 확인할 로컬 커피 기록"</p>
+      <p class="log-note">"${escapeHtml(memo)}"</p>
       <div class="retro-action-row">
-        <button type="button" data-retro-stamp="${escapeHtml(cafe.id)}">방문 도장</button>
+        ${state.visitDraftCafeId === cafe.id ? '' : `<button type="button" data-retro-stamp="${escapeHtml(cafe.id)}">방문 도장</button>`}
         <button type="button" data-retro-open-map="${escapeHtml(cafe.id)}">지도에서 보기</button>
       </div>
+    `;
+  }
+
+  function renderVisitStampForm(cafe, visit) {
+    const today = new Date().toISOString().slice(0, 10);
+    const visitedAt = visit.lastVisitedAt || today;
+    const favoriteMenu = visit.favoriteMenu || primaryTags(cafe, tagLabel);
+    const visitType = visit.lastVisitType || '혼자 방문';
+    const memo = visit.memo || '';
+    const option = (value, label) => `<option value="${escapeHtml(value)}" ${visitType === value ? 'selected' : ''}>${escapeHtml(label)}</option>`;
+
+    return `
+      <form class="visit-stamp-form" data-retro-visit-form data-cafe-id="${escapeHtml(cafe.id)}">
+        <h4>방문 도장</h4>
+        <label>방문일<input type="date" name="visitedAt" value="${escapeHtml(visitedAt)}" required /></label>
+        <label>방문 형태<select name="visitType">
+          ${option('혼자 방문', '혼자 방문')}
+          ${option('대화', '대화')}
+          ${option('작업', '작업')}
+          ${option('테이크아웃', '테이크아웃')}
+        </select></label>
+        <label>기억할 메뉴<input name="favoriteMenu" value="${escapeHtml(favoriteMenu)}" placeholder="예: 필터커피" /></label>
+        <label>한 줄 메모<textarea name="memo" rows="2" placeholder="다시 떠올릴 방문 메모">${escapeHtml(memo)}</textarea></label>
+        <div class="retro-action-row">
+          <button type="submit">도장 저장</button>
+          <button type="button" data-retro-cancel-stamp>취소</button>
+        </div>
+      </form>
     `;
   }
 
@@ -525,7 +585,8 @@ export function createRetroDesktop({
 
     return `
       <button type="button" class="${isActive ? 'is-active' : ''}" data-open-program="${definition.id}" aria-pressed="${isActive}">
-        ${escapeHtml(definition.file)}
+        <span class="taskbar-file-label">${escapeHtml(definition.file)}</span>
+        <span class="taskbar-mobile-label">${escapeHtml(definition.mobileLabel || definition.label)}</span>
         ${isOpen && windowState.mode === 'minimized' ? '<span>MIN</span>' : ''}
         ${badge ? `<strong aria-label="${badge}개 새 알림">${badge}</strong>` : ''}
       </button>
@@ -678,11 +739,31 @@ export function createRetroDesktop({
 
     const stamp = event.target.closest('[data-retro-stamp]');
     if (stamp) {
-      stampVisit(stamp.dataset.retroStamp);
+      openVisitForm(stamp.dataset.retroStamp);
+      return;
+    }
+
+    const cancelStamp = event.target.closest('[data-retro-cancel-stamp]');
+    if (cancelStamp) {
+      closeVisitForm();
       return;
     }
 
     render();
+  }
+
+  function handleSubmit(event) {
+    const form = event.target.closest('[data-retro-visit-form]');
+    if (!form) return;
+
+    event.preventDefault();
+    const formData = new FormData(form);
+    stampVisit(form.dataset.cafeId, {
+      visitedAt: String(formData.get('visitedAt') || '').trim(),
+      visitType: String(formData.get('visitType') || '').trim(),
+      favoriteMenu: String(formData.get('favoriteMenu') || '').trim(),
+      memo: String(formData.get('memo') || '').trim(),
+    });
   }
 
   function startDrag(event) {
@@ -742,6 +823,7 @@ export function createRetroDesktop({
   }
 
   root.addEventListener('click', handleClick);
+  root.addEventListener('submit', handleSubmit);
   root.addEventListener('pointerdown', startDrag);
   window.addEventListener('pointermove', continueDrag);
   window.addEventListener('pointerup', stopDrag);
