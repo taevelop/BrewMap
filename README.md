@@ -53,6 +53,7 @@ git switch <target-branch>
 - `docs/taxonomy.md`: 커피 태그, 동의어, 검증/신뢰도 정책
 - `docs/search-layout-final-plan.md`: 검색 결과 중심 화면 전환 최종안과 레트로 데스크톱 앱 디자인 기준
 - `docs/design-concepts.md`: 로컬 카페 앱 정체성을 위한 UI/UX 디자인 콘셉트
+- `docs/ui-ux-beta-validation-checklist.md`: UI/UX 베타 검증 체크리스트와 현재/기대 동작 비교
 - `docs/csv-format.md`: Excel 호환 CSV 입력 포맷
 - `db/schema.sql`: 핵심 DB 스키마 초안
 - `data/seed-cafes.csv`: Seed CSV 포맷

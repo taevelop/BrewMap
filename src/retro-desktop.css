@@ -281,6 +281,10 @@ body.is-retro-main .top-layer {
   font-size: .68rem;
 }
 
+.taskbar-mobile-label {
+  display: none;
+}
+
 .retro-kicker {
   margin: 0 0 8px;
   color: var(--brewmap-orange);
@@ -579,6 +583,45 @@ body.is-retro-main .top-layer {
   line-height: 1.58;
 }
 
+.visit-stamp-form {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  border: 1px solid var(--brewmap-espresso);
+  padding: 10px;
+  background: var(--brewmap-bg);
+}
+
+.visit-stamp-form h4 {
+  margin: 0;
+  color: var(--brewmap-orange);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: .82rem;
+}
+
+.visit-stamp-form label {
+  display: grid;
+  gap: 4px;
+  color: var(--brewmap-muted);
+  font-weight: 900;
+}
+
+.visit-stamp-form input,
+.visit-stamp-form select,
+.visit-stamp-form textarea {
+  width: 100%;
+  border: 1px solid var(--brewmap-espresso);
+  border-radius: 2px;
+  padding: 7px;
+  color: var(--brewmap-ink);
+  background: var(--brewmap-surface);
+  font: inherit;
+}
+
+.visit-stamp-form textarea {
+  resize: vertical;
+}
+
 @media (max-width: 1023px) {
   .retro-window {
     min-width: 0;
@@ -667,6 +710,14 @@ body.is-retro-main .top-layer {
     font-size: .68rem;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .taskbar-file-label {
+    display: none;
+  }
+
+  .taskbar-mobile-label {
+    display: inline;
   }
 
   .retro-taskbar > button,
