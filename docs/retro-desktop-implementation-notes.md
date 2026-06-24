@@ -3,7 +3,7 @@
 ## Phase 0 감사 결과
 
 - 현재 BrewMap은 의존성 없는 정적 Web MVP입니다. 라우팅은 별도 프레임워크 없이 `index.html`과 해시 앵커를 사용합니다.
-- 현재 운영 UI는 레트로 데스크톱을 기본 진입 화면으로 사용합니다. 기존 검색/지도/저장/Admin DOM은 호환성과 기존 데이터 바인딩을 위해 유지하되, 레트로 셸이 활성화된 동안 화면에는 노출하지 않습니다.
+- 현재 운영 UI는 상단 `Retro Desktop`과 하단 `Classic Workspace`가 공존하는 하이브리드 화면입니다. 기존 검색/지도/저장/Admin DOM은 호환성 목적의 숨김 영역이 아니라 사용자가 직접 볼 수 있는 기존 UI 영역으로 유지합니다.
 - 카페 데이터의 소스 오브 트루스는 `data/seed-cafes.csv`이고, `src/main.js`에서 CSV를 검증한 뒤 `cafes` 배열로 로드합니다.
 - 저장 상태는 기존 `brewmap.savedCafes.v1` localStorage 키와 `savedCafeIds` Set으로 관리합니다.
 - 지도는 `src/map-services.js`의 provider adapter와 `assets/brewmap-cafe-marker*.svg`를 사용합니다.
@@ -17,7 +17,9 @@
 - `NEARBY_MAP.EXE`는 내 위치/현재 지점 기준 일반 지도 역할을 맡고, 실제 지도 타일, 카페 핀, 확대/축소, 드래그 이동을 제공합니다.
 - 창 열기, 포커스, 드래그 이동, 최소화, 최대화/복원, 닫기, 작업 표시줄 복원, Reset Layout을 P0로 구현합니다.
 - 최초 진입과 Reset Layout은 `LOCAL_ZINE.EXE`만 열고 전면에 표시합니다.
-- 모바일에서는 자유 배치 창을 숨기고 활성 프로그램 하나만 전체 화면으로 표시합니다.
+- 레트로 작업 영역은 고정 높이 안에서 자체 스크롤을 사용하고, 기존 캡쳐 UI는 바로 아래 `Classic Workspace`로 표시합니다.
+- 상단 `CLASSIC` 메뉴는 기존 UI 영역으로 스크롤합니다.
+- 모바일에서는 레트로 활성 프로그램을 먼저 보여주고, 기존 UI는 아래로 이어지는 스크롤 영역에서 접근합니다.
 
 ## 남은 계획
 

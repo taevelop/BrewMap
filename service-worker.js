@@ -1,5 +1,5 @@
-const CACHE_NAME = 'brewmap-pwa-v13';
-const ASSET_VERSION = '20260624-1';
+const CACHE_NAME = 'brewmap-pwa-v14';
+const ASSET_VERSION = '20260624-2';
 const APP_SHELL = [
   './',
   './index.html',

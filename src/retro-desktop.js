@@ -854,6 +854,7 @@ export function createRetroDesktop({
             <button type="button" data-open-program="brewmap-map">CAFE MAP</button>
             <button type="button" data-open-program="nearby-map">NEARBY</button>
             <button type="button" data-open-program="brew-log">LOG</button>
+            <button type="button" data-retro-scroll-target="#workspace">CLASSIC</button>
           </nav>
           <span>BUSAN&nbsp;&nbsp;${escapeHtml(time)}</span>
         </header>
@@ -929,6 +930,14 @@ export function createRetroDesktop({
   }
 
   function handleClick(event) {
+    const scrollAction = event.target.closest('[data-retro-scroll-target]');
+    if (scrollAction) {
+      event.preventDefault();
+      const target = document.querySelector(scrollAction.dataset.retroScrollTarget);
+      target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+
     const windowAction = event.target.closest('[data-window-action]');
     if (windowAction) {
       const programId = windowAction.dataset.programId;
@@ -1093,14 +1102,15 @@ export function createRetroDesktop({
     root.hidden = false;
     const legacyMount = root.parentElement?.querySelector('.legacy-app-mounts');
     if (legacyMount) {
-      legacyMount.hidden = true;
-      legacyMount.setAttribute('aria-hidden', 'true');
+      legacyMount.hidden = false;
+      legacyMount.removeAttribute('aria-hidden');
     }
     standardRoots.forEach((element) => {
-      element.hidden = true;
-      element.setAttribute('aria-hidden', 'true');
+      element.hidden = false;
+      element.removeAttribute('aria-hidden');
     });
-    document.body.classList.add('is-retro-main');
+    document.body.classList.remove('is-retro-main');
+    document.body.classList.add('is-retro-hybrid');
 
     if (!clockTimer) {
       clockTimer = window.setInterval(() => {
