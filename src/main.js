@@ -1,5 +1,5 @@
 import { getMapProvider } from './map-services.js';
-import { createRetroDesktop } from './retro-desktop.js';
+import { createRetroDesktop } from './retro-desktop.js?v=20260624-1';
 
 const capabilityCatalog = [
   { key: 'filter_coffee', label: '필터커피', group: '커피 종류', isMvpFilter: true },

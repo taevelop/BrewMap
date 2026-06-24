@@ -36,6 +36,7 @@ const programDefinitions = [
   {
     id: 'nearby-map',
     label: '주변 지도',
+    mobileLabel: '주변',
     file: 'NEARBY_MAP',
     title: 'NEARBY_MAP.EXE',
     menu: ['FILE', 'MAP', 'LOCATION', 'VIEW'],
@@ -91,7 +92,7 @@ function writeJsonStorage(key, value) {
 
 function defaultWindowState(definition) {
   return {
-    isOpen: definition.id === 'local-zine' || definition.id === 'cafe-index',
+    isOpen: definition.id === 'local-zine',
     mode: 'normal',
     position: { x: definition.defaultRect.x, y: definition.defaultRect.y },
     size: { width: definition.defaultRect.width, height: definition.defaultRect.height },
@@ -160,8 +161,8 @@ export function createRetroDesktop({
   const windows = Object.fromEntries(programDefinitions.map((definition) => [definition.id, defaultWindowState(definition)]));
   const state = {
     windows,
-    zOrder: ['local-zine', 'cafe-index'],
-    activeProgramId: 'cafe-index',
+    zOrder: ['local-zine'],
+    activeProgramId: 'local-zine',
     selectedCafeId: null,
     storyIndex: 0,
     activeFilters: new Set(),
@@ -259,8 +260,8 @@ export function createRetroDesktop({
     programDefinitions.forEach((definition) => {
       state.windows[definition.id] = defaultWindowState(definition);
     });
-    state.zOrder = ['local-zine', 'cafe-index'];
-    state.activeProgramId = 'cafe-index';
+    state.zOrder = ['local-zine'];
+    state.activeProgramId = 'local-zine';
     state.taskbarBadges = { 'brew-log': 0 };
     state.visitDraftCafeId = null;
     render();
@@ -655,19 +656,9 @@ export function createRetroDesktop({
     const items = activeCafes();
     const selected = selectedCafe();
     const isSaved = selected ? savedCafeIds().has(selected.id) : false;
-    const pins = items.map((cafe) => {
-      const position = cafePosition(cafe, items);
-      return `
-        <button
-          type="button"
-          class="retro-map-pin ${selected?.id === cafe.id ? 'is-active' : ''}"
-          style="left: ${position.left.toFixed(2)}%; top: ${position.top.toFixed(2)}%;"
-          title="${escapeHtml(cafe.name)}"
-          aria-label="${escapeHtml(cafe.name)} 지도 핀"
-          data-retro-select-cafe="${escapeHtml(cafe.id)}"
-        ></button>
-      `;
-    }).join('');
+    const nearbyItems = selected
+      ? items.filter((cafe) => cafe.id !== selected.id && cafe.area === selected.area).slice(0, 4)
+      : [];
 
     return `
       <section class="cafe-sketch-program">
@@ -700,6 +691,33 @@ export function createRetroDesktop({
             </div>
           ` : '<div class="retro-empty"><h3>NO PIN</h3><p>지도 핀을 선택하면 카페 정보가 표시됩니다.</p></div>'}
         </aside>
+      </section>
+    `;
+  }
+
+  function renderNearbyMapProgram() {
+    const items = activeCafes();
+    const selected = selectedCafe();
+    const providerLabel = retroMapProvider.attribution?.label || '지도 데이터';
+    const providerUrl = retroMapProvider.attribution?.url || '#';
+
+    return `
+      <section class="retro-map-shell">
+        <div class="retro-map-toolbar" aria-label="주변 지도 도구">
+          <span>NEARBY MAP · Z${escapeHtml(state.mapViewport.zoom)}</span>
+          <button type="button" data-retro-request-location>내 위치</button>
+          <button type="button" data-retro-fit-map>전체 보기</button>
+          <button type="button" data-retro-map-zoom="1" aria-label="주변 지도 확대">+</button>
+          <button type="button" data-retro-map-zoom="-1" aria-label="주변 지도 축소">-</button>
+        </div>
+        <div class="retro-map-surface" data-retro-map-surface tabindex="0" role="application" aria-label="주변 카페 지도. 드래그하거나 휠, 더하기, 빼기 키로 이동할 수 있습니다.">
+          <div class="retro-map-base" data-retro-map-base aria-hidden="true"></div>
+          <div class="retro-map-markers" data-retro-map-markers></div>
+          <a class="retro-map-attribution" href="${escapeHtml(providerUrl)}" target="_blank" rel="noreferrer">${escapeHtml(providerLabel)}</a>
+          <p class="nearby-status" aria-live="polite">
+            ${escapeHtml(items.length)} CAFES · ${selected ? escapeHtml(selected.area) : 'BUSAN'} · ${escapeHtml(state.locationStatus)}
+          </p>
+        </div>
       </section>
     `;
   }
@@ -831,11 +849,11 @@ export function createRetroDesktop({
           <strong class="retro-brand"><img src="./assets/brewmap-brand-icon.svg" alt="" width="24" height="24" />BREWMAP</strong>
           <nav aria-label="Retro desktop 메뉴">
             <button type="button">FILE</button>
-            <button type="button" data-retro-scroll-target="#legacy-home">SEARCH</button>
-            <button type="button" data-retro-scroll-target="#map">MAP</button>
-            <button type="button" data-retro-scroll-target="#saved">SAVED</button>
-            <button type="button" data-retro-scroll-target="#report">REPORT</button>
-            <button type="button" data-retro-scroll-target="#admin">ADMIN</button>
+            <button type="button" data-open-program="local-zine">DISCOVER</button>
+            <button type="button" data-open-program="cafe-index">INDEX</button>
+            <button type="button" data-open-program="brewmap-map">CAFE MAP</button>
+            <button type="button" data-open-program="nearby-map">NEARBY</button>
+            <button type="button" data-open-program="brew-log">LOG</button>
           </nav>
           <span>BUSAN&nbsp;&nbsp;${escapeHtml(time)}</span>
         </header>
@@ -911,14 +929,6 @@ export function createRetroDesktop({
   }
 
   function handleClick(event) {
-    const scrollAction = event.target.closest('[data-retro-scroll-target]');
-    if (scrollAction) {
-      event.preventDefault();
-      const target = document.querySelector(scrollAction.dataset.retroScrollTarget);
-      target?.scrollIntoView({ behavior: 'auto', block: 'start' });
-      return;
-    }
-
     const windowAction = event.target.closest('[data-window-action]');
     if (windowAction) {
       const programId = windowAction.dataset.programId;
@@ -943,6 +953,25 @@ export function createRetroDesktop({
       const cafeId = open.dataset.retroSelectCafe;
       if (cafeId) selectCafe(cafeId);
       openProgram(open.dataset.openProgram);
+      return;
+    }
+
+    const mapZoom = event.target.closest('[data-retro-map-zoom]');
+    if (mapZoom) {
+      zoomRetroMapBy(Number(mapZoom.dataset.retroMapZoom || 0));
+      return;
+    }
+
+    const mapFit = event.target.closest('[data-retro-fit-map]');
+    if (mapFit) {
+      fitRetroMapToItems(activeCafes());
+      render();
+      return;
+    }
+
+    const requestLocation = event.target.closest('[data-retro-request-location]');
+    if (requestLocation) {
+      requestRetroUserLocation();
       return;
     }
 
@@ -1064,11 +1093,12 @@ export function createRetroDesktop({
     root.hidden = false;
     const legacyMount = root.parentElement?.querySelector('.legacy-app-mounts');
     if (legacyMount) {
-      legacyMount.hidden = false;
-      legacyMount.removeAttribute('aria-hidden');
+      legacyMount.hidden = true;
+      legacyMount.setAttribute('aria-hidden', 'true');
     }
     standardRoots.forEach((element) => {
-      element.hidden = false;
+      element.hidden = true;
+      element.setAttribute('aria-hidden', 'true');
     });
     document.body.classList.add('is-retro-main');
 
