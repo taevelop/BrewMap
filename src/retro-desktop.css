@@ -821,6 +821,18 @@ body.is-retro-main .retro-desktop {
   text-decoration: none;
 }
 
+.nearby-status {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  z-index: 3;
+  max-width: min(68%, 620px);
+  margin: 0;
+  padding: 4px 6px;
+  border: 1px solid var(--brewmap-border);
+  background: rgba(255, 250, 242, .92);
+}
+
 @media (max-width: 767px) {
   .retro-program-body {
     padding: 8px;
