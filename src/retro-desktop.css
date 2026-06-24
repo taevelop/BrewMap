@@ -1,6 +1,11 @@
-/* Retro desktop main UI */
-body.is-retro-main .top-layer {
-  display: none;
+/* Retro desktop and classic workspace hybrid UI */
+body.is-retro-hybrid {
+  overflow: auto;
+}
+
+body.is-retro-hybrid .legacy-app-mounts {
+  display: block;
+  border-top: 2px solid var(--brewmap-espresso);
 }
 
 .retro-main-shell {
@@ -16,8 +21,8 @@ body.is-retro-main .top-layer {
 }
 
 .retro-desktop-root {
-  height: 100vh;
-  min-height: 100svh;
+  height: clamp(560px, 58dvh, 720px);
+  min-height: 560px;
   overflow: hidden;
   color: var(--brewmap-ink);
   background:
@@ -153,6 +158,8 @@ body.is-retro-main .top-layer {
   grid-template-rows: 32px 28px minmax(0, 1fr) 24px;
   min-width: min(320px, calc(100vw - 24px));
   min-height: min(320px, calc(100svh - 104px));
+  max-width: calc(100% - 24px);
+  max-height: calc(100% - 24px);
   overflow: hidden;
   border: 1px solid var(--brewmap-espresso);
   border-radius: 2px;
@@ -735,16 +742,10 @@ body.is-retro-main .top-layer {
   }
 }
 
-body.is-retro-main {
-  overflow: hidden;
-}
-
-body.is-retro-main .app-shell,
-body.is-retro-main .retro-desktop-root,
-body.is-retro-main .retro-desktop {
+body.is-retro-hybrid .app-shell,
+body.is-retro-hybrid .retro-desktop-root,
+body.is-retro-hybrid .retro-desktop {
   width: 100%;
-  height: 100dvh;
-  min-height: 100dvh;
 }
 
 .retro-map-shell {
