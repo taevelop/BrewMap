@@ -1,3 +1,10 @@
+import { getMapProvider } from './map-services.js';
+
+const retroMapProvider = getMapProvider();
+const retroMapZoomRange = retroMapProvider.zoomRange;
+const retroNeighborhoodMapZoom = 16;
+const retroClusterBreakoutZoom = 16;
+
 const programDefinitions = [
   {
     id: 'local-zine',
@@ -23,8 +30,16 @@ const programDefinitions = [
     mobileLabel: '지도',
     file: 'BREWMAP',
     title: 'BREWMAP.EXE',
+    menu: ['FILE', 'CAFE', 'ROUTE', 'VIEW'],
+    defaultRect: { x: 560, y: 138, width: 760, height: 560 },
+  },
+  {
+    id: 'nearby-map',
+    label: '주변 지도',
+    file: 'NEARBY_MAP',
+    title: 'NEARBY_MAP.EXE',
     menu: ['FILE', 'MAP', 'LOCATION', 'VIEW'],
-    defaultRect: { x: 560, y: 138, width: 820, height: 620 },
+    defaultRect: { x: 320, y: 118, width: 920, height: 640 },
   },
   {
     id: 'brew-log',
@@ -76,7 +91,7 @@ function writeJsonStorage(key, value) {
 
 function defaultWindowState(definition) {
   return {
-    isOpen: definition.id === 'local-zine',
+    isOpen: definition.id === 'local-zine' || definition.id === 'cafe-index',
     mode: 'normal',
     position: { x: definition.defaultRect.x, y: definition.defaultRect.y },
     size: { width: definition.defaultRect.width, height: definition.defaultRect.height },
@@ -145,8 +160,8 @@ export function createRetroDesktop({
   const windows = Object.fromEntries(programDefinitions.map((definition) => [definition.id, defaultWindowState(definition)]));
   const state = {
     windows,
-    zOrder: ['local-zine'],
-    activeProgramId: 'local-zine',
+    zOrder: ['local-zine', 'cafe-index'],
+    activeProgramId: 'cafe-index',
     selectedCafeId: null,
     storyIndex: 0,
     activeFilters: new Set(),
@@ -154,10 +169,14 @@ export function createRetroDesktop({
     visits: readJsonStorage(visitStorageKey, {}),
     visitDraftCafeId: null,
     clock: new Date(),
+    mapViewport: { ...retroMapProvider.defaultViewport },
+    userLocation: null,
+    locationStatus: '현재 위치를 설정하면 주변 카페 지도가 열립니다.',
   };
   let routeActive = true;
   let clockTimer = null;
   let dragState = null;
+  let mapDragState = null;
 
   function cafes() {
     return (getCafes?.() || []).filter((cafe) => cafe.status !== 'hidden');
@@ -240,8 +259,8 @@ export function createRetroDesktop({
     programDefinitions.forEach((definition) => {
       state.windows[definition.id] = defaultWindowState(definition);
     });
-    state.zOrder = ['local-zine'];
-    state.activeProgramId = 'local-zine';
+    state.zOrder = ['local-zine', 'cafe-index'];
+    state.activeProgramId = 'cafe-index';
     state.taskbarBadges = { 'brew-log': 0 };
     state.visitDraftCafeId = null;
     render();
@@ -289,6 +308,193 @@ export function createRetroDesktop({
     render();
   }
 
+
+  function mapSurfaceSize() {
+    const surface = root.querySelector('[data-retro-map-surface]');
+    const rect = surface?.getBoundingClientRect();
+    return {
+      width: rect?.width || surface?.clientWidth || 560,
+      height: rect?.height || surface?.clientHeight || 430,
+    };
+  }
+
+  function projectMap(latitude, longitude, zoom = state.mapViewport.zoom) {
+    return retroMapProvider.project(latitude, longitude, zoom)
+      || retroMapProvider.project(retroMapProvider.defaultViewport.latitude, retroMapProvider.defaultViewport.longitude, zoom);
+  }
+
+  function unprojectMap(point, zoom = state.mapViewport.zoom) {
+    return retroMapProvider.unproject(point, zoom) || { ...retroMapProvider.defaultViewport, zoom };
+  }
+
+  function setRetroMapViewportFromCenterPoint(centerPoint, zoom = state.mapViewport.zoom) {
+    const nextZoom = clamp(Math.round(zoom), retroMapZoomRange.min, retroMapZoomRange.max);
+    const nextCenter = unprojectMap(centerPoint, nextZoom);
+    state.mapViewport = retroMapProvider.normalizeViewport({ ...nextCenter, zoom: nextZoom });
+  }
+
+  function screenPositionForCafeInViewport(cafe, viewport, surfaceSize) {
+    const { width, height } = surfaceSize;
+    const center = projectMap(viewport.latitude, viewport.longitude, viewport.zoom);
+    const point = projectMap(cafe.latitude, cafe.longitude, viewport.zoom);
+    return {
+      left: width / 2 + point.x - center.x,
+      top: height / 2 + point.y - center.y,
+    };
+  }
+
+  function screenPositionForCafe(cafe) {
+    return screenPositionForCafeInViewport(cafe, state.mapViewport, mapSurfaceSize());
+  }
+
+  function fitRetroMapToItems(items) {
+    const coordinates = items.map((cafe) => ({ latitude: Number(cafe.latitude), longitude: Number(cafe.longitude) }))
+      .filter((coordinate) => Number.isFinite(coordinate.latitude) && Number.isFinite(coordinate.longitude));
+    if (!coordinates.length) {
+      state.mapViewport = { ...retroMapProvider.defaultViewport };
+      return;
+    }
+
+    const bounds = coordinates.reduce((accumulator, coordinate) => ({
+      minLatitude: Math.min(accumulator.minLatitude, coordinate.latitude),
+      maxLatitude: Math.max(accumulator.maxLatitude, coordinate.latitude),
+      minLongitude: Math.min(accumulator.minLongitude, coordinate.longitude),
+      maxLongitude: Math.max(accumulator.maxLongitude, coordinate.longitude),
+    }), {
+      minLatitude: coordinates[0].latitude,
+      maxLatitude: coordinates[0].latitude,
+      minLongitude: coordinates[0].longitude,
+      maxLongitude: coordinates[0].longitude,
+    });
+    const center = {
+      latitude: (bounds.minLatitude + bounds.maxLatitude) / 2,
+      longitude: (bounds.minLongitude + bounds.maxLongitude) / 2,
+    };
+    state.mapViewport = retroMapProvider.normalizeViewport({ ...center, zoom: coordinates.length === 1 ? retroNeighborhoodMapZoom : 12 });
+  }
+
+  function zoomRetroMapBy(delta) {
+    const zoom = clamp(state.mapViewport.zoom + delta, retroMapZoomRange.min, retroMapZoomRange.max);
+    if (zoom === state.mapViewport.zoom) return;
+    state.mapViewport = retroMapProvider.normalizeViewport({ ...state.mapViewport, zoom });
+    render();
+  }
+
+  function clusterRetroMapItems(items) {
+    if (state.mapViewport.zoom >= retroClusterBreakoutZoom) {
+      return items.map((cafe) => ({ items: [cafe], ...screenPositionForCafe(cafe) }));
+    }
+
+    const cellSize = state.mapViewport.zoom >= 13 ? 44 : 64;
+    const clusters = new Map();
+    items.forEach((cafe) => {
+      const position = screenPositionForCafe(cafe);
+      const key = `${Math.floor(position.left / cellSize)}:${Math.floor(position.top / cellSize)}`;
+      const cluster = clusters.get(key) || { items: [], left: 0, top: 0, latitude: 0, longitude: 0 };
+      cluster.items.push(cafe);
+      cluster.left += position.left;
+      cluster.top += position.top;
+      cluster.latitude += Number(cafe.latitude);
+      cluster.longitude += Number(cafe.longitude);
+      clusters.set(key, cluster);
+    });
+
+    return [...clusters.values()].map((cluster) => ({
+      items: cluster.items,
+      left: cluster.left / cluster.items.length,
+      top: cluster.top / cluster.items.length,
+      latitude: cluster.latitude / cluster.items.length,
+      longitude: cluster.longitude / cluster.items.length,
+    }));
+  }
+
+  function hydrateRetroMap() {
+    const surface = root.querySelector('[data-retro-map-surface]');
+    const baseLayer = root.querySelector('[data-retro-map-base]');
+    const markerLayer = root.querySelector('[data-retro-map-markers]');
+    if (!surface || !baseLayer || !markerLayer) return;
+
+    retroMapProvider.renderBaseLayer({ container: baseLayer, viewport: state.mapViewport, surfaceSize: mapSurfaceSize() });
+    const cafePins = clusterRetroMapItems(activeCafes()).map((cluster) => {
+      if (cluster.items.length > 1) {
+        const clusterButton = document.createElement('button');
+        clusterButton.type = 'button';
+        clusterButton.className = 'retro-map-cluster';
+        clusterButton.style.left = `${cluster.left.toFixed(1)}px`;
+        clusterButton.style.top = `${cluster.top.toFixed(1)}px`;
+        clusterButton.textContent = cluster.items.length;
+        clusterButton.title = cluster.items.slice(0, 3).map((cafe) => cafe.name).join(', ');
+        clusterButton.setAttribute('aria-label', `${cluster.items.length}개 카페 지도 묶음`);
+        clusterButton.addEventListener('click', () => {
+          state.mapViewport = retroMapProvider.normalizeViewport({
+            latitude: cluster.latitude,
+            longitude: cluster.longitude,
+            zoom: Math.min(retroMapZoomRange.max, state.mapViewport.zoom + 2),
+          });
+          render();
+        });
+        return clusterButton;
+      }
+
+      const [cafe] = cluster.items;
+      const pin = document.createElement('button');
+      pin.type = 'button';
+      pin.className = `retro-map-pin ${state.selectedCafeId === cafe.id ? 'is-active' : ''}`;
+      pin.style.left = `${cluster.left.toFixed(1)}px`;
+      pin.style.top = `${cluster.top.toFixed(1)}px`;
+      pin.title = cafe.name;
+      pin.setAttribute('aria-label', `${cafe.name} 지도 핀`);
+      pin.dataset.retroSelectCafe = cafe.id;
+      return pin;
+    });
+    if (state.userLocation) {
+      const position = screenPositionForCafe(state.userLocation);
+      const userPin = document.createElement('span');
+      userPin.className = 'retro-user-pin';
+      userPin.style.left = `${position.left.toFixed(1)}px`;
+      userPin.style.top = `${position.top.toFixed(1)}px`;
+      userPin.setAttribute('aria-label', '내 위치');
+      cafePins.push(userPin);
+    }
+    markerLayer.replaceChildren(...cafePins);
+  }
+
+
+  function hydrateCafeOsmMaps() {
+    root.querySelectorAll('[data-cafe-osm-map]').forEach((surface) => {
+      const selected = selectedCafe();
+      const baseLayer = surface.querySelector('[data-cafe-osm-base]');
+      const markerLayer = surface.querySelector('[data-cafe-osm-markers]');
+      if (!selected || !baseLayer || !markerLayer) return;
+
+      const items = [selected, ...activeCafes()
+        .filter((cafe) => cafe.id !== selected.id && cafe.area === selected.area)
+        .slice(0, 4)];
+      const viewport = retroMapProvider.normalizeViewport({
+        latitude: selected.latitude,
+        longitude: selected.longitude,
+        zoom: retroNeighborhoodMapZoom,
+      });
+      const rect = surface.getBoundingClientRect();
+      const surfaceSize = { width: rect.width || surface.clientWidth || 560, height: rect.height || surface.clientHeight || 360 };
+      retroMapProvider.renderBaseLayer({ container: baseLayer, viewport, surfaceSize });
+      const pins = items.map((cafe, index) => {
+        const position = screenPositionForCafeInViewport(cafe, viewport, surfaceSize);
+        const pin = document.createElement('button');
+        pin.type = 'button';
+        pin.className = `retro-map-pin cafe-osm-pin ${cafe.id === selected.id ? 'is-active' : ''}`;
+        pin.style.left = `${position.left.toFixed(1)}px`;
+        pin.style.top = `${position.top.toFixed(1)}px`;
+        pin.title = cafe.name;
+        pin.setAttribute('aria-label', `${cafe.name} OSM 지도 핀`);
+        pin.dataset.retroSelectCafe = cafe.id;
+        pin.textContent = cafe.id === selected.id ? '★' : String(index).padStart(2, '0');
+        return pin;
+      });
+      markerLayer.replaceChildren(...pins);
+    });
+  }
+
   function programStatus(programId) {
     const items = activeCafes();
     const selected = selectedCafe();
@@ -296,7 +502,8 @@ export function createRetroDesktop({
 
     if (programId === 'local-zine') return `${items.length ? state.storyIndex + 1 : 0} / ${items.length} STORIES · BUSAN`;
     if (programId === 'cafe-index') return `${filteredIndexCafes().length} RECORDS · ${items.length} ACTIVE · INFORMATION VERIFIED`;
-    if (programId === 'brewmap-map') return selected ? `${selected.name} · ${selected.area} · MAP READY` : 'NO LOCATION SELECTED';
+    if (programId === 'brewmap-map') return selected ? `${selected.name} · ${selected.area} · CAFE SKETCH` : 'NO CAFE SELECTED';
+    if (programId === 'nearby-map') return `${items.length} CAFES · ${state.userLocation ? 'MY LOCATION ON' : 'BUSAN DEFAULT'} · MAP READY`;
     return `${savedCount} SAVED · ${Object.values(state.visits).reduce((sum, visit) => sum + Number(visit.count || 0), 0)} VISITS`;
   }
 
@@ -463,22 +670,35 @@ export function createRetroDesktop({
     }).join('');
 
     return `
-      <section class="brewmap-program">
-        <div class="retro-map-surface" role="img" aria-label="부산 카페 위치 미니맵">
-          <div class="retro-map-grid" aria-hidden="true"></div>
-          ${pins}
+      <section class="cafe-sketch-program">
+        <div class="cafe-sketch-panel">
+          <div class="cafe-sketch-toolbar">
+            <span>CAFE GUIDE MAP</span>
+            <button type="button" data-open-program="nearby-map">주변 일반 지도 열기</button>
+          </div>
+          <div class="cafe-sketch-surface cafe-osm-surface" role="img" aria-label="OpenStreetMap 배경으로 표시한 선택 카페 주변 지도" data-cafe-osm-map>
+            <div class="retro-map-base" data-cafe-osm-base aria-hidden="true"></div>
+            <div class="retro-map-markers" data-cafe-osm-markers></div>
+            <a class="retro-map-attribution" href="${escapeHtml(retroMapProvider.attribution?.url || '#')}" target="_blank" rel="noreferrer">${escapeHtml(retroMapProvider.attribution?.label || '지도 데이터')}</a>
+          </div>
+          <p class="cafe-sketch-caption">BREWMAP.EXE는 선택한 카페를 중심으로 OpenStreetMap 배경을 표시합니다. 핀치 줌과 드래그 탐색은 NEARBY_MAP.EXE에서 사용할 수 있습니다.</p>
         </div>
         <aside class="map-record">
           ${selected ? `
-            <p class="retro-kicker">PIN SELECTED</p>
+            <p class="retro-kicker">CAFE SKETCH</p>
             <h3>${escapeHtml(selected.name)}</h3>
             <p>${escapeHtml(selected.city)} · ${escapeHtml(selected.area)}</p>
             <p>${escapeHtml(selected.address)}</p>
+            <dl class="retro-data-grid">
+              <div><dt>COFFEE</dt><dd>${escapeHtml(primaryTags(selected, tagLabel))}</dd></div>
+              <div><dt>VERIFY</dt><dd>${escapeHtml(verificationSourceLabel(selected.source))}</dd></div>
+              <div><dt>NEARBY</dt><dd>${nearbyItems.length ? nearbyItems.map((cafe) => cafe.name).join(' · ') : '같은 권역 주변 카페 준비 중'}</dd></div>
+            </dl>
             <div class="retro-action-row">
               <button type="button" data-open-program="cafe-index" data-retro-select-cafe="${escapeHtml(selected.id)}">인덱스 열기</button>
               <button type="button" class="${isSaved ? 'is-saved' : ''}" aria-pressed="${isSaved}" data-retro-save="${escapeHtml(selected.id)}">${isSaved ? '저장됨' : '장부에 저장'}</button>
             </div>
-          ` : '<div class="retro-empty"><h3>NO LOCATION</h3><p>카페를 선택하면 지도 핀이 강조됩니다.</p></div>'}
+          ` : '<div class="retro-empty"><h3>NO PIN</h3><p>지도 핀을 선택하면 카페 정보가 표시됩니다.</p></div>'}
         </aside>
       </section>
     `;
@@ -574,6 +794,7 @@ export function createRetroDesktop({
     if (programId === 'local-zine') return renderLocalZineProgram();
     if (programId === 'cafe-index') return renderCafeIndexProgram();
     if (programId === 'brewmap-map') return renderMapProgram();
+    if (programId === 'nearby-map') return renderNearbyMapProgram();
     return renderBrewLogProgram();
   }
 
@@ -603,6 +824,7 @@ export function createRetroDesktop({
     const taskbar = programDefinitions.map(renderTaskbarButton).join('');
     const time = new Intl.DateTimeFormat('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false }).format(state.clock);
 
+    clampWindowsToCanvas();
     root.innerHTML = `
       <div class="retro-desktop" data-retro-shell>
         <header class="retro-desktop-topbar">
@@ -628,6 +850,16 @@ export function createRetroDesktop({
         </footer>
       </div>
     `;
+    hydrateRetroMap();
+    hydrateCafeOsmMaps();
+  }
+
+  function clampWindowsToCanvas() {
+    programDefinitions.forEach((definition) => {
+      const windowState = state.windows[definition.id];
+      if (!windowState || windowState.mode !== 'normal') return;
+      moveWindow(definition.id, windowState.position.x, windowState.position.y);
+    });
   }
 
   function boundsForWindow(windowState) {
@@ -648,6 +880,34 @@ export function createRetroDesktop({
       x: clamp(x, 12, bounds.maxX),
       y: clamp(y, 12, bounds.maxY),
     };
+  }
+
+
+  function requestRetroUserLocation() {
+    if (!navigator.geolocation) {
+      state.locationStatus = '현재 위치를 확인할 수 없습니다.';
+      render();
+      return;
+    }
+
+    state.locationStatus = '현재 위치 확인 중...';
+    render();
+    navigator.geolocation.getCurrentPosition((position) => {
+      state.userLocation = {
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+      };
+      state.mapViewport = retroMapProvider.normalizeViewport({
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        zoom: Math.min(retroMapZoomRange.max, 15),
+      });
+      state.locationStatus = '현재 위치 기준으로 주변 카페를 표시합니다.';
+      openProgram('nearby-map');
+    }, () => {
+      state.locationStatus = '현재 위치 권한을 확인할 수 없습니다. 부산 기본 지도로 표시합니다.';
+      render();
+    }, { enableHighAccuracy: false, maximumAge: 300000, timeout: 6000 });
   }
 
   function handleClick(event) {
@@ -696,7 +956,6 @@ export function createRetroDesktop({
     const mapOpen = event.target.closest('[data-retro-open-map]');
     if (mapOpen) {
       selectCafe(mapOpen.dataset.retroOpenMap);
-      openProgram('cafe-index');
       openProgram('brewmap-map');
       return;
     }
@@ -822,12 +1081,102 @@ export function createRetroDesktop({
     render();
   }
 
+
+  function activeTouchPoints() {
+    return [...(mapDragState?.points?.values() || [])];
+  }
+
+  function midpoint(points) {
+    return { x: (points[0].clientX + points[1].clientX) / 2, y: (points[0].clientY + points[1].clientY) / 2 };
+  }
+
+  function distance(points) {
+    return Math.hypot(points[0].clientX - points[1].clientX, points[0].clientY - points[1].clientY);
+  }
+
+  function handleMapPointerDown(event) {
+    const surface = event.target.closest('[data-retro-map-surface]');
+    if (!surface || event.target.closest('button, a')) return;
+    surface.setPointerCapture?.(event.pointerId);
+    const center = projectMap(state.mapViewport.latitude, state.mapViewport.longitude);
+    if (!mapDragState) mapDragState = { surface, points: new Map(), originCenter: center, originZoom: state.mapViewport.zoom };
+    mapDragState.points.set(event.pointerId, { clientX: event.clientX, clientY: event.clientY });
+    mapDragState.originCenter = center;
+    mapDragState.originZoom = state.mapViewport.zoom;
+    const points = activeTouchPoints();
+    if (points.length >= 2) {
+      mapDragState.originDistance = distance(points);
+      mapDragState.originMidpoint = midpoint(points);
+    } else {
+      mapDragState.startX = event.clientX;
+      mapDragState.startY = event.clientY;
+    }
+    surface.classList.add('is-dragging');
+    event.preventDefault();
+  }
+
+  function handleMapPointerMove(event) {
+    if (!mapDragState?.points?.has(event.pointerId)) return;
+    mapDragState.points.set(event.pointerId, { clientX: event.clientX, clientY: event.clientY });
+    const points = activeTouchPoints();
+    if (points.length >= 2 && mapDragState.originDistance) {
+      const scale = distance(points) / mapDragState.originDistance;
+      const nextZoom = clamp(Math.round(mapDragState.originZoom + Math.log2(scale)), retroMapZoomRange.min, retroMapZoomRange.max);
+      const currentMidpoint = midpoint(points);
+      const zoomScale = 2 ** (nextZoom - mapDragState.originZoom);
+      setRetroMapViewportFromCenterPoint({
+        x: mapDragState.originCenter.x * zoomScale - (currentMidpoint.x - mapDragState.originMidpoint.x),
+        y: mapDragState.originCenter.y * zoomScale - (currentMidpoint.y - mapDragState.originMidpoint.y),
+      }, nextZoom);
+    } else {
+      setRetroMapViewportFromCenterPoint({
+        x: mapDragState.originCenter.x - (event.clientX - mapDragState.startX),
+        y: mapDragState.originCenter.y - (event.clientY - mapDragState.startY),
+      });
+    }
+    render();
+    event.preventDefault();
+  }
+
+  function stopMapDrag(event) {
+    if (!mapDragState) return;
+    if (event?.pointerId != null) mapDragState.points.delete(event.pointerId);
+    if (mapDragState.points.size) return;
+    mapDragState.surface?.classList.remove('is-dragging');
+    mapDragState = null;
+  }
+
+  function handleMapWheel(event) {
+    if (!event.target.closest('[data-retro-map-surface]')) return;
+    event.preventDefault();
+    zoomRetroMapBy(event.deltaY < 0 ? 1 : -1, event.clientX, event.clientY);
+  }
+
+  function handleMapKeydown(event) {
+    if (!event.target.closest('[data-retro-map-surface]')) return;
+    const actions = {
+      '+': () => zoomRetroMapBy(1),
+      '=': () => zoomRetroMapBy(1),
+      '-': () => zoomRetroMapBy(-1),
+    };
+    const action = actions[event.key];
+    if (!action) return;
+    event.preventDefault();
+    action();
+  }
+
   root.addEventListener('click', handleClick);
   root.addEventListener('submit', handleSubmit);
   root.addEventListener('pointerdown', startDrag);
+  root.addEventListener('pointerdown', handleMapPointerDown);
+  root.addEventListener('wheel', handleMapWheel, { passive: false });
+  root.addEventListener('keydown', handleMapKeydown);
   window.addEventListener('pointermove', continueDrag);
+  window.addEventListener('pointermove', handleMapPointerMove);
   window.addEventListener('pointerup', stopDrag);
+  window.addEventListener('pointerup', stopMapDrag);
   window.addEventListener('pointercancel', stopDrag);
+  window.addEventListener('pointercancel', stopMapDrag);
   window.addEventListener('resize', () => {
     if (routeActive) render();
   });
