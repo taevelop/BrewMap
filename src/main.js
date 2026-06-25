@@ -1111,7 +1111,7 @@ function renderTagList() {
     const info = document.createElement('div');
     const edit = document.createElement('button');
     item.className = 'tag-admin-item';
-    info.innerHTML = `<strong>${escapeHtml(capability.label)}</strong><span>${escapeHtml(capability.key)} · ${escapeHtml(capability.group)}${capability.isMvpFilter ? ' · MVP' : ''}</span>`;
+    info.innerHTML = `<strong>${escapeHtml(capability.label)}</strong><span>${escapeHtml(capability.key)} · ${escapeHtml(capability.group)}${capability.isMvpFilter ? ' · 공개 필터' : ''}</span>`;
     edit.type = 'button';
     edit.textContent = '편집';
     edit.addEventListener('click', () => selectTagForEdit(capability.key));
