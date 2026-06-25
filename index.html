@@ -3,9 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="마시고 싶은 커피가 있는 카페를 찾는 부산 커피맵 MVP" />
+    <meta name="description" content="메뉴와 최근 확인 정보를 기준으로 부산에서 원하는 커피를 판매하는 카페를 찾아보세요." />
     <meta name="theme-color" content="#2D1B12" />
-    <title>BrewMap | Coffee Map MVP</title>
+    <title>브루맵 | 부산에서 원하는 커피를 찾는 지도</title>
     <link rel="icon" href="./favicon.ico" sizes="any" />
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
@@ -32,13 +32,13 @@
       <section class="search-shell" id="legacy-home">
         <header class="search-header">
           <div class="search-intro">
-            <p class="eyebrow">FIND YOUR COFFEE</p>
-            <h1>마시고 싶은 커피를 찾을지도</h1>
-            <p>부산 권역에서 원하는 커피가 실제로 가능한지, 최근 검증 정보와 함께 빠르게 확인하세요.</p>
+            <p class="eyebrow">커피 찾기</p>
+            <h1>마시고 싶은 커피를 파는 카페를 찾아보세요</h1>
+            <p>메뉴 사진과 최근 확인 정보를 기준으로 부산 카페의 커피 제공 여부를 확인합니다.</p>
             <div class="hero-proof" aria-label="BrewMap 핵심 기준">
               <span><strong>별점 없음</strong> 커피 가능 여부 우선</span>
               <span><strong>검증 표시</strong> 출처 · 최근 확인일</span>
-              <span><strong>부산 베타</strong> 서울 확장 준비</span>
+              <span><strong>부산 카페</strong> 지역별 검색</span>
             </div>
           </div>
           <form class="search-card" role="search" data-search-form>
@@ -60,24 +60,24 @@
         <div class="search-layout">
           <aside class="filter-panel" aria-labelledby="filter-heading">
             <div class="panel-heading">
-              <p class="eyebrow">Filters</p>
+              <p class="eyebrow">검색 조건</p>
               <h2 id="filter-heading">커피 조건</h2>
             </div>
-            <div class="filter-row" aria-label="MVP 커피 필터" data-filter-row></div>
+            <div class="filter-row" aria-label="커피 필터" data-filter-row></div>
             <div class="quality-panel" aria-label="BrewMap 데이터 기준">
               <span><strong>기준</strong> 리뷰/별점 제외</span>
               <span><strong>검증</strong> 출처와 최근 확인일 표시</span>
-              <span><strong>범위</strong> 부산 우선 · 서울 확장 준비</span>
+              <span><strong>지역</strong> 부산 카페 우선</span>
             </div>
           </aside>
 
           <section class="result-panel" id="cafes" aria-label="BrewMap 카페 검색 결과">
             <div class="result-heading">
               <div>
-                <p class="eyebrow">Coffee Results</p>
-                <h2>커피 가능한 카페</h2>
+                <p class="eyebrow">검색 결과</p>
+                <h2>조건에 맞는 카페</h2>
               </div>
-              <strong data-result-count aria-live="polite">0개 카페</strong>
+              <strong data-result-count aria-live="polite">불러오는 중</strong>
             </div>
             <div class="cafe-grid" data-cafe-grid></div>
           </section>
@@ -100,21 +100,21 @@
 
       <section class="ops-grid">
         <article class="panel saved-panel" id="saved">
-          <p class="eyebrow">Saved</p>
-          <h2>기본 저장 리스트</h2>
-          <p>로그인 사용자는 “가보고 싶은 곳” 기본 리스트에 카페를 저장하고 해제할 수 있어야 합니다.</p>
-          <div class="saved-summary"><strong data-saved-count>0개</strong><span>가보고 싶은 곳</span></div>
+          <p class="eyebrow">저장한 카페</p>
+          <h2>나중에 볼 카페</h2>
+          <p>마음에 드는 카페를 저장해 두고 나중에 다시 확인하세요.</p>
+          <div class="saved-summary"><strong data-saved-count>0개</strong><span>저장됨</span></div><p class="saved-login-note">저장한 카페를 여러 기기에서 확인하려면 로그인하세요.</p><div class="saved-login-actions"><a href="#saved" data-login-action>로그인</a><button type="button" data-login-later>둘러보기 계속</button></div><p class="form-status" data-saved-status aria-live="polite"></p>
           <ul class="saved-list" data-saved-list></ul>
         </article>
         <article class="panel report-panel" id="report">
-          <p class="eyebrow">Report</p>
+          <p class="eyebrow">정보 제보</p>
           <h2>정보 수정 제보</h2>
-          <p>추가, 수정, 삭제, 폐업, 메뉴 변경 제보를 받아 검증 큐로 보냅니다.</p>
+          <p>카페 정보가 다르다면 제보해 주세요. 운영 검토 후 반영합니다.</p>
           <form class="report-form" data-report-form>
             <label>카페<select data-report-cafe></select></label>
             <label>제보 유형<select data-report-type><option value="update">수정</option><option value="add">추가</option><option value="delete">삭제</option><option value="closed">폐업</option><option value="menu_change">메뉴 변경</option></select></label>
             <label>제보 내용<textarea data-report-detail rows="4" placeholder="예: 디카페인 메뉴가 없어졌습니다." required></textarea></label>
-            <button type="submit">검증 큐로 보내기</button>
+            <button type="submit">정보 제보하기</button>
             <p class="form-status" data-report-status aria-live="polite"></p>
           </form>
         </article>

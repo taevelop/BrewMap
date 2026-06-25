@@ -1,4 +1,4 @@
-﻿:root {
+:root {
   color-scheme: light;
   color: #2d1b12;
   background: #fffaf2;
@@ -1078,6 +1078,51 @@ h3 {
   font-weight: 900;
 }
 
+.saved-login-note {
+  margin: 0 0 10px;
+  color: #5f6c68;
+  line-height: 1.55;
+}
+
+.saved-login-actions,
+.empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.saved-login-actions a,
+.saved-login-actions button,
+.empty-actions button,
+.empty-state button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #fff;
+  background: #173f35;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.saved-login-actions button,
+.empty-actions button[data-empty-report] {
+  border: 1px solid #d9dfda;
+  color: #34423e;
+  background: #fff;
+}
+
+.loading-state,
+.error-state {
+  min-height: 220px;
+  align-content: center;
+}
+
+.error-state button {
+  justify-self: start;
+  background: #a1372b;
+}
 .saved-list,
 .admin-panel ul {
   display: grid;
