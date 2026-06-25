@@ -8,8 +8,33 @@ body.is-retro-hybrid .legacy-app-mounts {
   border-top: 2px solid var(--brewmap-espresso);
 }
 
+body.is-retro-main {
+  overflow: hidden;
+}
+
 .retro-main-shell {
   padding-top: 0;
+}
+
+.retro-public-link {
+  position: fixed;
+  left: 18px;
+  bottom: 18px;
+  z-index: 8;
+  margin: 0;
+}
+
+.retro-public-link a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 238, 198, .7);
+  color: #fff5dc;
+  background: rgba(45, 27, 18, .86);
+  text-decoration: none;
+  font-weight: 800;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, .28);
 }
 
 .legacy-app-mounts[hidden] {

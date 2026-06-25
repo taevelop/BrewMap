@@ -1,5 +1,4 @@
 import { getMapProvider } from './map-services.js';
-import { createRetroDesktop } from './retro-desktop.js?v=20260624-2';
 
 const capabilityCatalog = [
   { key: 'filter_coffee', label: '필터커피', group: '커피 종류', isMvpFilter: true },
@@ -1664,6 +1663,7 @@ registerServiceWorker();
 await loadSeedCafes();
 savedCafeIds = readSavedCafeIds();
 if (retroDesktopRoot) {
+  const { createRetroDesktop } = await import('./retro-desktop.js?v=20260624-2');
   retroDesktop = createRetroDesktop({
     root: retroDesktopRoot,
     standardRoots: document.querySelectorAll('.search-shell, .ops-grid'),
