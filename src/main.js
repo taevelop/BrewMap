@@ -189,6 +189,7 @@ const csvImport = document.querySelector('[data-csv-import]');
 const csvSummary = document.querySelector('[data-csv-summary]');
 const csvErrors = document.querySelector('[data-csv-errors]');
 const adminLogList = document.querySelector('[data-admin-log-list]');
+const adminAuthStatus = document.querySelector('[data-admin-auth-status]');
 
 const adminCafeFields = {
   id: document.querySelector('[data-admin-cafe-id]'),
@@ -230,6 +231,7 @@ const hasSavedSurface = Boolean(savedCount && savedList);
 const hasReportSurface = Boolean(reportForm && reportCafeSelect && reportTypeSelect && reportDetailInput);
 const hasDetailSurface = Boolean(detailDialog && detailBody && detailClose);
 const hasAdminSurface = Boolean(adminCafeForm && adminTagForm && csvInput);
+let adminAuthorized = !hasAdminSurface;
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (char) => ({
@@ -589,6 +591,46 @@ function setAdminCafeStatus(message) {
 
 function setAdminTagStatus(message) {
   if (adminTagStatus) adminTagStatus.textContent = message;
+}
+
+function setAdminAuthStatus(message, state = '') {
+  if (!adminAuthStatus) return;
+  adminAuthStatus.textContent = message;
+  adminAuthStatus.dataset.state = state;
+}
+
+function setAdminControlsEnabled(isEnabled) {
+  if (!hasAdminSurface) return;
+  document.querySelectorAll('[data-admin-cafe-form] input, [data-admin-cafe-form] select, [data-admin-cafe-form] button, [data-admin-tag-form] input, [data-admin-tag-form] button, [data-csv-input], [data-csv-sample], [data-csv-validate], [data-csv-import], [data-admin-queue] button').forEach((control) => {
+    control.disabled = !isEnabled;
+  });
+}
+
+function requireAdminAccess() {
+  if (!hasAdminSurface || adminAuthorized) return true;
+  setAdminAuthStatus('Admin session is required before changing operational data.', 'error');
+  setAdminCafeStatus('Admin session is required.');
+  setAdminTagStatus('Admin session is required.');
+  return false;
+}
+
+async function verifyAdminSession() {
+  if (!hasAdminSurface) return;
+  adminAuthorized = false;
+  setAdminControlsEnabled(false);
+  setAdminAuthStatus('Checking admin session...', 'pending');
+
+  try {
+    const response = await fetch('/api/admin/session', { cache: 'no-store', credentials: 'same-origin' });
+    if (!response.ok) throw new Error('Admin session check failed with ' + response.status);
+    const session = await response.json();
+    adminAuthorized = session.role === 'admin';
+  } catch {
+    adminAuthorized = false;
+  }
+
+  setAdminControlsEnabled(adminAuthorized);
+  setAdminAuthStatus(adminAuthorized ? 'Admin session verified.' : 'Admin session required. Open this page through the protected /admin route.', adminAuthorized ? 'ok' : 'error');
 }
 
 function updateTopLayerOffset() {
@@ -982,6 +1024,7 @@ function applyReportSideEffect(report) {
 }
 
 function approveReport(reportId) {
+  if (!requireAdminAccess()) return;
   const report = adminQueue.find((item) => item.id === reportId);
   if (!report) return;
 
@@ -992,6 +1035,7 @@ function approveReport(reportId) {
 }
 
 function rejectReport(reportId) {
+  if (!requireAdminAccess()) return;
   const report = adminQueue.find((item) => item.id === reportId);
   if (!report) return;
 
@@ -1213,6 +1257,7 @@ function cafeDataFromAdminForm() {
 
 function saveCafeFromAdmin(event) {
   event.preventDefault();
+  if (!requireAdminAccess()) return;
   const result = cafeDataFromAdminForm();
   if (result.error) {
     setAdminCafeStatus(result.error);
@@ -1246,6 +1291,7 @@ function saveCafeFromAdmin(event) {
 
 function deleteSelectedCafe() {
   if (!hasAdminSurface) return;
+  if (!requireAdminAccess()) return;
   if (!selectedAdminCafeId) {
     setAdminCafeStatus('삭제할 카페를 먼저 선택해 주세요.');
     return;
@@ -1290,6 +1336,7 @@ function resetTagForm() {
 
 function saveTagFromAdmin(event) {
   event.preventDefault();
+  if (!requireAdminAccess()) return;
   const key = adminTagFields.key.value.trim();
   const label = adminTagFields.label.value.trim();
   const group = adminTagFields.group.value.trim();
@@ -1454,6 +1501,7 @@ function renderCsvValidation(result) {
 
 function validateCsvFromAdmin() {
   if (!csvInput) return;
+  if (!requireAdminAccess()) return;
   lastCsvSource = csvInput.value;
   lastCsvValidation = validateCsvImportText(lastCsvSource);
   renderCsvValidation(lastCsvValidation);
@@ -1509,6 +1557,7 @@ async function loadSeedCafes() {
 
 function importCsvRows() {
   if (!csvInput || !csvSummary || !csvImport) return;
+  if (!requireAdminAccess()) return;
   if (!lastCsvValidation || lastCsvSource !== csvInput.value) validateCsvFromAdmin();
   if (!lastCsvValidation || lastCsvValidation.errors.length) return;
 
@@ -1572,6 +1621,7 @@ function cafeToCsvRecord(cafe) {
 
 function loadCsvSample() {
   if (!csvInput) return;
+  if (!requireAdminAccess()) return;
   const header = [...csvRequiredColumns, ...csvOptionalColumns].join(',');
   csvInput.value = [header, ...cafes.slice(0, 3).map(cafeToCsvRecord)].join('\n');
   validateCsvFromAdmin();
@@ -1679,3 +1729,4 @@ if (retroDesktopRoot) {
 resetCafeForm();
 resetTagForm();
 renderApp();
+await verifyAdminSession();
