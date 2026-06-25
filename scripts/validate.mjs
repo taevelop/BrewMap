@@ -2,6 +2,7 @@ import { access, readFile } from 'node:fs/promises';
 
 const requiredFiles = [
   'index.html',
+  'admin.html',
   'favicon.ico',
   'favicon.svg',
   'favicon-16x16.png',
@@ -36,6 +37,7 @@ const packageJson = await readFile('package.json', 'utf8');
 const buildScript = await readFile('scripts/build.mjs', 'utf8');
 const serveScript = await readFile('scripts/serve.mjs', 'utf8');
 const html = await readFile('index.html', 'utf8');
+const adminHtml = await readFile('admin.html', 'utf8');
 const js = await readFile('src/main.js', 'utf8');
 const mapServices = await readFile('src/map-services.js', 'utf8');
 const retroDesktopCss = await readFile('src/retro-desktop.css', 'utf8');
@@ -69,14 +71,15 @@ const checks = [
   ['JavaScript wires saved cafes', js.includes('data-saved-list') && js.includes('toggleSaved')],
   ['JavaScript wires report queue', js.includes('data-report-form') && js.includes('submitReport')],
   ['JavaScript wires cafe detail modal', js.includes('data-detail-dialog') && js.includes('openDetail')],
-  ['HTML defines Admin MVP workspace', html.includes('data-admin-cafe-form') && html.includes('data-admin-tag-form') && html.includes('data-csv-input')],
+  ['Public HTML omits Admin workspace', !html.includes('data-admin-cafe-form') && !html.includes('data-admin-tag-form') && !html.includes('data-csv-input') && !html.includes('href="#admin"')],
+  ['Admin HTML defines separated 운영 workspace', adminHtml.includes('data-admin-cafe-form') && adminHtml.includes('data-admin-tag-form') && adminHtml.includes('data-csv-input') && adminHtml.includes('운영자 전용')],
   ['JavaScript wires Admin cafe CRUD', js.includes('saveCafeFromAdmin') && js.includes('deleteSelectedCafe') && js.includes('renderAdminCafeList')],
   ['JavaScript wires Admin report review', js.includes('approveReport') && js.includes('rejectReport')],
   ['JavaScript wires Admin tag management', js.includes('saveTagFromAdmin') && js.includes('renderTagList')],
   ['JavaScript wires CSV validation and import', js.includes('validateCsvImportText') && js.includes('importCsvRows')],
   ['JavaScript loads Seed CSV as cafe data source', js.includes('loadSeedCafes') && js.includes('./data/seed-cafes.csv')],
   ['JavaScript labels internal status values for display', js.includes('verificationSourceLabel') && js.includes('adminActionLabel') && js.includes('관리자 확인')],
-  ['HTML labels Admin source choices for display', html.includes('관리자 확인') && html.includes('사용자 제보') && !html.includes('>admin_verified<')],
+  ['Admin HTML labels source choices for display', adminHtml.includes('관리자 확인') && adminHtml.includes('사용자 제보') && !adminHtml.includes('>admin_verified<')],
   ['JavaScript exposes all required map link outs', js.includes('mapLinksMarkup') && ['naver', 'kakao', 'google'].every((provider) => js.includes(provider))],
   ['HTML defines real map layers', html.includes('data-map-base-layer') && html.includes('data-map-marker-layer') && html.includes('data-location-action')],
   ['HTML defines map viewport controls', html.includes('data-map-zoom-in') && html.includes('data-map-zoom-out') && html.includes('tabindex="0"')],
@@ -97,7 +100,7 @@ const checks = [
   ['CSS defines responsive layout', css.includes('@media (max-width: 900px)')],
   ['CSS keeps Korean words together', css.includes('word-break: keep-all') && css.includes('overflow-wrap: break-word')],
   ['CSS styles Admin MVP workspace', css.includes('.admin-workspace') && css.includes('.admin-grid')],
-  ['Service worker caches static app shell', serviceWorker.includes('APP_SHELL') && serviceWorker.includes('manifest.webmanifest') && serviceWorker.includes('favicon.ico') && serviceWorker.includes('favicon.svg') && serviceWorker.includes('favicon-32x32.png') && serviceWorker.includes('apple-touch-icon.png') && serviceWorker.includes('android-chrome-192x192.png') && serviceWorker.includes('android-chrome-512x512.png') && serviceWorker.includes('assets/brewmap-brand-icon.svg') && serviceWorker.includes('assets/brewmap-cafe-marker.svg') && serviceWorker.includes('src/map-services.js') && serviceWorker.includes('data/seed-cafes.csv')],
+  ['Service worker caches static app shell', serviceWorker.includes('APP_SHELL') && serviceWorker.includes('admin.html') && serviceWorker.includes('manifest.webmanifest') && serviceWorker.includes('favicon.ico') && serviceWorker.includes('favicon.svg') && serviceWorker.includes('favicon-32x32.png') && serviceWorker.includes('apple-touch-icon.png') && serviceWorker.includes('android-chrome-192x192.png') && serviceWorker.includes('android-chrome-512x512.png') && serviceWorker.includes('assets/brewmap-brand-icon.svg') && serviceWorker.includes('assets/brewmap-cafe-marker.svg') && serviceWorker.includes('src/map-services.js') && serviceWorker.includes('data/seed-cafes.csv')],
   ['Service worker caches versioned retro desktop module', serviceWorker.includes('`./src/retro-desktop.js?v=${ASSET_VERSION}`,') && !serviceWorker.includes('./src/retro-desktop.js?v=,')],
   ['Dev server serves web app manifest MIME type', serveScript.includes('.webmanifest') && serveScript.includes('application/manifest+json')],
   ['Scope includes required Admin work', scope.includes('관리자 페이지') && scope.includes('CSV Import')],
@@ -105,6 +108,7 @@ const checks = [
   ['Seed CSV is UTF-8 BOM for Excel', seedBytes[0] === 0xef && seedBytes[1] === 0xbb && seedBytes[2] === 0xbf],
   ['Seed CSV includes Busan MVP area rows', seed.includes('city,area') && ['busan', 'jeonpo', 'gwangan', 'haeundae'].every((area) => seed.includes(area))],
   ['Package exposes seed data QA command', packageJson.includes('"data:check"') && packageJson.includes('scripts/check-seed-data.mjs')],
+  ['Build includes admin HTML', buildScript.includes('admin.html') && buildScript.includes('dist/admin.html')],
   ['Build includes favicon files', buildScript.includes('favicon.ico') && buildScript.includes('dist/favicon.ico') && buildScript.includes('favicon.svg') && buildScript.includes('dist/favicon.svg') && buildScript.includes('favicon-16x16.png') && buildScript.includes('favicon-32x32.png')],
   ['Build includes Apple touch icon file', buildScript.includes('apple-touch-icon.png') && buildScript.includes('dist/apple-touch-icon.png')],
   ['Build includes Android home screen icon files', buildScript.includes('android-chrome-192x192.png') && buildScript.includes('dist/android-chrome-192x192.png') && buildScript.includes('android-chrome-512x512.png') && buildScript.includes('dist/android-chrome-512x512.png')],

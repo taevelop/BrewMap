@@ -219,6 +219,13 @@ let lastCsvValidation = null;
 let lastCsvSource = '';
 let retroDesktop = null;
 
+const hasPublicSurface = Boolean(searchForm && filterRow && cafeGrid && resultCount);
+const hasMapSurface = Boolean(mapSurface && mapBaseLayer && mapMarkerLayer);
+const hasSavedSurface = Boolean(savedCount && savedList);
+const hasReportSurface = Boolean(reportForm && reportCafeSelect && reportTypeSelect && reportDetailInput);
+const hasDetailSurface = Boolean(detailDialog && detailBody && detailClose);
+const hasAdminSurface = Boolean(adminCafeForm && adminTagForm && csvInput);
+
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (char) => ({
     '&': '&amp;',
@@ -299,15 +306,18 @@ function setMapViewportFromCenterPoint(centerPoint, zoom = mapViewport.zoom) {
 }
 
 function rerenderCurrentMap() {
+  if (!hasMapSurface) return;
   renderMapPins(filteredCafes(), { keepViewport: true });
 }
 
 function updateMapZoomControlState() {
+  if (!mapZoomInAction || !mapZoomOutAction) return;
   mapZoomInAction.disabled = mapViewport.zoom >= mapZoomRange.max;
   mapZoomOutAction.disabled = mapViewport.zoom <= mapZoomRange.min;
 }
 
 function renderMapAttribution() {
+  if (!hasMapSurface || !mapAttribution) return;
   const attribution = activeMapProvider.attribution;
   mapAttribution.hidden = !attribution;
   if (!attribution) return;
@@ -366,6 +376,7 @@ function fitMapToItems(items) {
 }
 
 function renderMapBaseLayer() {
+  if (!hasMapSurface) return;
   renderMapAttribution();
   activeMapProvider.renderBaseLayer({
     container: mapBaseLayer,
@@ -386,7 +397,7 @@ function screenPositionForCoordinates(latitude, longitude) {
 }
 
 function setMapStatus(message) {
-  mapStatus.textContent = message;
+  if (mapStatus) mapStatus.textContent = message;
 }
 
 function zoomMapTo(nextZoom) {
@@ -528,15 +539,15 @@ function mapLinksMarkup(cafe) {
 }
 
 function setReportStatus(message) {
-  reportStatus.textContent = message;
+  if (reportStatus) reportStatus.textContent = message;
 }
 
 function setAdminCafeStatus(message) {
-  adminCafeStatusText.textContent = message;
+  if (adminCafeStatusText) adminCafeStatusText.textContent = message;
 }
 
 function setAdminTagStatus(message) {
-  adminTagStatus.textContent = message;
+  if (adminTagStatus) adminTagStatus.textContent = message;
 }
 
 function updateTopLayerOffset() {
@@ -547,6 +558,7 @@ function updateTopLayerOffset() {
 }
 
 function renderFilters() {
+  if (!filterRow) return;
   filterRow.replaceChildren(...mvpCapabilities().map((capability) => {
     const button = document.createElement('button');
     button.type = 'button';
@@ -634,6 +646,7 @@ function renderCafeNeighborhoodMap(cafe) {
 }
 
 function renderMapPins(items, options = {}) {
+  if (!hasMapSurface) return;
   if (!options.keepViewport) fitMapToItems(items);
   renderMapBaseLayer();
   mapMarkerLayer.replaceChildren();
@@ -682,6 +695,7 @@ function renderMapPins(items, options = {}) {
 }
 
 function bindMapInteractions() {
+  if (!hasMapSurface || !mapZoomInAction || !mapZoomOutAction) return;
   mapZoomInAction.addEventListener('click', () => zoomMapBy(1));
   mapZoomOutAction.addEventListener('click', () => zoomMapBy(-1));
 
@@ -711,6 +725,7 @@ function bindMapInteractions() {
 }
 
 function renderCafeResults() {
+  if (!hasPublicSurface) return;
   const items = filteredCafes();
   resultCount.textContent = `${items.length}개 카페`;
   cafeGrid.replaceChildren(...(items.length ? items.map(renderCafe) : [renderEmptyState()]));
@@ -718,6 +733,7 @@ function renderCafeResults() {
 }
 
 function renderSavedList() {
+  if (!hasSavedSurface) return;
   const savedItems = cafes.filter((cafe) => cafe.status !== 'hidden' && savedCafeIds.has(cafe.id));
   savedCount.textContent = `${savedItems.length}개`;
 
@@ -746,6 +762,7 @@ function isReportReviewable(report) {
 }
 
 function renderAdminQueue() {
+  if (!adminQueueEl) return;
   adminQueueEl.replaceChildren(...adminQueue.map((report) => {
     const item = document.createElement('li');
     const title = document.createElement('strong');
@@ -779,6 +796,7 @@ function renderAdminQueue() {
 
 
 function renderReportOptions() {
+  if (!reportCafeSelect) return;
   const selectedValue = reportCafeSelect.value;
   const options = cafes.filter((cafe) => cafe.status !== 'hidden').map((cafe) => {
     const option = document.createElement('option');
@@ -795,6 +813,7 @@ function renderReportOptions() {
 }
 
 function startReport(cafeId) {
+  if (!hasReportSurface) return;
   const cafe = cafeById(cafeId);
   if (!cafe) return;
 
@@ -866,6 +885,7 @@ function rejectReport(reportId) {
 }
 
 function renderDetail(cafe) {
+  if (!hasDetailSurface) return;
   if (!cafe) return;
 
   const isSaved = savedCafeIds.has(cafe.id);
@@ -893,6 +913,7 @@ function renderDetail(cafe) {
 }
 
 function openDetail(cafeId) {
+  if (!hasDetailSurface) return;
   const cafe = cafeById(cafeId);
   if (!cafe) return;
 
@@ -902,15 +923,18 @@ function openDetail(cafeId) {
 }
 
 function closeDetail() {
+  if (!detailDialog) return;
   if (typeof detailDialog.close === 'function') detailDialog.close();
   else detailDialog.removeAttribute('open');
 }
 
 function readSelectedCapabilities() {
+  if (!adminCafeCapabilities) return new Set();
   return new Set([...adminCafeCapabilities.querySelectorAll('input:checked')].map((input) => input.value));
 }
 
 function renderAdminCapabilityControls(selected = readSelectedCapabilities()) {
+  if (!adminCafeCapabilities) return;
   const selectedSet = selected instanceof Set ? selected : new Set(selected);
   adminCafeCapabilities.replaceChildren(...capabilityCatalog.map((capability) => {
     const label = document.createElement('label');
@@ -927,6 +951,7 @@ function renderAdminCapabilityControls(selected = readSelectedCapabilities()) {
 }
 
 function renderAdminCafeList() {
+  if (!adminCafeList) return;
   const rows = cafes.map((cafe) => {
     const row = document.createElement('div');
     const info = document.createElement('div');
@@ -956,12 +981,14 @@ function renderAdminCafeList() {
 }
 
 function renderAdminCounts() {
+  if (!adminPendingCount || !adminCafeCount || !adminTagCount) return;
   adminPendingCount.textContent = `${adminQueue.filter(isReportReviewable).length}건`;
   adminCafeCount.textContent = `${cafes.length}개`;
   adminTagCount.textContent = `${capabilityCatalog.length}개`;
 }
 
 function renderTagList() {
+  if (!adminTagList) return;
   adminTagList.replaceChildren(...capabilityCatalog.map((capability) => {
     const item = document.createElement('div');
     const info = document.createElement('div');
@@ -977,6 +1004,7 @@ function renderTagList() {
 }
 
 function renderAdminLogs() {
+  if (!adminLogList) return;
   adminLogList.replaceChildren(...adminLogs.slice(0, 8).map((log) => {
     const item = document.createElement('li');
     const title = document.createElement('strong');
@@ -989,6 +1017,7 @@ function renderAdminLogs() {
 }
 
 function selectCafeForEdit(cafeId) {
+  if (!hasAdminSurface) return;
   const cafe = cafeById(cafeId);
   if (!cafe) return;
 
@@ -1013,6 +1042,7 @@ function selectCafeForEdit(cafeId) {
 }
 
 function resetCafeForm() {
+  if (!hasAdminSurface) return;
   selectedAdminCafeId = '';
   adminCafeForm.reset();
   adminCafeFields.id.readOnly = false;
@@ -1025,6 +1055,7 @@ function resetCafeForm() {
 }
 
 function cafeDataFromAdminForm() {
+  if (!hasAdminSurface) return { error: '관리자 화면을 찾을 수 없습니다.' };
   const id = adminCafeFields.id.value.trim();
   const latitude = Number(adminCafeFields.latitude.value);
   const longitude = Number(adminCafeFields.longitude.value);
@@ -1098,6 +1129,7 @@ function saveCafeFromAdmin(event) {
 }
 
 function deleteSelectedCafe() {
+  if (!hasAdminSurface) return;
   if (!selectedAdminCafeId) {
     setAdminCafeStatus('삭제할 카페를 먼저 선택해 주세요.');
     return;
@@ -1117,6 +1149,7 @@ function deleteSelectedCafe() {
 }
 
 function selectTagForEdit(key) {
+  if (!hasAdminSurface) return;
   const tag = capabilityCatalog.find((capability) => capability.key === key);
   if (!tag) return;
 
@@ -1130,6 +1163,7 @@ function selectTagForEdit(key) {
 }
 
 function resetTagForm() {
+  if (!hasAdminSurface) return;
   selectedAdminTagKey = '';
   adminTagForm.reset();
   adminTagFields.key.readOnly = false;
@@ -1284,6 +1318,7 @@ function validateCsvImportText(text) {
 }
 
 function renderCsvValidation(result) {
+  if (!csvSummary || !csvImport || !csvErrors) return;
   csvSummary.textContent = `${result.rowCount}행 중 ${result.validRows.length}행 통과, 오류 ${result.errors.length}건`;
   csvImport.disabled = result.errors.length > 0 || result.validRows.length === 0;
 
@@ -1300,6 +1335,7 @@ function renderCsvValidation(result) {
 }
 
 function validateCsvFromAdmin() {
+  if (!csvInput) return;
   lastCsvSource = csvInput.value;
   lastCsvValidation = validateCsvImportText(lastCsvSource);
   renderCsvValidation(lastCsvValidation);
@@ -1344,6 +1380,7 @@ async function loadSeedCafes() {
 }
 
 function importCsvRows() {
+  if (!csvInput || !csvSummary || !csvImport) return;
   if (!lastCsvValidation || lastCsvSource !== csvInput.value) validateCsvFromAdmin();
   if (!lastCsvValidation || lastCsvValidation.errors.length) return;
 
@@ -1406,6 +1443,7 @@ function cafeToCsvRecord(cafe) {
 }
 
 function loadCsvSample() {
+  if (!csvInput) return;
   const header = [...csvRequiredColumns, ...csvOptionalColumns].join(',');
   csvInput.value = [header, ...cafes.slice(0, 3).map(cafeToCsvRecord)].join('\n');
   validateCsvFromAdmin();
@@ -1433,13 +1471,13 @@ function renderApp() {
   retroDesktop?.render();
 }
 
-searchForm.addEventListener('submit', (event) => {
+searchForm?.addEventListener('submit', (event) => {
   event.preventDefault();
   searchQuery = readSearchQuery();
   renderCafeResults();
 });
 
-searchInput.addEventListener('input', () => {
+searchInput?.addEventListener('input', () => {
   searchQuery = readSearchQuery();
   renderCafeResults();
 });
@@ -1458,15 +1496,15 @@ locationPresetActions.forEach((button) => {
   });
 });
 
-reportForm.addEventListener('submit', submitReport);
-locationAction.addEventListener('click', requestUserLocation);
+reportForm?.addEventListener('submit', submitReport);
+locationAction?.addEventListener('click', requestUserLocation);
 bindMapInteractions();
-detailClose.addEventListener('click', closeDetail);
-detailDialog.addEventListener('click', (event) => {
+detailClose?.addEventListener('click', closeDetail);
+detailDialog?.addEventListener('click', (event) => {
   if (event.target === detailDialog) closeDetail();
 });
 document.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape' && detailDialog.open) closeDetail();
+  if (event.key === 'Escape' && detailDialog?.open) closeDetail();
 });
 if (topLayer && typeof ResizeObserver !== 'undefined') {
   const topLayerResizeObserver = new ResizeObserver(updateTopLayerOffset);
@@ -1476,30 +1514,32 @@ window.addEventListener('resize', () => {
   updateTopLayerOffset();
   renderMapPins(filteredCafes());
 });
-adminCafeForm.addEventListener('submit', saveCafeFromAdmin);
-adminCafeNew.addEventListener('click', resetCafeForm);
-adminCafeDelete.addEventListener('click', deleteSelectedCafe);
-adminTagForm.addEventListener('submit', saveTagFromAdmin);
-adminTagNew.addEventListener('click', resetTagForm);
-csvSample.addEventListener('click', loadCsvSample);
-csvValidate.addEventListener('click', validateCsvFromAdmin);
-csvImport.addEventListener('click', importCsvRows);
+adminCafeForm?.addEventListener('submit', saveCafeFromAdmin);
+adminCafeNew?.addEventListener('click', resetCafeForm);
+adminCafeDelete?.addEventListener('click', deleteSelectedCafe);
+adminTagForm?.addEventListener('submit', saveTagFromAdmin);
+adminTagNew?.addEventListener('click', resetTagForm);
+csvSample?.addEventListener('click', loadCsvSample);
+csvValidate?.addEventListener('click', validateCsvFromAdmin);
+csvImport?.addEventListener('click', importCsvRows);
 
 updateTopLayerOffset();
 registerServiceWorker();
 await loadSeedCafes();
 savedCafeIds = readSavedCafeIds();
-retroDesktop = createRetroDesktop({
-  root: retroDesktopRoot,
-  standardRoots: document.querySelectorAll('.search-shell, .ops-grid, .admin-workspace'),
-  getCafes: () => cafes,
-  getSavedCafeIds: () => savedCafeIds,
-  getFilters: () => mvpCapabilities(),
-  toggleSaved,
-  tagLabel,
-  confidenceLabel,
-  verificationSourceLabel,
-});
+if (retroDesktopRoot) {
+  retroDesktop = createRetroDesktop({
+    root: retroDesktopRoot,
+    standardRoots: document.querySelectorAll('.search-shell, .ops-grid'),
+    getCafes: () => cafes,
+    getSavedCafeIds: () => savedCafeIds,
+    getFilters: () => mvpCapabilities(),
+    toggleSaved,
+    tagLabel,
+    confidenceLabel,
+    verificationSourceLabel,
+  });
+}
 resetCafeForm();
 resetTagForm();
 renderApp();

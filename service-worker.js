@@ -1,8 +1,9 @@
-const CACHE_NAME = 'brewmap-pwa-v14';
+const CACHE_NAME = 'brewmap-pwa-v15';
 const ASSET_VERSION = '20260624-2';
 const APP_SHELL = [
   './',
   './index.html',
+  './admin.html',
   './favicon.ico',
   './favicon.svg',
   './favicon-16x16.png',
