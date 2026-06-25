@@ -1,28 +1,17 @@
-import { cp, mkdir, rm } from 'node:fs/promises';
+import { spawn } from 'node:child_process';
 
-await rm('dist', { recursive: true, force: true });
-await mkdir('dist/src', { recursive: true });
-await mkdir('dist/data', { recursive: true });
-await mkdir('dist/assets', { recursive: true });
-await cp('index.html', 'dist/index.html');
-await cp('admin.html', 'dist/admin.html');
-await cp('retro.html', 'dist/retro.html');
-await cp('favicon.ico', 'dist/favicon.ico');
-await cp('favicon.svg', 'dist/favicon.svg');
-await cp('favicon-16x16.png', 'dist/favicon-16x16.png');
-await cp('favicon-32x32.png', 'dist/favicon-32x32.png');
-await cp('apple-touch-icon.png', 'dist/apple-touch-icon.png');
-await cp('android-chrome-192x192.png', 'dist/android-chrome-192x192.png');
-await cp('android-chrome-512x512.png', 'dist/android-chrome-512x512.png');
-await cp('assets/brewmap-brand-icon.svg', 'dist/assets/brewmap-brand-icon.svg');
-await cp('assets/brewmap-cafe-marker.svg', 'dist/assets/brewmap-cafe-marker.svg');
-await cp('assets/brewmap-cafe-marker-selected.svg', 'dist/assets/brewmap-cafe-marker-selected.svg');
-await cp('manifest.webmanifest', 'dist/manifest.webmanifest');
-await cp('service-worker.js', 'dist/service-worker.js');
-await cp('src/styles.css', 'dist/src/styles.css');
-await cp('src/retro-desktop.css', 'dist/src/retro-desktop.css');
-await cp('src/main.js', 'dist/src/main.js');
-await cp('src/retro-desktop.js', 'dist/src/retro-desktop.js');
-await cp('src/map-services.js', 'dist/src/map-services.js');
-await cp('data/seed-cafes.csv', 'dist/data/seed-cafes.csv');
-console.log('Built static BrewMap prototype to dist/');
+await import('./sync-public.mjs');
+
+const nextExecutable = process.platform === 'win32' ? 'next.cmd' : 'next';
+const build = spawn(nextExecutable, ['build'], {
+  stdio: 'inherit',
+  shell: false,
+});
+
+const exitCode = await new Promise((resolve) => {
+  build.on('close', resolve);
+});
+
+if (exitCode !== 0) {
+  process.exit(exitCode ?? 1);
+}
