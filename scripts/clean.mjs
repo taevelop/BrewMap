@@ -3,13 +3,20 @@ import { basename, dirname, isAbsolute, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const distPath = resolve(repoRoot, 'dist');
+const generatedDirectories = ['.next', 'out', 'dist', 'public'];
 
-const relativeDistPath = relative(repoRoot, distPath);
+function assertGeneratedPath(targetPath, expectedName) {
+  const relativeTargetPath = relative(repoRoot, targetPath);
 
-if (basename(distPath) !== 'dist' || relativeDistPath.startsWith('..') || isAbsolute(relativeDistPath)) {
-  throw new Error(`Refusing to clean unexpected path: ${distPath}`);
+  if (basename(targetPath) !== expectedName || relativeTargetPath.startsWith('..') || isAbsolute(relativeTargetPath)) {
+    throw new Error(`Refusing to clean unexpected path: ${targetPath}`);
+  }
 }
 
-await rm(distPath, { recursive: true, force: true });
-console.log('Removed generated dist/ output.');
+for (const directory of generatedDirectories) {
+  const targetPath = resolve(repoRoot, directory);
+  assertGeneratedPath(targetPath, directory);
+  await rm(targetPath, { recursive: true, force: true });
+}
+
+console.log('Removed generated Next.js outputs.');

@@ -4,10 +4,22 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "node scripts/serve.mjs",
-    "build": "node scripts/build.mjs",
+    "predev": "node scripts/sync-public.mjs",
+    "dev": "next dev",
+    "prebuild": "node scripts/sync-public.mjs",
+    "build": "next build",
+    "prestart": "node scripts/sync-public.mjs",
+    "start": "next start",
     "clean": "node scripts/clean.mjs",
     "data:check": "node scripts/check-seed-data.mjs",
     "lint": "node scripts/validate.mjs"
+  },
+  "dependencies": {
+    "next": "^16.2.9",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
+  "overrides": {
+    "postcss": "8.5.10"
   }
 }

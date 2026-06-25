@@ -1540,7 +1540,7 @@ async function loadSeedCafes() {
   }
 
   try {
-    const response = await fetch('./data/seed-cafes.csv', { cache: 'no-store' });
+    const response = await fetch('/data/seed-cafes.csv', { cache: 'no-store' });
     if (!response.ok) throw new Error(`Seed CSV request failed with ${response.status}`);
 
     const validation = validateCsvImportText(await response.text());
@@ -1585,7 +1585,7 @@ function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
 
   const register = () => {
-    navigator.serviceWorker.register('./service-worker.js').catch((error) => {
+    navigator.serviceWorker.register('/service-worker.js').catch((error) => {
       console.warn(`Service worker registration failed. ${error.message}`);
     });
   };
@@ -1707,26 +1707,32 @@ csvImport?.addEventListener('click', importCsvRows);
 loginAction?.addEventListener('click', () => setSavedStatus('로그인 기능은 서버 계정 연결 단계에서 제공됩니다. 지금은 이 기기에 임시 저장됩니다.'));
 loginLaterAction?.addEventListener('click', () => setSavedStatus('둘러보기를 계속합니다. 저장한 카페는 현재 기기에 남아 있습니다.'));
 
-updateTopLayerOffset();
-syncSearchStateFromUrl();
-registerServiceWorker();
-await loadSeedCafes();
-savedCafeIds = readSavedCafeIds();
-if (retroDesktopRoot) {
-  const { createRetroDesktop } = await import('./retro-desktop.js?v=20260624-2');
-  retroDesktop = createRetroDesktop({
-    root: retroDesktopRoot,
-    standardRoots: document.querySelectorAll('.search-shell, .ops-grid'),
-    getCafes: () => cafes,
-    getSavedCafeIds: () => savedCafeIds,
-    getFilters: () => mvpCapabilities(),
-    toggleSaved,
-    tagLabel,
-    confidenceLabel,
-    verificationSourceLabel,
-  });
+async function startBrewMap() {
+  updateTopLayerOffset();
+  syncSearchStateFromUrl();
+  registerServiceWorker();
+  await loadSeedCafes();
+  savedCafeIds = readSavedCafeIds();
+  if (retroDesktopRoot) {
+    const { createRetroDesktop } = await import('./retro-desktop.js');
+    retroDesktop = createRetroDesktop({
+      root: retroDesktopRoot,
+      standardRoots: document.querySelectorAll('.search-shell, .ops-grid'),
+      getCafes: () => cafes,
+      getSavedCafeIds: () => savedCafeIds,
+      getFilters: () => mvpCapabilities(),
+      toggleSaved,
+      tagLabel,
+      confidenceLabel,
+      verificationSourceLabel,
+    });
+  }
+  resetCafeForm();
+  resetTagForm();
+  renderApp();
+  await verifyAdminSession();
 }
-resetCafeForm();
-resetTagForm();
-renderApp();
-await verifyAdminSession();
+
+startBrewMap().catch((error) => {
+  console.error(`BrewMap failed to start. ${error.message}`);
+});
