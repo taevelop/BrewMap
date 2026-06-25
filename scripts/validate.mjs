@@ -68,6 +68,8 @@ const checks = [
   ['JavaScript defines MVP coffee capabilities', js.includes('filter_coffee') && js.includes('bean_sales')],
   ['JavaScript registers service worker', js.includes('registerServiceWorker') && js.includes('serviceWorker') && js.includes('./service-worker.js')],
   ['JavaScript wires cafe search', js.includes('data-search-form') && js.includes('matchesSearch')],
+  ['JavaScript syncs filters to URL state', js.includes('syncSearchStateFromUrl') && js.includes('writeSearchStateToUrl') && js.includes('URLSearchParams')],
+  ['JavaScript syncs result cards and map pins', js.includes('selectedCafeId') && js.includes('data-focus-map-action') && js.includes('data-cafe-card') && js.includes('is-selected')],
   ['JavaScript renders cafe primary tags with known label helper', js.includes('map(tagLabel)') && !js.includes('capabilityLabel')],
   ['JavaScript wires saved cafes', js.includes('data-saved-list') && js.includes('toggleSaved')],
   ['JavaScript wires report queue', js.includes('data-report-form') && js.includes('submitReport')],

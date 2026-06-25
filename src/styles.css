@@ -718,6 +718,16 @@ h3 {
   filter: var(--brewmap-marker-selected-filter);
 }
 
+.cafe-card.is-selected {
+  border-color: #173f35;
+  box-shadow: 0 0 0 3px rgba(23, 63, 53, .14), 0 18px 42px rgba(91, 50, 31, .1);
+}
+
+.map-pin.is-selected {
+  z-index: 5;
+  transform: translate(-50%, -100%) scale(1.16);
+  filter: var(--brewmap-marker-selected-filter);
+}
 .map-pin.confidence-a::before {
   background-image: url("../assets/brewmap-cafe-marker-selected.svg");
 }
