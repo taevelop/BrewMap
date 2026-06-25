@@ -1,5 +1,5 @@
--- BrewMap MVP schema for PostgreSQL / Supabase.
--- Cafe IDs are text because the seed CSV and UI use stable slugs.
+-- BrewMap MVP schema for Supabase.
+-- Run this on the empty BrewMapKR project before importing seed cafe data.
 
 create extension if not exists pgcrypto;
 

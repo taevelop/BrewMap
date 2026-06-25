@@ -12,7 +12,8 @@
     "start": "next start",
     "clean": "node scripts/clean.mjs",
     "data:check": "node scripts/check-seed-data.mjs",
-    "lint": "node scripts/validate.mjs"
+    "lint": "node scripts/validate.mjs",
+    "supabase:seed:sql": "node scripts/generate-supabase-seed.mjs"
   },
   "dependencies": {
     "next": "^16.2.9",

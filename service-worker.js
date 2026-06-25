@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = 'brewmap-pwa-v16';
+const CACHE_NAME = 'brewmap-pwa-v16';
 const ASSET_VERSION = '20260624-2';
 const APP_SHELL = [
   '/',
@@ -54,7 +54,7 @@ self.addEventListener('fetch', (event) => {
 
   if (request.method !== 'GET' || requestUrl.origin !== self.location.origin) return;
 
-  if (requestUrl.pathname === '/admin' || requestUrl.pathname.startsWith('/admin/') || requestUrl.pathname === '/admin.html' || requestUrl.pathname.startsWith('/api/admin/')) {
+  if (requestUrl.pathname === '/admin' || requestUrl.pathname.startsWith('/admin/') || requestUrl.pathname === '/admin.html' || requestUrl.pathname.startsWith('/api/')) {
     return;
   }
 

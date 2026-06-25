@@ -734,7 +734,7 @@ function renderErrorState() {
   card.querySelector('[data-retry-load]').addEventListener('click', async () => {
     cafeLoadState = 'loading';
     renderCafeResults();
-    await loadSeedCafes();
+    await loadCafes();
     renderApp();
   });
   return card;
@@ -1529,7 +1529,60 @@ function csvRecordToCafe(record) {
   };
 }
 
-async function loadSeedCafes() {
+function normalizeCafePayload(cafe) {
+  const links = cafe.links || {};
+  return {
+    id: String(cafe.id || ''),
+    name: String(cafe.name || ''),
+    city: cityLabels[cafe.city] || cafe.city || '',
+    area: areaLabels[cafe.area] || cafe.area || '',
+    address: cafe.address || '',
+    latitude: Number(cafe.latitude),
+    longitude: Number(cafe.longitude),
+    capabilities: Array.isArray(cafe.capabilities) ? cafe.capabilities.filter(Boolean) : [],
+    confidence: cafe.confidence || 'X',
+    verifiedAt: cafe.verifiedAt || '',
+    source: cafe.source || 'admin_verified',
+    status: cafe.status || 'active',
+    links: {
+      naver: links.naver || '#',
+      kakao: links.kakao || '#',
+      google: links.google || '#',
+    },
+  };
+}
+
+async function loadSupabaseCafes() {
+  const response = await fetch('/api/cafes', { cache: 'no-store' });
+  if (!response.ok) throw new Error(`Cafe API request failed with ${response.status}`);
+
+  const payload = await response.json();
+  if (!Array.isArray(payload.cafes)) throw new Error('Cafe API response is invalid.');
+
+  cafes = payload.cafes.map(normalizeCafePayload);
+  cafeLoadState = 'success';
+}
+
+async function loadSeedCafeFallback(cause) {
+  try {
+    const response = await fetch('/data/seed-cafes.csv', { cache: 'no-store' });
+    if (!response.ok) throw new Error(`Seed CSV request failed with ${response.status}`);
+
+    const validation = validateCsvImportText(await response.text());
+    if (validation.errors.length) throw new Error(validation.errors.join('; '));
+
+    cafes = validation.validRows.map(csvRecordToCafe);
+    cafeLoadState = 'success';
+    cafeLoadErrorMessage = cause ? `Supabase fallback active: ${cause.message}` : '';
+  } catch (fallbackError) {
+    cafeLoadState = 'error';
+    cafeLoadErrorMessage = cause
+      ? `Supabase: ${cause.message}; CSV fallback: ${fallbackError.message}`
+      : fallbackError.message;
+  }
+}
+
+async function loadCafes() {
   cafeLoadState = 'loading';
   cafeLoadErrorMessage = '';
 
@@ -1540,21 +1593,12 @@ async function loadSeedCafes() {
   }
 
   try {
-    const response = await fetch('/data/seed-cafes.csv', { cache: 'no-store' });
-    if (!response.ok) throw new Error(`Seed CSV request failed with ${response.status}`);
-
-    const validation = validateCsvImportText(await response.text());
-    if (validation.errors.length) throw new Error(validation.errors.join('; '));
-
-    cafes = validation.validRows.map(csvRecordToCafe);
-    cafeLoadState = 'success';
+    await loadSupabaseCafes();
   } catch (error) {
-    cafeLoadState = 'error';
-    cafeLoadErrorMessage = error.message;
-    console.warn(`Using bundled cafe fallback data. ${error.message}`);
+    console.warn(`Using CSV cafe fallback data. ${error.message}`);
+    await loadSeedCafeFallback(error);
   }
 }
-
 function importCsvRows() {
   if (!csvInput || !csvSummary || !csvImport) return;
   if (!requireAdminAccess()) return;
@@ -1711,7 +1755,7 @@ async function startBrewMap() {
   updateTopLayerOffset();
   syncSearchStateFromUrl();
   registerServiceWorker();
-  await loadSeedCafes();
+  await loadCafes();
   savedCafeIds = readSavedCafeIds();
   if (retroDesktopRoot) {
     const { createRetroDesktop } = await import('./retro-desktop.js');
