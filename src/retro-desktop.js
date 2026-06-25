@@ -1101,6 +1101,7 @@ export function createRetroDesktop({
     routeActive = true;
     root.hidden = false;
     const legacyMount = root.parentElement?.querySelector('.legacy-app-mounts');
+    const hasClassicWorkspace = Boolean(legacyMount) || standardRoots.length > 0;
     if (legacyMount) {
       legacyMount.hidden = false;
       legacyMount.removeAttribute('aria-hidden');
@@ -1109,8 +1110,8 @@ export function createRetroDesktop({
       element.hidden = false;
       element.removeAttribute('aria-hidden');
     });
-    document.body.classList.remove('is-retro-main');
-    document.body.classList.add('is-retro-hybrid');
+    document.body.classList.toggle('is-retro-main', !hasClassicWorkspace);
+    document.body.classList.toggle('is-retro-hybrid', hasClassicWorkspace);
 
     if (!clockTimer) {
       clockTimer = window.setInterval(() => {

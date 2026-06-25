@@ -2451,3 +2451,16 @@ h3,
 .cafe-neighborhood-pin {
   pointer-events: none;
 }
+
+.admin-auth-status {
+  margin-top: 10px;
+  font-weight: 800;
+}
+
+.admin-auth-status[data-state="ok"] {
+  color: #206246;
+}
+
+.admin-auth-status[data-state="error"] {
+  color: #9a3412;
+}

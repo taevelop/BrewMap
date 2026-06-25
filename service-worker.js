@@ -3,7 +3,7 @@ const ASSET_VERSION = '20260624-2';
 const APP_SHELL = [
   './',
   './index.html',
-  './admin.html',
+  './retro.html',
   './favicon.ico',
   './favicon.svg',
   './favicon-16x16.png',
@@ -57,6 +57,10 @@ self.addEventListener('fetch', (event) => {
   const requestUrl = new URL(request.url);
 
   if (request.method !== 'GET' || requestUrl.origin !== self.location.origin) return;
+
+  if (requestUrl.pathname === '/admin' || requestUrl.pathname === '/admin.html' || requestUrl.pathname.startsWith('/api/admin/')) {
+    return;
+  }
 
   if (request.mode === 'navigate') {
     event.respondWith(networkFirst(request, './index.html'));

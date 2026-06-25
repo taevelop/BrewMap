@@ -3,6 +3,7 @@ import { access, readFile } from 'node:fs/promises';
 const requiredFiles = [
   'index.html',
   'admin.html',
+  'retro.html',
   'favicon.ico',
   'favicon.svg',
   'favicon-16x16.png',
@@ -38,6 +39,7 @@ const buildScript = await readFile('scripts/build.mjs', 'utf8');
 const serveScript = await readFile('scripts/serve.mjs', 'utf8');
 const html = await readFile('index.html', 'utf8');
 const adminHtml = await readFile('admin.html', 'utf8');
+const retroHtml = await readFile('retro.html', 'utf8');
 const js = await readFile('src/main.js', 'utf8');
 const mapServices = await readFile('src/map-services.js', 'utf8');
 const retroDesktopCss = await readFile('src/retro-desktop.css', 'utf8');
@@ -60,8 +62,10 @@ const checks = [
   ['HTML links web app manifest', html.includes('rel="manifest"') && html.includes('manifest.webmanifest')],
   ['HTML defines v4 PWA theme color', html.includes('name="theme-color"') && html.includes('#2D1B12')],
   ['HTML states public coffee-finder mission', html.includes('마시고 싶은 커피를 파는 카페를 찾아보세요') && html.includes('메뉴와 최근 확인 정보를 기준')],
+  ['Public HTML makes search flow the primary home', html.includes('<section class="search-shell" id="home">') && !html.includes('data-retro-desktop') && !html.includes('legacy-app-mounts') && !html.includes('retro-desktop.css')],
   ['Public HTML omits project/internal labels', !['Coffee Map MVP', 'FIND YOUR COFFEE', 'Coffee Results', 'Saved', 'Report', 'MVP', '베타', '서울 확장 준비'].some((label) => html.includes(label))],
   ['HTML links brand to home section', html.includes('id="home"') && html.includes('href="#home"') && html.includes('브루맵')],
+  ['Retro HTML owns the separated retro desktop entry', retroHtml.includes('data-retro-desktop') && retroHtml.includes('retro-desktop.css') && retroHtml.includes('index.html#home')],
   ['Manifest defines standalone BrewMap app with v4 theme', manifest.includes('"display": "standalone"') && manifest.includes('"start_url": "./"') && manifest.includes('"theme_color": "#2D1B12"') && manifest.includes('"background_color": "#2D1B12"')],
   ['Manifest includes Apple touch icon PNG', manifest.includes('"src": "./apple-touch-icon.png"') && manifest.includes('"sizes": "180x180"') && manifest.includes('"type": "image/png"')],
   ['Manifest includes Android home screen PNG icons', manifest.includes('"src": "./android-chrome-192x192.png"') && manifest.includes('"sizes": "192x192"') && manifest.includes('"src": "./android-chrome-512x512.png"') && manifest.includes('"sizes": "512x512"')],
@@ -75,9 +79,11 @@ const checks = [
   ['JavaScript wires report queue', js.includes('data-report-form') && js.includes('submitReport')],
   ['JavaScript wires cafe detail modal', js.includes('data-detail-dialog') && js.includes('openDetail')],
   ['Public HTML omits Admin workspace', !html.includes('data-admin-cafe-form') && !html.includes('data-admin-tag-form') && !html.includes('data-csv-input') && !html.includes('href="#admin"')],
+  ['Admin HTML exposes auth status', adminHtml.includes('data-admin-auth-status') && adminHtml.includes('Server session')],
   ['Admin HTML defines separated 운영 workspace', adminHtml.includes('data-admin-cafe-form') && adminHtml.includes('data-admin-tag-form') && adminHtml.includes('data-csv-input') && adminHtml.includes('운영자 전용')],
   ['Admin UI uses 운영자-facing labels', ['제보 검토', '운영 콘솔', '카페 관리', '태그 관리', 'CSV 가져오기', '변경 기록', '공개 필터'].every((label) => adminHtml.includes(label) || js.includes(label)) && !['Admin Queue', 'Admin MVP', 'Cafe CRUD', 'Cafe List', 'Tag Management', 'CSV Import', 'Audit Log', 'MVP 필터', ' · MVP'].some((label) => adminHtml.includes(label) || js.includes(label))],
   ['JavaScript wires Admin cafe CRUD', js.includes('saveCafeFromAdmin') && js.includes('deleteSelectedCafe') && js.includes('renderAdminCafeList')],
+  ['JavaScript verifies Admin session before operations', js.includes('verifyAdminSession') && js.includes('/api/admin/session') && js.includes('requireAdminAccess') && js.includes('setAdminControlsEnabled(false)')],
   ['JavaScript confirms destructive admin delete', js.includes('window.confirm') && js.includes('삭제할까요')],
   ['JavaScript labels CSV dry-run preview', js.includes('변경 미리보기') && adminHtml.includes('검증 결과 반영')],
   ['JavaScript wires Admin report review', js.includes('approveReport') && js.includes('rejectReport')],
@@ -109,15 +115,17 @@ const checks = [
   ['CSS defines visible keyboard focus states', css.includes('button:focus-visible') && css.includes('outline') && css.includes('.map-surface:focus-visible')],
   ['JavaScript supports modal and map accessibility basics', js.includes('Escape') && js.includes('aria-label') && js.includes('지도 핀') && js.includes('data-detail-dialog')],
   ['CSS keeps map layout dimensions stable', css.includes('.map-surface') && css.includes('min-height') && css.includes('aspect-ratio')],
-  ['Service worker caches static app shell', serviceWorker.includes('APP_SHELL') && serviceWorker.includes('admin.html') && serviceWorker.includes('manifest.webmanifest') && serviceWorker.includes('favicon.ico') && serviceWorker.includes('favicon.svg') && serviceWorker.includes('favicon-32x32.png') && serviceWorker.includes('apple-touch-icon.png') && serviceWorker.includes('android-chrome-192x192.png') && serviceWorker.includes('android-chrome-512x512.png') && serviceWorker.includes('assets/brewmap-brand-icon.svg') && serviceWorker.includes('assets/brewmap-cafe-marker.svg') && serviceWorker.includes('src/map-services.js') && serviceWorker.includes('data/seed-cafes.csv')],
+  ['Service worker caches public app shell only', serviceWorker.includes('APP_SHELL') && serviceWorker.includes('retro.html') && !serviceWorker.includes("'./admin.html'") && serviceWorker.includes('manifest.webmanifest') && serviceWorker.includes('favicon.ico') && serviceWorker.includes('favicon.svg') && serviceWorker.includes('favicon-32x32.png') && serviceWorker.includes('apple-touch-icon.png') && serviceWorker.includes('android-chrome-192x192.png') && serviceWorker.includes('android-chrome-512x512.png') && serviceWorker.includes('assets/brewmap-brand-icon.svg') && serviceWorker.includes('assets/brewmap-cafe-marker.svg') && serviceWorker.includes('src/map-services.js') && serviceWorker.includes('data/seed-cafes.csv')],
   ['Service worker caches versioned retro desktop module', serviceWorker.includes('`./src/retro-desktop.js?v=${ASSET_VERSION}`,') && !serviceWorker.includes('./src/retro-desktop.js?v=,')],
   ['Dev server serves web app manifest MIME type', serveScript.includes('.webmanifest') && serveScript.includes('application/manifest+json')],
+  ['Dev server guards Admin routes and API', serveScript.includes('BREWMAP_ADMIN_PASSWORD') && serveScript.includes("pathname === '/admin'") && serveScript.includes("pathname === '/admin.html'") && serveScript.includes("pathname.startsWith('/api/admin/')") && serveScript.includes("'/api/admin/session'") && serveScript.includes('www-authenticate')],
   ['Scope includes required Admin work', scope.includes('관리자 페이지') && scope.includes('CSV Import')],
   ['Schema includes core tables', ['cafes', 'coffee_capabilities', 'cafe_capabilities', 'reports', 'admin_logs'].every((table) => schema.includes(`create table ${table}`))],
   ['Seed CSV is UTF-8 BOM for Excel', seedBytes[0] === 0xef && seedBytes[1] === 0xbb && seedBytes[2] === 0xbf],
   ['Seed CSV includes Busan launch area rows', seed.includes('city,area') && ['busan', 'jeonpo', 'gwangan', 'haeundae'].every((area) => seed.includes(area))],
   ['Package exposes seed data QA command', packageJson.includes('"data:check"') && packageJson.includes('scripts/check-seed-data.mjs')],
   ['Build includes admin HTML', buildScript.includes('admin.html') && buildScript.includes('dist/admin.html')],
+  ['Build includes retro HTML', buildScript.includes('retro.html') && buildScript.includes('dist/retro.html')],
   ['Build includes favicon files', buildScript.includes('favicon.ico') && buildScript.includes('dist/favicon.ico') && buildScript.includes('favicon.svg') && buildScript.includes('dist/favicon.svg') && buildScript.includes('favicon-16x16.png') && buildScript.includes('favicon-32x32.png')],
   ['Build includes Apple touch icon file', buildScript.includes('apple-touch-icon.png') && buildScript.includes('dist/apple-touch-icon.png')],
   ['Build includes Android home screen icon files', buildScript.includes('android-chrome-192x192.png') && buildScript.includes('dist/android-chrome-192x192.png') && buildScript.includes('android-chrome-512x512.png') && buildScript.includes('dist/android-chrome-512x512.png')],
@@ -125,9 +133,9 @@ const checks = [
   ['Build includes PWA assets', buildScript.includes('manifest.webmanifest') && buildScript.includes('service-worker.js')],
   ['Build includes map service module', buildScript.includes('src/map-services.js') && buildScript.includes('dist/src/map-services.js')],
   ['Build includes seed CSV data file', buildScript.includes('dist/data') && buildScript.includes('data/seed-cafes.csv')],
-  ['HTML keeps legacy workspace mounted for compatibility', html.includes('class="legacy-app-mounts" id="workspace"') && !html.includes('class="legacy-app-mounts" hidden')],
-  ['Retro desktop exposes legacy workspace as Classic Workspace in hybrid mode', retroDesktopJs.includes('legacyMount.hidden = false') && retroDesktopJs.includes("legacyMount.removeAttribute('aria-hidden')") && retroDesktopJs.includes('element.hidden = false') && retroDesktopJs.includes('document.body.classList.add(\'is-retro-hybrid\')') && !retroDesktopJs.includes('legacyMount.hidden = true')],
-  ['Retro desktop top menu opens retro programs and links to Classic Workspace', ['local-zine', 'cafe-index', 'brewmap-map', 'nearby-map', 'brew-log'].every((programId) => retroDesktopJs.includes(`data-open-program="${programId}"`)) && retroDesktopJs.includes('data-retro-scroll-target="#workspace"')],
+  ['Public HTML removes legacy hybrid workspace', !html.includes('class="legacy-app-mounts"') && !html.includes('retro-desktop-root')],
+  ['Retro desktop supports standalone and hybrid modes', retroDesktopJs.includes('hasClassicWorkspace') && retroDesktopJs.includes("classList.toggle('is-retro-main'") && retroDesktopJs.includes("classList.toggle('is-retro-hybrid'") && !html.includes('legacy-app-mounts')],
+  ['Retro desktop top menu opens retro programs', ['local-zine', 'cafe-index', 'brewmap-map', 'nearby-map', 'brew-log'].every((programId) => retroDesktopJs.includes(`data-open-program="${programId}"`))],
   ['Retro desktop includes rendered NEARBY_MAP program and compact mobile label', retroDesktopJs.includes("id: 'nearby-map'") && retroDesktopJs.includes('NEARBY_MAP.EXE') && retroDesktopJs.includes("mobileLabel: '주변'") && retroDesktopJs.includes('function renderNearbyMapProgram()') && retroDesktopJs.includes('data-retro-map-surface') && retroDesktopJs.includes('data-retro-request-location')],
   ['Retro desktop default layout opens only LOCAL_ZINE first', retroDesktopJs.includes("isOpen: definition.id === 'local-zine'") && retroDesktopJs.includes("zOrder: ['local-zine']") && retroDesktopJs.includes("activeProgramId: 'local-zine'") && !retroDesktopJs.includes("isOpen: definition.id === 'local-zine' || definition.id === 'cafe-index'")],
   ['Retro desktop top menu remains usable on narrow screens', retroDesktopCss.includes('.retro-desktop-topbar nav') && retroDesktopCss.includes('overflow-x: auto')],
