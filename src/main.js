@@ -1254,6 +1254,8 @@ function deleteSelectedCafe() {
 
   const index = cafes.findIndex((cafe) => cafe.id === selectedAdminCafeId);
   if (index < 0) return;
+  const targetCafe = cafes[index];
+  if (!window.confirm(`${targetCafe.name}을 삭제할까요? 이 작업은 되돌릴 수 없습니다.`)) return;
   const [removed] = cafes.splice(index, 1);
   savedCafeIds.delete(removed.id);
   persistSavedCafeIds();
@@ -1436,7 +1438,7 @@ function validateCsvImportText(text) {
 
 function renderCsvValidation(result) {
   if (!csvSummary || !csvImport || !csvErrors) return;
-  csvSummary.textContent = `${result.rowCount}행 중 ${result.validRows.length}행 통과, 오류 ${result.errors.length}건`;
+  csvSummary.textContent = `변경 미리보기: ${result.rowCount}행 중 ${result.validRows.length}행 통과, 오류 ${result.errors.length}건`;
   csvImport.disabled = result.errors.length > 0 || result.validRows.length === 0;
 
   if (!result.errors.length) {

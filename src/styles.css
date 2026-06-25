@@ -584,6 +584,7 @@ h3 {
   position: relative;
   height: calc(100vh - 190px);
   min-height: 520px;
+  aspect-ratio: 4 / 3;
   overflow: hidden;
   border: 1px solid #d9dfda;
   border-radius: 10px;
