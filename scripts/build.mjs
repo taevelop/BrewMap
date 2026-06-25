@@ -5,6 +5,7 @@ await mkdir('dist/src', { recursive: true });
 await mkdir('dist/data', { recursive: true });
 await mkdir('dist/assets', { recursive: true });
 await cp('index.html', 'dist/index.html');
+await cp('admin.html', 'dist/admin.html');
 await cp('favicon.ico', 'dist/favicon.ico');
 await cp('favicon.svg', 'dist/favicon.svg');
 await cp('favicon-16x16.png', 'dist/favicon-16x16.png');

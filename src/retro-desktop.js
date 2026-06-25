@@ -12,7 +12,7 @@ const programDefinitions = [
     mobileLabel: '발견',
     file: 'LOCAL_ZINE',
     title: 'LOCAL_ZINE.EXE',
-    menu: ['FILE', 'ISSUE', 'NEIGHBORHOOD', 'VIEW'],
+    menu: ['파일', '이번 호', '동네', '보기'],
     defaultRect: { x: 220, y: 46, width: 620, height: 680 },
   },
   {
@@ -21,7 +21,7 @@ const programDefinitions = [
     mobileLabel: '인덱스',
     file: 'CAFE_INDEX',
     title: 'CAFE_INDEX.EXE',
-    menu: ['FILE', 'SEARCH', 'FILTER', 'MAP', 'VIEW'],
+    menu: ['파일', '검색', '필터', '지도', '보기'],
     defaultRect: { x: 360, y: 96, width: 980, height: 620 },
   },
   {
@@ -30,7 +30,7 @@ const programDefinitions = [
     mobileLabel: '지도',
     file: 'BREWMAP',
     title: 'BREWMAP.EXE',
-    menu: ['FILE', 'CAFE', 'ROUTE', 'VIEW'],
+    menu: ['파일', '카페', '경로', '보기'],
     defaultRect: { x: 560, y: 138, width: 760, height: 560 },
   },
   {
@@ -39,7 +39,7 @@ const programDefinitions = [
     mobileLabel: '주변',
     file: 'NEARBY_MAP',
     title: 'NEARBY_MAP.EXE',
-    menu: ['FILE', 'MAP', 'LOCATION', 'VIEW'],
+    menu: ['파일', '지도', '위치', '보기'],
     defaultRect: { x: 320, y: 118, width: 920, height: 640 },
   },
   {
@@ -48,7 +48,7 @@ const programDefinitions = [
     mobileLabel: '장부',
     file: 'BREW_LOG',
     title: 'BREW_LOG.EXE',
-    menu: ['FILE', 'FOLDER', 'STAMP', 'EXPORT', 'VIEW'],
+    menu: ['파일', '폴더', '도장', '내보내기', '보기'],
     defaultRect: { x: 420, y: 160, width: 760, height: 600 },
   },
 ];
@@ -501,11 +501,11 @@ export function createRetroDesktop({
     const selected = selectedCafe();
     const savedCount = savedCafeIds().size;
 
-    if (programId === 'local-zine') return `${items.length ? state.storyIndex + 1 : 0} / ${items.length} STORIES · BUSAN`;
-    if (programId === 'cafe-index') return `${filteredIndexCafes().length} RECORDS · ${items.length} ACTIVE · INFORMATION VERIFIED`;
-    if (programId === 'brewmap-map') return selected ? `${selected.name} · ${selected.area} · CAFE SKETCH` : 'NO CAFE SELECTED';
-    if (programId === 'nearby-map') return `${items.length} CAFES · ${state.userLocation ? 'MY LOCATION ON' : 'BUSAN DEFAULT'} · MAP READY`;
-    return `${savedCount} SAVED · ${Object.values(state.visits).reduce((sum, visit) => sum + Number(visit.count || 0), 0)} VISITS`;
+    if (programId === 'local-zine') return `${items.length ? state.storyIndex + 1 : 0} / ${items.length}개 이야기 · 부산`;
+    if (programId === 'cafe-index') return `${filteredIndexCafes().length}개 결과 · ${items.length}개 운영 중 · 정보 확인`;
+    if (programId === 'brewmap-map') return selected ? `${selected.name} · ${selected.area} · 카페 지도` : '선택한 카페 없음';
+    if (programId === 'nearby-map') return `${items.length}개 카페 · ${state.userLocation ? '내 위치 사용' : '부산 기본 위치'} · 지도 준비`;
+    return `${savedCount}개 저장 · ${Object.values(state.visits).reduce((sum, visit) => sum + Number(visit.count || 0), 0)}회 방문`;
   }
 
   function renderDesktopShortcut(definition) {
@@ -611,21 +611,21 @@ export function createRetroDesktop({
         <span>${escapeHtml(primaryTags(cafe, tagLabel))}</span>
         <small>${escapeHtml(cafe.verifiedAt || '확인일 없음')} · ${escapeHtml(cafe.area)}</small>
       </button>
-    `).join('') : '<div class="retro-empty"><h3>CAFE RECORDS NOT FOUND</h3><p>선택한 조건에 맞는 카페가 없습니다.</p><button type="button" data-retro-clear-filters>필터 초기화</button></div>';
+    `).join('') : '<div class="retro-empty"><h3>조건에 맞는 카페가 없습니다</h3><p>선택한 조건에 맞는 카페가 없습니다.</p><button type="button" data-retro-clear-filters>필터 초기화</button></div>';
 
     return `
       <section class="cafe-index-program">
         <aside class="index-filter-panel">
-          <h3>FIND BY</h3>
+          <h3>검색 조건</h3>
           <div>${filterButtons}</div>
           <button type="button" class="retro-secondary-action" data-retro-clear-filters>필터 초기화</button>
         </aside>
         <div class="index-record-list">
-          <h3>CAFE RECORDS</h3>
+          <h3>카페 결과</h3>
           ${records}
         </div>
         <aside class="index-detail-panel">
-          ${selected ? renderIndexDetail(selected) : '<div class="retro-empty"><h3>NO SELECTION</h3><p>카페를 선택하면 상세 레코드가 표시됩니다.</p></div>'}
+          ${selected ? renderIndexDetail(selected) : '<div class="retro-empty"><h3>선택한 카페 없음</h3><p>카페를 선택하면 상세 레코드가 표시됩니다.</p></div>'}
         </aside>
       </section>
     `;
@@ -639,10 +639,10 @@ export function createRetroDesktop({
       <h3>${escapeHtml(cafe.name)}</h3>
       <p>${escapeHtml(cafe.address)}</p>
       <dl class="retro-data-grid">
-        <div><dt>COFFEE</dt><dd>${escapeHtml(primaryTags(cafe, tagLabel))}</dd></div>
-        <div><dt>VERIFY</dt><dd>${escapeHtml(verificationSourceLabel(cafe.source))}</dd></div>
-        <div><dt>RECENT</dt><dd>${escapeHtml(cafe.verifiedAt || '-')}</dd></div>
-        <div><dt>TRUST</dt><dd>${escapeHtml(confidenceLabel(cafe.confidence))}</dd></div>
+        <div><dt>커피</dt><dd>${escapeHtml(primaryTags(cafe, tagLabel))}</dd></div>
+        <div><dt>확인 근거</dt><dd>${escapeHtml(verificationSourceLabel(cafe.source))}</dd></div>
+        <div><dt>최근 확인</dt><dd>${escapeHtml(cafe.verifiedAt || '-')}</dd></div>
+        <div><dt>신뢰도</dt><dd>${escapeHtml(confidenceLabel(cafe.confidence))}</dd></div>
       </dl>
       <div class="retro-action-row">
         <button type="button" data-retro-open-map="${escapeHtml(cafe.id)}">지도에서 보기</button>
@@ -664,7 +664,7 @@ export function createRetroDesktop({
       <section class="cafe-sketch-program">
         <div class="cafe-sketch-panel">
           <div class="cafe-sketch-toolbar">
-            <span>CAFE GUIDE MAP</span>
+            <span>카페 위치 지도</span>
             <button type="button" data-open-program="nearby-map">주변 일반 지도 열기</button>
           </div>
           <div class="cafe-sketch-surface cafe-osm-surface" role="img" aria-label="OpenStreetMap 배경으로 표시한 선택 카페 주변 지도" data-cafe-osm-map>
@@ -676,20 +676,20 @@ export function createRetroDesktop({
         </div>
         <aside class="map-record">
           ${selected ? `
-            <p class="retro-kicker">CAFE SKETCH</p>
+            <p class="retro-kicker">카페 위치</p>
             <h3>${escapeHtml(selected.name)}</h3>
             <p>${escapeHtml(selected.city)} · ${escapeHtml(selected.area)}</p>
             <p>${escapeHtml(selected.address)}</p>
             <dl class="retro-data-grid">
-              <div><dt>COFFEE</dt><dd>${escapeHtml(primaryTags(selected, tagLabel))}</dd></div>
-              <div><dt>VERIFY</dt><dd>${escapeHtml(verificationSourceLabel(selected.source))}</dd></div>
-              <div><dt>NEARBY</dt><dd>${nearbyItems.length ? nearbyItems.map((cafe) => cafe.name).join(' · ') : '같은 권역 주변 카페 준비 중'}</dd></div>
+              <div><dt>커피</dt><dd>${escapeHtml(primaryTags(selected, tagLabel))}</dd></div>
+              <div><dt>확인 근거</dt><dd>${escapeHtml(verificationSourceLabel(selected.source))}</dd></div>
+              <div><dt>주변 카페</dt><dd>${nearbyItems.length ? nearbyItems.map((cafe) => cafe.name).join(' · ') : '같은 권역 주변 카페 준비 중'}</dd></div>
             </dl>
             <div class="retro-action-row">
               <button type="button" data-open-program="cafe-index" data-retro-select-cafe="${escapeHtml(selected.id)}">인덱스 열기</button>
               <button type="button" class="${isSaved ? 'is-saved' : ''}" aria-pressed="${isSaved}" data-retro-save="${escapeHtml(selected.id)}">${isSaved ? '저장됨' : '장부에 저장'}</button>
             </div>
-          ` : '<div class="retro-empty"><h3>NO PIN</h3><p>지도 핀을 선택하면 카페 정보가 표시됩니다.</p></div>'}
+          ` : '<div class="retro-empty"><h3>선택한 핀 없음</h3><p>지도 핀을 선택하면 카페 정보가 표시됩니다.</p></div>'}
         </aside>
       </section>
     `;
@@ -704,7 +704,7 @@ export function createRetroDesktop({
     return `
       <section class="retro-map-shell">
         <div class="retro-map-toolbar" aria-label="주변 지도 도구">
-          <span>NEARBY MAP · Z${escapeHtml(state.mapViewport.zoom)}</span>
+          <span>주변 지도 · Z${escapeHtml(state.mapViewport.zoom)}</span>
           <button type="button" data-retro-request-location>내 위치</button>
           <button type="button" data-retro-fit-map>전체 보기</button>
           <button type="button" data-retro-map-zoom="1" aria-label="주변 지도 확대">+</button>
@@ -715,7 +715,7 @@ export function createRetroDesktop({
           <div class="retro-map-markers" data-retro-map-markers></div>
           <a class="retro-map-attribution" href="${escapeHtml(providerUrl)}" target="_blank" rel="noreferrer">${escapeHtml(providerLabel)}</a>
           <p class="nearby-status" aria-live="polite">
-            ${escapeHtml(items.length)} CAFES · ${selected ? escapeHtml(selected.area) : 'BUSAN'} · ${escapeHtml(state.locationStatus)}
+            ${escapeHtml(items.length)}개 카페 · ${selected ? escapeHtml(selected.area) : '부산'} · ${escapeHtml(state.locationStatus)}
           </p>
         </div>
       </section>
@@ -736,7 +736,7 @@ export function createRetroDesktop({
     return `
       <section class="brew-log-program">
         <aside class="folder-tree">
-          <h3>MY FOLDERS</h3>
+          <h3>내 폴더</h3>
           <button type="button">▣ 스크랩</button>
           <button type="button">▣ 가고 싶은 곳</button>
           <button type="button">▣ 방문한 곳</button>
@@ -744,11 +744,11 @@ export function createRetroDesktop({
           <button type="button">▣ 내 메모</button>
         </aside>
         <div class="saved-record-list">
-          <h3>SAVED CAFES</h3>
+          <h3>저장한 카페</h3>
           ${savedRecords}
         </div>
         <aside class="log-detail">
-          ${selected ? renderLogDetail(selected) : '<div class="retro-empty"><h3>MY LOCAL FILES</h3><p>저장 후 장부에서 방문 기록을 남길 수 있습니다.</p></div>'}
+          ${selected ? renderLogDetail(selected) : '<div class="retro-empty"><h3>내 로컬 기록</h3><p>저장 후 장부에서 방문 기록을 남길 수 있습니다.</p></div>'}
         </aside>
       </section>
     `;
@@ -848,15 +848,15 @@ export function createRetroDesktop({
         <header class="retro-desktop-topbar">
           <strong class="retro-brand"><img src="./assets/brewmap-brand-icon.svg" alt="" width="24" height="24" />BREWMAP</strong>
           <nav aria-label="Retro desktop 메뉴">
-            <button type="button">FILE</button>
-            <button type="button" data-open-program="local-zine">DISCOVER</button>
-            <button type="button" data-open-program="cafe-index">INDEX</button>
-            <button type="button" data-open-program="brewmap-map">CAFE MAP</button>
-            <button type="button" data-open-program="nearby-map">NEARBY</button>
-            <button type="button" data-open-program="brew-log">LOG</button>
-            <button type="button" data-retro-scroll-target="#workspace">CLASSIC</button>
+            <button type="button">파일</button>
+            <button type="button" data-open-program="local-zine">발견</button>
+            <button type="button" data-open-program="cafe-index">인덱스</button>
+            <button type="button" data-open-program="brewmap-map">지도</button>
+            <button type="button" data-open-program="nearby-map">주변</button>
+            <button type="button" data-open-program="brew-log">장부</button>
+            <button type="button" data-retro-scroll-target="#workspace">기본 화면</button>
           </nav>
-          <span>BUSAN&nbsp;&nbsp;${escapeHtml(time)}</span>
+          <span>부산&nbsp;&nbsp;${escapeHtml(time)}</span>
         </header>
         <div class="retro-desktop-canvas" data-retro-canvas>
           <div class="retro-shortcuts" aria-label="프로그램 바로가기">${shortcuts}</div>

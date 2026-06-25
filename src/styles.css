@@ -1,4 +1,4 @@
-﻿:root {
+:root {
   color-scheme: light;
   color: #2d1b12;
   background: #fffaf2;
@@ -584,6 +584,7 @@ h3 {
   position: relative;
   height: calc(100vh - 190px);
   min-height: 520px;
+  aspect-ratio: 4 / 3;
   overflow: hidden;
   border: 1px solid #d9dfda;
   border-radius: 10px;
@@ -718,6 +719,16 @@ h3 {
   filter: var(--brewmap-marker-selected-filter);
 }
 
+.cafe-card.is-selected {
+  border-color: #173f35;
+  box-shadow: 0 0 0 3px rgba(23, 63, 53, .14), 0 18px 42px rgba(91, 50, 31, .1);
+}
+
+.map-pin.is-selected {
+  z-index: 5;
+  transform: translate(-50%, -100%) scale(1.16);
+  filter: var(--brewmap-marker-selected-filter);
+}
 .map-pin.confidence-a::before {
   background-image: url("../assets/brewmap-cafe-marker-selected.svg");
 }
@@ -1078,6 +1089,51 @@ h3 {
   font-weight: 900;
 }
 
+.saved-login-note {
+  margin: 0 0 10px;
+  color: #5f6c68;
+  line-height: 1.55;
+}
+
+.saved-login-actions,
+.empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.saved-login-actions a,
+.saved-login-actions button,
+.empty-actions button,
+.empty-state button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #fff;
+  background: #173f35;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.saved-login-actions button,
+.empty-actions button[data-empty-report] {
+  border: 1px solid #d9dfda;
+  color: #34423e;
+  background: #fff;
+}
+
+.loading-state,
+.error-state {
+  min-height: 220px;
+  align-content: center;
+}
+
+.error-state button {
+  justify-self: start;
+  background: #a1372b;
+}
 .saved-list,
 .admin-panel ul {
   display: grid;

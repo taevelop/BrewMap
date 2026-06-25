@@ -130,6 +130,8 @@ function mapLinksFor(address, name) {
 }
 
 let cafes = [];
+let cafeLoadState = 'loading';
+let cafeLoadErrorMessage = '';
 
 const adminQueue = [];
 
@@ -157,6 +159,9 @@ const adminQueueEl = document.querySelector('[data-admin-queue]');
 const resultCount = document.querySelector('[data-result-count]');
 const savedCount = document.querySelector('[data-saved-count]');
 const savedList = document.querySelector('[data-saved-list]');
+const savedStatus = document.querySelector('[data-saved-status]');
+const loginAction = document.querySelector('[data-login-action]');
+const loginLaterAction = document.querySelector('[data-login-later]');
 const reportForm = document.querySelector('[data-report-form]');
 const reportCafeSelect = document.querySelector('[data-report-cafe]');
 const reportTypeSelect = document.querySelector('[data-report-type]');
@@ -213,11 +218,19 @@ const adminTagFields = {
 const selectedFilters = new Set();
 let savedCafeIds = new Set();
 let searchQuery = '';
+let selectedCafeId = '';
 let selectedAdminCafeId = '';
 let selectedAdminTagKey = '';
 let lastCsvValidation = null;
 let lastCsvSource = '';
 let retroDesktop = null;
+
+const hasPublicSurface = Boolean(searchForm && filterRow && cafeGrid && resultCount);
+const hasMapSurface = Boolean(mapSurface && mapBaseLayer && mapMarkerLayer);
+const hasSavedSurface = Boolean(savedCount && savedList);
+const hasReportSurface = Boolean(reportForm && reportCafeSelect && reportTypeSelect && reportDetailInput);
+const hasDetailSurface = Boolean(detailDialog && detailBody && detailClose);
+const hasAdminSurface = Boolean(adminCafeForm && adminTagForm && csvInput);
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (char) => ({
@@ -299,15 +312,18 @@ function setMapViewportFromCenterPoint(centerPoint, zoom = mapViewport.zoom) {
 }
 
 function rerenderCurrentMap() {
+  if (!hasMapSurface) return;
   renderMapPins(filteredCafes(), { keepViewport: true });
 }
 
 function updateMapZoomControlState() {
+  if (!mapZoomInAction || !mapZoomOutAction) return;
   mapZoomInAction.disabled = mapViewport.zoom >= mapZoomRange.max;
   mapZoomOutAction.disabled = mapViewport.zoom <= mapZoomRange.min;
 }
 
 function renderMapAttribution() {
+  if (!hasMapSurface || !mapAttribution) return;
   const attribution = activeMapProvider.attribution;
   mapAttribution.hidden = !attribution;
   if (!attribution) return;
@@ -366,6 +382,7 @@ function fitMapToItems(items) {
 }
 
 function renderMapBaseLayer() {
+  if (!hasMapSurface) return;
   renderMapAttribution();
   activeMapProvider.renderBaseLayer({
     container: mapBaseLayer,
@@ -386,7 +403,7 @@ function screenPositionForCoordinates(latitude, longitude) {
 }
 
 function setMapStatus(message) {
-  mapStatus.textContent = message;
+  if (mapStatus) mapStatus.textContent = message;
 }
 
 function zoomMapTo(nextZoom) {
@@ -500,7 +517,39 @@ function searchTokens() {
 }
 
 function readSearchQuery() {
-  return [searchInput.value, locationInput?.value].filter(Boolean).join(' ');
+  return [searchInput?.value, locationInput?.value].filter(Boolean).join(' ').trim();
+}
+
+function syncSearchStateFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const query = params.get('q') || '';
+  const location = params.get('area') || '';
+  const filters = params.get('coffee') || '';
+
+  if (searchInput) searchInput.value = query;
+  if (locationInput) locationInput.value = location;
+  selectedFilters.clear();
+  filters.split(',').map((value) => value.trim()).filter(Boolean).forEach((filter) => selectedFilters.add(filter));
+  searchQuery = readSearchQuery();
+}
+
+function writeSearchStateToUrl() {
+  if (!hasPublicSurface || !window.history?.replaceState) return;
+
+  const params = new URLSearchParams(window.location.search);
+  const query = searchInput?.value.trim() || '';
+  const location = locationInput?.value.trim() || '';
+  const filters = [...selectedFilters].sort();
+
+  if (query) params.set('q', query);
+  else params.delete('q');
+  if (location) params.set('area', location);
+  else params.delete('area');
+  if (filters.length) params.set('coffee', filters.join(','));
+  else params.delete('coffee');
+
+  const nextUrl = `${window.location.pathname}${params.toString() ? `?${params}` : ''}${window.location.hash}`;
+  window.history.replaceState({}, '', nextUrl);
 }
 
 function searchIndex(cafe) {
@@ -528,15 +577,19 @@ function mapLinksMarkup(cafe) {
 }
 
 function setReportStatus(message) {
-  reportStatus.textContent = message;
+  if (reportStatus) reportStatus.textContent = message;
+}
+
+function setSavedStatus(message) {
+  if (savedStatus) savedStatus.textContent = message;
 }
 
 function setAdminCafeStatus(message) {
-  adminCafeStatusText.textContent = message;
+  if (adminCafeStatusText) adminCafeStatusText.textContent = message;
 }
 
 function setAdminTagStatus(message) {
-  adminTagStatus.textContent = message;
+  if (adminTagStatus) adminTagStatus.textContent = message;
 }
 
 function updateTopLayerOffset() {
@@ -547,6 +600,7 @@ function updateTopLayerOffset() {
 }
 
 function renderFilters() {
+  if (!filterRow) return;
   filterRow.replaceChildren(...mvpCapabilities().map((capability) => {
     const button = document.createElement('button');
     button.type = 'button';
@@ -555,6 +609,7 @@ function renderFilters() {
     button.addEventListener('click', () => {
       if (selectedFilters.has(capability.key)) selectedFilters.delete(capability.key);
       else selectedFilters.add(capability.key);
+      writeSearchStateToUrl();
       renderFilters();
       renderCafeResults();
     });
@@ -570,43 +625,101 @@ function filteredCafes() {
 }
 
 function toggleSaved(cafeId) {
-  if (savedCafeIds.has(cafeId)) savedCafeIds.delete(cafeId);
-  else savedCafeIds.add(cafeId);
+  const cafe = cafeById(cafeId);
+  const shouldSave = !savedCafeIds.has(cafeId);
+  if (shouldSave) savedCafeIds.add(cafeId);
+  else savedCafeIds.delete(cafeId);
 
+  setSavedStatus(shouldSave
+    ? `${cafe?.name || '카페'}를 저장했습니다. 로그인하면 다른 기기에서도 볼 수 있어요.`
+    : `${cafe?.name || '카페'} 저장을 해제했습니다.`);
   persistSavedCafeIds();
   renderCafeResults();
   renderSavedList();
   retroDesktop?.render();
-  if (detailDialog.open) renderDetail(cafeById(cafeId));
+  if (detailDialog?.open) renderDetail(cafeById(cafeId));
+}
+
+function selectCafe(cafeId, options = {}) {
+  if (!cafeById(cafeId)) return;
+  selectedCafeId = cafeId;
+  renderCafeResults();
+
+  if (options.scrollList) {
+    document.querySelector(`[data-cafe-card="${cafeId}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  if (options.openDetail) openDetail(cafeId);
 }
 
 function renderCafe(cafe, index = 0) {
   const isSaved = savedCafeIds.has(cafe.id);
+  const isSelected = selectedCafeId === cafe.id;
   const primaryTags = cafe.capabilities.slice(0, 3).map(tagLabel).join(' · ');
   const card = document.createElement('article');
-  card.className = 'cafe-card';
+  card.className = `cafe-card ${isSelected ? 'is-selected' : ''}`.trim();
+  card.dataset.cafeCard = cafe.id;
+  if (isSelected) card.setAttribute('aria-current', 'true');
   card.innerHTML = `
     <div class="result-rank" aria-hidden="true">${String(index + 1).padStart(2, '0')}</div>
     <div class="cafe-card-body">
-      <div class="cafe-card-topline"><span>${escapeHtml(cafe.city)} · ${escapeHtml(cafe.area)}</span><strong>신뢰도 ${escapeHtml(confidenceLabel(cafe.confidence))}</strong></div>
+      <div class="cafe-card-topline"><span>${escapeHtml(cafe.city)} · ${escapeHtml(cafe.area)}</span><strong>${escapeHtml(cafe.verifiedAt || '확인일 준비 중')} 확인</strong></div>
       <h3>${escapeHtml(cafe.name)}</h3>
-      <p class="coffee-match">${escapeHtml(primaryTags || '커피 태그 검증 중')}</p>
+      <p class="coffee-match">${escapeHtml(primaryTags || '커피 태그 확인 중')}</p>
       <p class="cafe-address">${escapeHtml(cafe.address)}</p>
-      <dl class="metadata"><div><dt>가능 여부</dt><dd>메뉴 확인</dd></div><div><dt>검증 출처</dt><dd>${escapeHtml(verificationSourceLabel(cafe.source))}</dd></div><div><dt>최근 확인</dt><dd>${escapeHtml(cafe.verifiedAt || '-')}</dd></div></dl>
+      <dl class="metadata"><div><dt>제공 커피</dt><dd>${escapeHtml(primaryTags || '확인 중')}</dd></div><div><dt>확인 근거</dt><dd>${escapeHtml(verificationSourceLabel(cafe.source))}</dd></div><div><dt>신뢰도</dt><dd>${escapeHtml(confidenceLabel(cafe.confidence))}</dd></div></dl>
       <div class="tag-list">${tagsMarkup(cafe)}</div>
-      <div class="card-actions"><button type="button" data-detail-action>상세</button><button type="button" class="${isSaved ? 'is-saved' : ''}" aria-pressed="${isSaved}" data-save-action>${isSaved ? '저장됨' : '저장'}</button><button type="button" data-report-action>정보 제보</button>${mapLinksMarkup(cafe)}</div>
+      <div class="card-actions"><button type="button" data-focus-map-action>지도에서 보기</button><button type="button" data-detail-action>상세</button><button type="button" class="${isSaved ? 'is-saved' : ''}" aria-pressed="${isSaved}" data-save-action>${isSaved ? '저장됨' : '저장'}</button><button type="button" data-report-action>정보 제보</button>${mapLinksMarkup(cafe)}</div>
     </div>
   `;
-  card.querySelector('[data-detail-action]').addEventListener('click', () => openDetail(cafe.id));
+  card.querySelector('[data-focus-map-action]').addEventListener('click', () => selectCafe(cafe.id));
+  card.querySelector('[data-detail-action]').addEventListener('click', () => selectCafe(cafe.id, { openDetail: true }));
   card.querySelector('[data-save-action]').addEventListener('click', () => toggleSaved(cafe.id));
   card.querySelector('[data-report-action]').addEventListener('click', () => startReport(cafe.id));
   return card;
 }
 
+function renderLoadingState() {
+  const card = document.createElement('article');
+  card.className = 'empty-state loading-state';
+  card.innerHTML = '<h3>카페 정보를 불러오고 있습니다</h3><p>최근 확인된 부산 카페와 지도 마커를 준비하는 중입니다.</p>';
+  return card;
+}
+
+function renderErrorState() {
+  const card = document.createElement('article');
+  card.className = 'empty-state error-state';
+  card.innerHTML = `<h3>카페 정보를 불러오지 못했습니다</h3><p>${escapeHtml(cafeLoadErrorMessage || '잠시 후 다시 시도해 주세요.')}</p><button type="button" data-retry-load>다시 시도</button>`;
+  card.querySelector('[data-retry-load]').addEventListener('click', async () => {
+    cafeLoadState = 'loading';
+    renderCafeResults();
+    await loadSeedCafes();
+    renderApp();
+  });
+  return card;
+}
+
 function renderEmptyState() {
+  const hasActiveCriteria = Boolean(searchQuery || selectedFilters.size);
   const card = document.createElement('article');
   card.className = 'empty-state';
-  card.innerHTML = '<h3>조건에 맞는 카페가 없습니다</h3><p>선택 조건과 일치하는 검증 카페가 아직 없습니다.</p>';
+  card.innerHTML = hasActiveCriteria
+    ? '<h3>조건에 맞는 카페를 찾지 못했습니다</h3><p>지역이나 커피 조건을 하나 줄여보세요.</p><div class="empty-actions"><button type="button" data-clear-empty-filters>전체 초기화</button><button type="button" data-empty-report>정보 제보</button></div>'
+    : '<h3>최근 확인된 부산 카페를 준비 중입니다</h3><p>조건을 선택하거나 검색어를 입력하면 카페 목록이 이곳에 표시됩니다.</p>';
+
+  card.querySelector('[data-clear-empty-filters]')?.addEventListener('click', () => {
+    selectedFilters.clear();
+    searchQuery = '';
+    if (searchInput) searchInput.value = '';
+    if (locationInput) locationInput.value = '';
+    writeSearchStateToUrl();
+    renderFilters();
+    renderCafeResults();
+  });
+  card.querySelector('[data-empty-report]')?.addEventListener('click', () => {
+    document.querySelector('#report')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    reportDetailInput?.focus();
+  });
   return card;
 }
 
@@ -634,6 +747,7 @@ function renderCafeNeighborhoodMap(cafe) {
 }
 
 function renderMapPins(items, options = {}) {
+  if (!hasMapSurface) return;
   if (!options.keepViewport) fitMapToItems(items);
   renderMapBaseLayer();
   mapMarkerLayer.replaceChildren();
@@ -669,19 +783,20 @@ function renderMapPins(items, options = {}) {
 
     const [cafe] = cluster.items;
     const pin = document.createElement('button');
-    pin.className = `map-pin confidence-${cafe.confidence.toLowerCase()}`;
+    pin.className = `map-pin confidence-${cafe.confidence.toLowerCase()} ${selectedCafeId === cafe.id ? 'is-selected' : ''}`.trim();
     pin.type = 'button';
     pin.style.top = `${cluster.top.toFixed(1)}px`;
     pin.style.left = `${cluster.left.toFixed(1)}px`;
     pin.setAttribute('aria-label', `${cafe.name} 지도 핀`);
     pin.title = cafe.name;
     pin.textContent = '';
-    pin.addEventListener('click', () => openDetail(cafe.id));
+    pin.addEventListener('click', () => selectCafe(cafe.id, { scrollList: true, openDetail: true }));
     mapMarkerLayer.append(pin);
   });
 }
 
 function bindMapInteractions() {
+  if (!hasMapSurface || !mapZoomInAction || !mapZoomOutAction) return;
   mapZoomInAction.addEventListener('click', () => zoomMapBy(1));
   mapZoomOutAction.addEventListener('click', () => zoomMapBy(-1));
 
@@ -711,19 +826,37 @@ function bindMapInteractions() {
 }
 
 function renderCafeResults() {
+  if (!hasPublicSurface) return;
+
+  if (cafeLoadState === 'loading') {
+    resultCount.textContent = '불러오는 중';
+    cafeGrid.replaceChildren(renderLoadingState());
+    renderMapPins([]);
+    return;
+  }
+
+  if (cafeLoadState === 'error') {
+    resultCount.textContent = '불러오기 실패';
+    cafeGrid.replaceChildren(renderErrorState());
+    renderMapPins([]);
+    return;
+  }
+
   const items = filteredCafes();
+  if (selectedCafeId && !items.some((cafe) => cafe.id === selectedCafeId)) selectedCafeId = '';
   resultCount.textContent = `${items.length}개 카페`;
   cafeGrid.replaceChildren(...(items.length ? items.map(renderCafe) : [renderEmptyState()]));
   renderMapPins(items);
 }
 
 function renderSavedList() {
+  if (!hasSavedSurface) return;
   const savedItems = cafes.filter((cafe) => cafe.status !== 'hidden' && savedCafeIds.has(cafe.id));
   savedCount.textContent = `${savedItems.length}개`;
 
   if (!savedItems.length) {
     const empty = document.createElement('li');
-    empty.textContent = '아직 저장한 카페가 없습니다.';
+    empty.textContent = '아직 저장한 카페가 없습니다. 마음에 드는 카페에서 저장을 눌러보세요.';
     savedList.replaceChildren(empty);
     return;
   }
@@ -746,6 +879,7 @@ function isReportReviewable(report) {
 }
 
 function renderAdminQueue() {
+  if (!adminQueueEl) return;
   adminQueueEl.replaceChildren(...adminQueue.map((report) => {
     const item = document.createElement('li');
     const title = document.createElement('strong');
@@ -779,6 +913,7 @@ function renderAdminQueue() {
 
 
 function renderReportOptions() {
+  if (!reportCafeSelect) return;
   const selectedValue = reportCafeSelect.value;
   const options = cafes.filter((cafe) => cafe.status !== 'hidden').map((cafe) => {
     const option = document.createElement('option');
@@ -795,6 +930,7 @@ function renderReportOptions() {
 }
 
 function startReport(cafeId) {
+  if (!hasReportSurface) return;
   const cafe = cafeById(cafeId);
   if (!cafe) return;
 
@@ -831,7 +967,7 @@ function submitReport(event) {
 
   adminQueue.unshift(report);
   reportDetailInput.value = '';
-  setReportStatus(`${report.cafe} 제보가 Admin 검증 큐에 추가되었습니다.`);
+  setReportStatus(`${report.cafe} 제보가 운영 검토 대기열에 추가되었습니다.`);
   addAdminLog('create_report', 'reports', report.id, `${report.cafe} ${report.type} 제보 접수`);
   renderAdminQueue();
   renderAdminCounts();
@@ -866,6 +1002,7 @@ function rejectReport(reportId) {
 }
 
 function renderDetail(cafe) {
+  if (!hasDetailSurface) return;
   if (!cafe) return;
 
   const isSaved = savedCafeIds.has(cafe.id);
@@ -893,6 +1030,7 @@ function renderDetail(cafe) {
 }
 
 function openDetail(cafeId) {
+  if (!hasDetailSurface) return;
   const cafe = cafeById(cafeId);
   if (!cafe) return;
 
@@ -902,15 +1040,18 @@ function openDetail(cafeId) {
 }
 
 function closeDetail() {
+  if (!detailDialog) return;
   if (typeof detailDialog.close === 'function') detailDialog.close();
   else detailDialog.removeAttribute('open');
 }
 
 function readSelectedCapabilities() {
+  if (!adminCafeCapabilities) return new Set();
   return new Set([...adminCafeCapabilities.querySelectorAll('input:checked')].map((input) => input.value));
 }
 
 function renderAdminCapabilityControls(selected = readSelectedCapabilities()) {
+  if (!adminCafeCapabilities) return;
   const selectedSet = selected instanceof Set ? selected : new Set(selected);
   adminCafeCapabilities.replaceChildren(...capabilityCatalog.map((capability) => {
     const label = document.createElement('label');
@@ -927,6 +1068,7 @@ function renderAdminCapabilityControls(selected = readSelectedCapabilities()) {
 }
 
 function renderAdminCafeList() {
+  if (!adminCafeList) return;
   const rows = cafes.map((cafe) => {
     const row = document.createElement('div');
     const info = document.createElement('div');
@@ -956,18 +1098,20 @@ function renderAdminCafeList() {
 }
 
 function renderAdminCounts() {
+  if (!adminPendingCount || !adminCafeCount || !adminTagCount) return;
   adminPendingCount.textContent = `${adminQueue.filter(isReportReviewable).length}건`;
   adminCafeCount.textContent = `${cafes.length}개`;
   adminTagCount.textContent = `${capabilityCatalog.length}개`;
 }
 
 function renderTagList() {
+  if (!adminTagList) return;
   adminTagList.replaceChildren(...capabilityCatalog.map((capability) => {
     const item = document.createElement('div');
     const info = document.createElement('div');
     const edit = document.createElement('button');
     item.className = 'tag-admin-item';
-    info.innerHTML = `<strong>${escapeHtml(capability.label)}</strong><span>${escapeHtml(capability.key)} · ${escapeHtml(capability.group)}${capability.isMvpFilter ? ' · MVP' : ''}</span>`;
+    info.innerHTML = `<strong>${escapeHtml(capability.label)}</strong><span>${escapeHtml(capability.key)} · ${escapeHtml(capability.group)}${capability.isMvpFilter ? ' · 공개 필터' : ''}</span>`;
     edit.type = 'button';
     edit.textContent = '편집';
     edit.addEventListener('click', () => selectTagForEdit(capability.key));
@@ -977,6 +1121,7 @@ function renderTagList() {
 }
 
 function renderAdminLogs() {
+  if (!adminLogList) return;
   adminLogList.replaceChildren(...adminLogs.slice(0, 8).map((log) => {
     const item = document.createElement('li');
     const title = document.createElement('strong');
@@ -989,6 +1134,7 @@ function renderAdminLogs() {
 }
 
 function selectCafeForEdit(cafeId) {
+  if (!hasAdminSurface) return;
   const cafe = cafeById(cafeId);
   if (!cafe) return;
 
@@ -1013,6 +1159,7 @@ function selectCafeForEdit(cafeId) {
 }
 
 function resetCafeForm() {
+  if (!hasAdminSurface) return;
   selectedAdminCafeId = '';
   adminCafeForm.reset();
   adminCafeFields.id.readOnly = false;
@@ -1025,6 +1172,7 @@ function resetCafeForm() {
 }
 
 function cafeDataFromAdminForm() {
+  if (!hasAdminSurface) return { error: '관리자 화면을 찾을 수 없습니다.' };
   const id = adminCafeFields.id.value.trim();
   const latitude = Number(adminCafeFields.latitude.value);
   const longitude = Number(adminCafeFields.longitude.value);
@@ -1098,6 +1246,7 @@ function saveCafeFromAdmin(event) {
 }
 
 function deleteSelectedCafe() {
+  if (!hasAdminSurface) return;
   if (!selectedAdminCafeId) {
     setAdminCafeStatus('삭제할 카페를 먼저 선택해 주세요.');
     return;
@@ -1105,6 +1254,8 @@ function deleteSelectedCafe() {
 
   const index = cafes.findIndex((cafe) => cafe.id === selectedAdminCafeId);
   if (index < 0) return;
+  const targetCafe = cafes[index];
+  if (!window.confirm(`${targetCafe.name}을 삭제할까요? 이 작업은 되돌릴 수 없습니다.`)) return;
   const [removed] = cafes.splice(index, 1);
   savedCafeIds.delete(removed.id);
   persistSavedCafeIds();
@@ -1117,6 +1268,7 @@ function deleteSelectedCafe() {
 }
 
 function selectTagForEdit(key) {
+  if (!hasAdminSurface) return;
   const tag = capabilityCatalog.find((capability) => capability.key === key);
   if (!tag) return;
 
@@ -1130,6 +1282,7 @@ function selectTagForEdit(key) {
 }
 
 function resetTagForm() {
+  if (!hasAdminSurface) return;
   selectedAdminTagKey = '';
   adminTagForm.reset();
   adminTagFields.key.readOnly = false;
@@ -1284,7 +1437,8 @@ function validateCsvImportText(text) {
 }
 
 function renderCsvValidation(result) {
-  csvSummary.textContent = `${result.rowCount}행 중 ${result.validRows.length}행 통과, 오류 ${result.errors.length}건`;
+  if (!csvSummary || !csvImport || !csvErrors) return;
+  csvSummary.textContent = `변경 미리보기: ${result.rowCount}행 중 ${result.validRows.length}행 통과, 오류 ${result.errors.length}건`;
   csvImport.disabled = result.errors.length > 0 || result.validRows.length === 0;
 
   if (!result.errors.length) {
@@ -1300,6 +1454,7 @@ function renderCsvValidation(result) {
 }
 
 function validateCsvFromAdmin() {
+  if (!csvInput) return;
   lastCsvSource = csvInput.value;
   lastCsvValidation = validateCsvImportText(lastCsvSource);
   renderCsvValidation(lastCsvValidation);
@@ -1328,7 +1483,14 @@ function csvRecordToCafe(record) {
 }
 
 async function loadSeedCafes() {
-  if (typeof fetch !== 'function') return;
+  cafeLoadState = 'loading';
+  cafeLoadErrorMessage = '';
+
+  if (typeof fetch !== 'function') {
+    cafeLoadState = 'error';
+    cafeLoadErrorMessage = '현재 환경에서 데이터를 요청할 수 없습니다.';
+    return;
+  }
 
   try {
     const response = await fetch('./data/seed-cafes.csv', { cache: 'no-store' });
@@ -1338,12 +1500,16 @@ async function loadSeedCafes() {
     if (validation.errors.length) throw new Error(validation.errors.join('; '));
 
     cafes = validation.validRows.map(csvRecordToCafe);
+    cafeLoadState = 'success';
   } catch (error) {
+    cafeLoadState = 'error';
+    cafeLoadErrorMessage = error.message;
     console.warn(`Using bundled cafe fallback data. ${error.message}`);
   }
 }
 
 function importCsvRows() {
+  if (!csvInput || !csvSummary || !csvImport) return;
   if (!lastCsvValidation || lastCsvSource !== csvInput.value) validateCsvFromAdmin();
   if (!lastCsvValidation || lastCsvValidation.errors.length) return;
 
@@ -1406,6 +1572,7 @@ function cafeToCsvRecord(cafe) {
 }
 
 function loadCsvSample() {
+  if (!csvInput) return;
   const header = [...csvRequiredColumns, ...csvOptionalColumns].join(',');
   csvInput.value = [header, ...cafes.slice(0, 3).map(cafeToCsvRecord)].join('\n');
   validateCsvFromAdmin();
@@ -1433,19 +1600,22 @@ function renderApp() {
   retroDesktop?.render();
 }
 
-searchForm.addEventListener('submit', (event) => {
+searchForm?.addEventListener('submit', (event) => {
   event.preventDefault();
   searchQuery = readSearchQuery();
+  writeSearchStateToUrl();
   renderCafeResults();
 });
 
-searchInput.addEventListener('input', () => {
+searchInput?.addEventListener('input', () => {
   searchQuery = readSearchQuery();
+  writeSearchStateToUrl();
   renderCafeResults();
 });
 
 locationInput?.addEventListener('input', () => {
   searchQuery = readSearchQuery();
+  writeSearchStateToUrl();
   renderCafeResults();
 });
 
@@ -1454,19 +1624,20 @@ locationPresetActions.forEach((button) => {
     if (!locationInput) return;
     locationInput.value = button.dataset.locationPreset || '';
     searchQuery = readSearchQuery();
+    writeSearchStateToUrl();
     renderCafeResults();
   });
 });
 
-reportForm.addEventListener('submit', submitReport);
-locationAction.addEventListener('click', requestUserLocation);
+reportForm?.addEventListener('submit', submitReport);
+locationAction?.addEventListener('click', requestUserLocation);
 bindMapInteractions();
-detailClose.addEventListener('click', closeDetail);
-detailDialog.addEventListener('click', (event) => {
+detailClose?.addEventListener('click', closeDetail);
+detailDialog?.addEventListener('click', (event) => {
   if (event.target === detailDialog) closeDetail();
 });
 document.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape' && detailDialog.open) closeDetail();
+  if (event.key === 'Escape' && detailDialog?.open) closeDetail();
 });
 if (topLayer && typeof ResizeObserver !== 'undefined') {
   const topLayerResizeObserver = new ResizeObserver(updateTopLayerOffset);
@@ -1476,30 +1647,35 @@ window.addEventListener('resize', () => {
   updateTopLayerOffset();
   renderMapPins(filteredCafes());
 });
-adminCafeForm.addEventListener('submit', saveCafeFromAdmin);
-adminCafeNew.addEventListener('click', resetCafeForm);
-adminCafeDelete.addEventListener('click', deleteSelectedCafe);
-adminTagForm.addEventListener('submit', saveTagFromAdmin);
-adminTagNew.addEventListener('click', resetTagForm);
-csvSample.addEventListener('click', loadCsvSample);
-csvValidate.addEventListener('click', validateCsvFromAdmin);
-csvImport.addEventListener('click', importCsvRows);
+adminCafeForm?.addEventListener('submit', saveCafeFromAdmin);
+adminCafeNew?.addEventListener('click', resetCafeForm);
+adminCafeDelete?.addEventListener('click', deleteSelectedCafe);
+adminTagForm?.addEventListener('submit', saveTagFromAdmin);
+adminTagNew?.addEventListener('click', resetTagForm);
+csvSample?.addEventListener('click', loadCsvSample);
+csvValidate?.addEventListener('click', validateCsvFromAdmin);
+csvImport?.addEventListener('click', importCsvRows);
+loginAction?.addEventListener('click', () => setSavedStatus('로그인 기능은 서버 계정 연결 단계에서 제공됩니다. 지금은 이 기기에 임시 저장됩니다.'));
+loginLaterAction?.addEventListener('click', () => setSavedStatus('둘러보기를 계속합니다. 저장한 카페는 현재 기기에 남아 있습니다.'));
 
 updateTopLayerOffset();
+syncSearchStateFromUrl();
 registerServiceWorker();
 await loadSeedCafes();
 savedCafeIds = readSavedCafeIds();
-retroDesktop = createRetroDesktop({
-  root: retroDesktopRoot,
-  standardRoots: document.querySelectorAll('.search-shell, .ops-grid, .admin-workspace'),
-  getCafes: () => cafes,
-  getSavedCafeIds: () => savedCafeIds,
-  getFilters: () => mvpCapabilities(),
-  toggleSaved,
-  tagLabel,
-  confidenceLabel,
-  verificationSourceLabel,
-});
+if (retroDesktopRoot) {
+  retroDesktop = createRetroDesktop({
+    root: retroDesktopRoot,
+    standardRoots: document.querySelectorAll('.search-shell, .ops-grid'),
+    getCafes: () => cafes,
+    getSavedCafeIds: () => savedCafeIds,
+    getFilters: () => mvpCapabilities(),
+    toggleSaved,
+    tagLabel,
+    confidenceLabel,
+    verificationSourceLabel,
+  });
+}
 resetCafeForm();
 resetTagForm();
 renderApp();
