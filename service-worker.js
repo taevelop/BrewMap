@@ -1,27 +1,23 @@
-const CACHE_NAME = 'brewmap-pwa-v15';
+﻿const CACHE_NAME = 'brewmap-pwa-v16';
 const ASSET_VERSION = '20260624-2';
 const APP_SHELL = [
-  './',
-  './index.html',
-  './retro.html',
-  './favicon.ico',
-  './favicon.svg',
-  './favicon-16x16.png',
-  './favicon-32x32.png',
-  './apple-touch-icon.png',
-  './android-chrome-192x192.png',
-  './android-chrome-512x512.png',
-  './assets/brewmap-brand-icon.svg',
-  './assets/brewmap-cafe-marker.svg',
-  './assets/brewmap-cafe-marker-selected.svg',
-  './manifest.webmanifest',
-  `./src/styles.css?v=${ASSET_VERSION}`,
-  `./src/retro-desktop.css?v=${ASSET_VERSION}`,
-  `./src/main.js?v=${ASSET_VERSION}`,
-  `./src/retro-desktop.js?v=${ASSET_VERSION}`,
-  './src/map-services.js',
-  './data/seed-cafes.csv',
+  '/',
+  '/retro',
+  '/favicon.ico',
+  '/favicon.svg',
+  '/favicon-16x16.png',
+  '/favicon-32x32.png',
+  '/apple-touch-icon.png',
+  '/android-chrome-192x192.png',
+  '/android-chrome-512x512.png',
+  '/assets/brewmap-brand-icon.svg',
+  '/assets/brewmap-cafe-marker.svg',
+  '/assets/brewmap-cafe-marker-selected.svg',
+  '/manifest.webmanifest',
+  '/data/seed-cafes.csv',
 ];
+
+void ASSET_VERSION;
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -58,12 +54,12 @@ self.addEventListener('fetch', (event) => {
 
   if (request.method !== 'GET' || requestUrl.origin !== self.location.origin) return;
 
-  if (requestUrl.pathname === '/admin' || requestUrl.pathname === '/admin.html' || requestUrl.pathname.startsWith('/api/admin/')) {
+  if (requestUrl.pathname === '/admin' || requestUrl.pathname.startsWith('/admin/') || requestUrl.pathname === '/admin.html' || requestUrl.pathname.startsWith('/api/admin/')) {
     return;
   }
 
   if (request.mode === 'navigate') {
-    event.respondWith(networkFirst(request, './index.html'));
+    event.respondWith(networkFirst(request, '/'));
     return;
   }
 
