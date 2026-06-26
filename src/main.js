@@ -726,21 +726,45 @@ function toggleSaved(cafeId) {
     ? `${cafe?.name || '카페'}를 저장했습니다. 로그인하면 다른 기기에서도 볼 수 있어요.`
     : `${cafe?.name || '카페'} 저장을 해제했습니다.`);
   persistSavedCafeIds();
-  renderCafeResults();
+  renderCafeResults({ keepMapViewport: true });
   renderSavedList();
   retroDesktop?.render();
   if (detailDialog?.open) renderDetail(cafeById(cafeId));
 }
 
+function focusMapOnCafe(cafe) {
+  if (!hasMapSurface || !cafe) return;
+  const latitude = Number(cafe.latitude);
+  const longitude = Number(cafe.longitude);
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
+
+  mapViewport = activeMapProvider.normalizeViewport({
+    latitude,
+    longitude,
+    zoom: neighborhoodMapZoom,
+  });
+  setMapStatus(`${cafe.name} 주변 지도로 이동했습니다.`);
+}
+
+function scrollMapIntoView() {
+  const mapSection = document.querySelector('#map');
+  if (!mapSection) return;
+  if (window.location.hash !== '#map') window.location.hash = 'map';
+  mapSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 function selectCafe(cafeId, options = {}) {
-  if (!cafeById(cafeId)) return;
+  const cafe = cafeById(cafeId);
+  if (!cafe) return;
   selectedCafeId = cafeId;
-  renderCafeResults();
+  if (options.focusMap) focusMapOnCafe(cafe);
+  renderCafeResults({ keepMapViewport: Boolean(options.keepMapViewport || options.focusMap) });
 
   if (options.scrollList) {
     document.querySelector(`[data-cafe-card="${cafeId}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
+  if (options.scrollMap) requestAnimationFrame(scrollMapIntoView);
   if (options.openDetail) openDetail(cafeId);
 }
 
@@ -764,7 +788,7 @@ function renderCafe(cafe, index = 0) {
       <div class="card-actions"><button type="button" data-focus-map-action>지도에서 보기</button><button type="button" data-detail-action>상세</button><button type="button" class="${isSaved ? 'is-saved' : ''}" aria-pressed="${isSaved}" data-save-action>${isSaved ? '저장됨' : '저장'}</button><button type="button" data-report-action>정보 제보</button>${mapLinksMarkup(cafe)}</div>
     </div>
   `;
-  card.querySelector('[data-focus-map-action]').addEventListener('click', () => selectCafe(cafe.id));
+  card.querySelector('[data-focus-map-action]').addEventListener('click', () => selectCafe(cafe.id, { focusMap: true, scrollMap: true }));
   card.querySelector('[data-detail-action]').addEventListener('click', () => selectCafe(cafe.id, { openDetail: true }));
   card.querySelector('[data-save-action]').addEventListener('click', () => toggleSaved(cafe.id));
   card.querySelector('[data-report-action]').addEventListener('click', () => startReport(cafe.id));
@@ -882,7 +906,7 @@ function renderMapPins(items, options = {}) {
     pin.setAttribute('aria-label', `${cafe.name} 지도 핀`);
     pin.title = cafe.name;
     pin.textContent = '';
-    pin.addEventListener('click', () => selectCafe(cafe.id, { scrollList: true, openDetail: true }));
+    pin.addEventListener('click', () => selectCafe(cafe.id, { keepMapViewport: true, scrollList: true, openDetail: true }));
     mapMarkerLayer.append(pin);
   });
 }
@@ -929,12 +953,12 @@ function renderResultPager(items) {
   pager.innerHTML = `<p>${items.length}개 중 ${Math.min(visibleCafeResultCount, items.length)}개만 먼저 표시 중입니다. 지도를 함께 보며 필요한 만큼 더 불러오세요.</p><button type="button">${nextCount}개 더 보기</button>`;
   pager.querySelector('button').addEventListener('click', () => {
     visibleCafeResultCount += cafeResultPageSize;
-    renderCafeResults();
+    renderCafeResults({ keepMapViewport: true });
   });
   return pager;
 }
 
-function renderCafeResults() {
+function renderCafeResults(options = {}) {
   if (!hasPublicSurface) return;
 
   if (cafeLoadState === 'loading') {
@@ -956,7 +980,7 @@ function renderCafeResults() {
   resultCount.textContent = `${items.length}개 카페`;
   const visibleItems = items.slice(0, visibleCafeResultCount);
   cafeGrid.replaceChildren(...(items.length ? [...visibleItems.map(renderCafe), renderResultPager(items)] : [renderEmptyState()]));
-  renderMapPins(items);
+  renderMapPins(items, { keepViewport: Boolean(options.keepMapViewport) });
   renderAreaRail();
 }
 
