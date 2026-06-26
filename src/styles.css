@@ -2464,3 +2464,420 @@ h3,
 .admin-auth-status[data-state="error"] {
   color: #9a3412;
 }
+
+.area-rail button.is-active {
+  border-color: var(--retro-line);
+  color: #fff;
+  background: var(--retro-blue);
+}
+
+.area-rail button small {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.65em;
+  margin-left: 6px;
+  border-radius: 999px;
+  padding: 1px 5px;
+  color: var(--retro-ink);
+  background: var(--retro-highlight);
+  font-size: .72rem;
+  font-weight: 900;
+}
+
+.result-pager {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  padding: 14px;
+  border: 2px dashed var(--retro-line);
+  border-radius: 6px;
+  color: var(--retro-ink);
+  background: var(--brewmap-cream);
+  text-align: center;
+}
+
+.result-pager p {
+  margin: 0;
+  color: #5f3d2c;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.result-pager button {
+  border: 2px solid var(--retro-line);
+  border-radius: 4px;
+  padding: 9px 14px;
+  color: #fff;
+  background: var(--coffee-orange);
+  box-shadow:
+    inset 2px 2px 0 rgba(255, 255, 255, .38),
+    inset -2px -2px 0 rgba(44, 52, 67, .22),
+    2px 2px 0 rgba(22, 27, 36, .28);
+  font-weight: 900;
+}
+
+/* Usability pass: keep search, results, and map in a predictable work area. */
+.search-layout {
+  grid-template-columns: minmax(420px, .94fr) minmax(520px, 1.06fr);
+  grid-template-areas:
+    "filters filters"
+    "results map";
+  gap: 16px;
+}
+
+.filter-panel {
+  grid-area: filters;
+  position: static;
+  top: auto;
+  display: grid;
+  grid-template-columns: minmax(170px, 220px) 1fr minmax(220px, .72fr);
+  align-items: start;
+  gap: 14px;
+}
+
+.filter-panel .panel-heading {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.filter-row {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-content: start;
+  margin-top: 0;
+}
+
+.filter-row button {
+  width: auto;
+  min-height: 42px;
+}
+
+.quality-panel {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.result-panel {
+  grid-area: results;
+}
+
+.map-card {
+  grid-area: map;
+  scroll-margin-top: calc(var(--top-layer-height) + 14px);
+}
+
+.map-card:target {
+  grid-area: auto / 1 / auto / -1;
+  position: relative;
+  top: auto;
+}
+
+.map-card:target .map-surface {
+  height: min(72vh, 760px);
+  min-height: 520px;
+}
+
+.map-surface {
+  height: min(64vh, 680px);
+  min-height: 480px;
+  aspect-ratio: auto;
+}
+
+.cafe-card {
+  align-items: stretch;
+}
+
+.cafe-card-body {
+  display: grid;
+  gap: 8px;
+}
+
+.coffee-match,
+.cafe-address,
+.metadata,
+.tag-list,
+.card-actions {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.card-actions {
+  align-items: center;
+}
+
+.result-pager {
+  margin-top: 4px;
+}
+
+@media (max-width: 1180px) {
+  .search-layout {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "filters"
+      "map"
+      "results";
+  }
+
+  .filter-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .quality-panel {
+    display: none;
+  }
+
+  .map-card {
+    position: static;
+  }
+
+  .map-surface,
+  .map-card:target .map-surface {
+    height: clamp(360px, 54vh, 560px);
+    min-height: 360px;
+  }
+}
+
+@media (max-width: 900px) {
+  .search-shell {
+    padding: 12px;
+  }
+
+  .area-rail {
+    display: flex;
+    grid-template-columns: none;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+  }
+
+  .area-rail span {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    flex: 0 0 auto;
+    width: auto;
+    background: var(--retro-toolbar);
+  }
+
+  .area-rail button {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: max-content;
+    text-align: center;
+    scroll-snap-align: start;
+  }
+
+  .filter-row {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: thin;
+  }
+
+  .filter-row button {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: max-content;
+    text-align: center;
+  }
+
+  .cafe-card {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr);
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .result-rank {
+    width: 34px;
+    height: 34px;
+  }
+
+  .cafe-card-body {
+    gap: 7px;
+  }
+
+  .cafe-card-topline {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 0;
+  }
+
+  .metadata,
+  .tag-list {
+    display: none;
+  }
+
+  .coffee-match {
+    max-width: 100%;
+    padding: 5px 7px;
+  }
+
+  .card-actions {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 7px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: thin;
+  }
+
+  .card-actions a,
+  .card-actions button,
+  .modal-actions a,
+  .modal-actions button {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: max-content;
+    text-align: center;
+  }
+
+  .map-surface,
+  .map-card:target .map-surface {
+    height: clamp(300px, 48vh, 430px);
+    min-height: 300px;
+  }
+
+  .map-status {
+    top: 8px;
+    left: 8px;
+    max-width: calc(100% - 86px);
+  }
+
+  .map-controls {
+    top: 8px;
+    right: 8px;
+  }
+}
+
+@media (max-width: 520px) {
+  .area-rail {
+    display: flex;
+    grid-template-columns: none;
+  }
+
+  .area-rail span,
+  .hero-proof span {
+    grid-column: auto;
+  }
+
+  .map-surface,
+  .map-card:target .map-surface {
+    height: 340px;
+    min-height: 300px;
+  }
+}
+
+/* Usability pass: compress the entry area so search controls lead the page. */
+.search-shell {
+  padding-top: 12px;
+}
+
+.search-header {
+  display: grid;
+  grid-template-columns: minmax(280px, .78fr) minmax(420px, 1.22fr);
+  align-items: end;
+  gap: 16px;
+  margin-bottom: 10px;
+  padding: 42px 16px 16px;
+}
+
+.search-intro h1 {
+  max-width: none;
+  font-size: 1.58rem;
+  line-height: 1.15;
+}
+
+.search-intro p:not(.eyebrow) {
+  margin-top: 6px;
+  line-height: 1.42;
+}
+
+.hero-proof {
+  margin-top: 10px;
+  gap: 6px;
+}
+
+.hero-proof span {
+  padding: 6px 8px;
+  font-size: .78rem;
+}
+
+.search-card {
+  align-self: stretch;
+  max-width: none;
+}
+
+.search-card label {
+  padding: 6px 8px;
+}
+
+.search-card button {
+  padding: 9px 12px;
+}
+
+@media (max-width: 900px) {
+  .search-header {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 42px 12px 12px;
+  }
+
+  .search-intro h1 {
+    font-size: 1.32rem;
+    line-height: 1.18;
+  }
+
+  .search-intro p:not(.eyebrow) {
+    font-size: .92rem;
+  }
+
+  .hero-proof {
+    display: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .search-header {
+    padding: 40px 12px 12px;
+  }
+
+  .search-card {
+    gap: 7px;
+    padding: 8px;
+  }
+}
+
+.search-layout:has(.map-card:target) {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-areas:
+    "filters filters"
+    "map map"
+    "results results";
+}
+
+.search-layout:has(.map-card:target) .map-card {
+  grid-area: map;
+  position: relative;
+  top: auto;
+}
+
+.search-layout:has(.map-card:target) .result-panel {
+  grid-area: results;
+}
+
+@media (max-width: 1180px) {
+  .search-layout:has(.map-card:target) {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "filters"
+      "map"
+      "results";
+  }
+}

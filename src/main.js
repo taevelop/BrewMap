@@ -143,7 +143,7 @@ const searchInput = document.querySelector('[data-search-input]');
 const locationInput = document.querySelector('[data-location-input]');
 const topLayer = document.querySelector('.top-layer');
 const filterRow = document.querySelector('[data-filter-row]');
-const locationPresetActions = document.querySelectorAll('[data-location-preset]');
+const areaRail = document.querySelector('[data-area-rail]');
 const retroDesktopRoot = document.querySelector('[data-retro-desktop]');
 const mapSurface = document.querySelector('[data-map-surface]');
 const mapBaseLayer = document.querySelector('[data-map-base-layer]');
@@ -224,6 +224,9 @@ let selectedAdminTagKey = '';
 let lastCsvValidation = null;
 let lastCsvSource = '';
 let retroDesktop = null;
+const initialCafeResultLimit = 12;
+const cafeResultPageSize = 12;
+let visibleCafeResultCount = initialCafeResultLimit;
 
 const hasPublicSurface = Boolean(searchForm && filterRow && cafeGrid && resultCount);
 const hasMapSurface = Boolean(mapSurface && mapBaseLayer && mapMarkerLayer);
@@ -640,6 +643,53 @@ function updateTopLayerOffset() {
   if (height > 0) document.documentElement.style.setProperty('--top-layer-height', `${height}px`);
 }
 
+function preferredAreaOrder(label) {
+  const preferred = ['전포', '광안리', '해운대', '영도', '동래', '교대', '부산대', '남산', '중구', '연제', '금정', '남구', '동구', '북구', '사하', '강서', '기장', '사상'];
+  const index = preferred.indexOf(label);
+  return index === -1 ? preferred.length : index;
+}
+
+function renderAreaRail() {
+  if (!areaRail) return;
+  const currentLocation = locationInput?.value.trim() || '';
+  const areaCounts = activeCafes().reduce((counts, cafe) => {
+    if (cafe.city !== '부산' || !cafe.area) return counts;
+    counts.set(cafe.area, (counts.get(cafe.area) || 0) + 1);
+    return counts;
+  }, new Map());
+  const areas = [...areaCounts.keys()].sort((a, b) => preferredAreaOrder(a) - preferredAreaOrder(b) || a.localeCompare(b, 'ko'));
+  const controls = [
+    { label: '전체 부산', value: '부산', count: activeCafes().filter((cafe) => cafe.city === '부산').length },
+    ...areas.map((area) => ({ label: area, value: area, count: areaCounts.get(area) })),
+  ];
+  const label = document.createElement('span');
+  label.textContent = '부산 권역';
+  areaRail.replaceChildren(label, ...controls.map((control) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.dataset.locationPreset = control.value;
+    button.className = currentLocation === control.value ? 'is-active' : '';
+    button.setAttribute('aria-pressed', String(currentLocation === control.value));
+    button.innerHTML = `${escapeHtml(control.label)} <small>${control.count}</small>`;
+    button.addEventListener('click', () => applyLocationPreset(control.value));
+    return button;
+  }));
+}
+
+function resetCafeResultLimit() {
+  visibleCafeResultCount = initialCafeResultLimit;
+}
+
+function applyLocationPreset(value) {
+  if (!locationInput) return;
+  locationInput.value = value;
+  searchQuery = readSearchQuery();
+  resetCafeResultLimit();
+  writeSearchStateToUrl();
+  renderCafeResults();
+  renderAreaRail();
+}
+
 function renderFilters() {
   if (!filterRow) return;
   filterRow.replaceChildren(...mvpCapabilities().map((capability) => {
@@ -650,6 +700,7 @@ function renderFilters() {
     button.addEventListener('click', () => {
       if (selectedFilters.has(capability.key)) selectedFilters.delete(capability.key);
       else selectedFilters.add(capability.key);
+      resetCafeResultLimit();
       writeSearchStateToUrl();
       renderFilters();
       renderCafeResults();
@@ -675,21 +726,45 @@ function toggleSaved(cafeId) {
     ? `${cafe?.name || '카페'}를 저장했습니다. 로그인하면 다른 기기에서도 볼 수 있어요.`
     : `${cafe?.name || '카페'} 저장을 해제했습니다.`);
   persistSavedCafeIds();
-  renderCafeResults();
+  renderCafeResults({ keepMapViewport: true });
   renderSavedList();
   retroDesktop?.render();
   if (detailDialog?.open) renderDetail(cafeById(cafeId));
 }
 
+function focusMapOnCafe(cafe) {
+  if (!hasMapSurface || !cafe) return;
+  const latitude = Number(cafe.latitude);
+  const longitude = Number(cafe.longitude);
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
+
+  mapViewport = activeMapProvider.normalizeViewport({
+    latitude,
+    longitude,
+    zoom: neighborhoodMapZoom,
+  });
+  setMapStatus(`${cafe.name} 주변 지도로 이동했습니다.`);
+}
+
+function scrollMapIntoView() {
+  const mapSection = document.querySelector('#map');
+  if (!mapSection) return;
+  if (window.location.hash !== '#map') window.location.hash = 'map';
+  mapSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 function selectCafe(cafeId, options = {}) {
-  if (!cafeById(cafeId)) return;
+  const cafe = cafeById(cafeId);
+  if (!cafe) return;
   selectedCafeId = cafeId;
-  renderCafeResults();
+  if (options.focusMap) focusMapOnCafe(cafe);
+  renderCafeResults({ keepMapViewport: Boolean(options.keepMapViewport || options.focusMap) });
 
   if (options.scrollList) {
     document.querySelector(`[data-cafe-card="${cafeId}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
+  if (options.scrollMap) requestAnimationFrame(scrollMapIntoView);
   if (options.openDetail) openDetail(cafeId);
 }
 
@@ -713,7 +788,7 @@ function renderCafe(cafe, index = 0) {
       <div class="card-actions"><button type="button" data-focus-map-action>지도에서 보기</button><button type="button" data-detail-action>상세</button><button type="button" class="${isSaved ? 'is-saved' : ''}" aria-pressed="${isSaved}" data-save-action>${isSaved ? '저장됨' : '저장'}</button><button type="button" data-report-action>정보 제보</button>${mapLinksMarkup(cafe)}</div>
     </div>
   `;
-  card.querySelector('[data-focus-map-action]').addEventListener('click', () => selectCafe(cafe.id));
+  card.querySelector('[data-focus-map-action]').addEventListener('click', () => selectCafe(cafe.id, { focusMap: true, scrollMap: true }));
   card.querySelector('[data-detail-action]').addEventListener('click', () => selectCafe(cafe.id, { openDetail: true }));
   card.querySelector('[data-save-action]').addEventListener('click', () => toggleSaved(cafe.id));
   card.querySelector('[data-report-action]').addEventListener('click', () => startReport(cafe.id));
@@ -831,7 +906,7 @@ function renderMapPins(items, options = {}) {
     pin.setAttribute('aria-label', `${cafe.name} 지도 핀`);
     pin.title = cafe.name;
     pin.textContent = '';
-    pin.addEventListener('click', () => selectCafe(cafe.id, { scrollList: true, openDetail: true }));
+    pin.addEventListener('click', () => selectCafe(cafe.id, { keepMapViewport: true, scrollList: true, openDetail: true }));
     mapMarkerLayer.append(pin);
   });
 }
@@ -866,7 +941,24 @@ function bindMapInteractions() {
   });
 }
 
-function renderCafeResults() {
+function renderResultPager(items) {
+  const pager = document.createElement('div');
+  pager.className = 'result-pager';
+  const hiddenCount = Math.max(0, items.length - visibleCafeResultCount);
+  if (!hiddenCount) {
+    pager.innerHTML = `<p>현재 조건의 ${items.length}개 카페를 모두 표시했습니다.</p>`;
+    return pager;
+  }
+  const nextCount = Math.min(cafeResultPageSize, hiddenCount);
+  pager.innerHTML = `<p>${items.length}개 중 ${Math.min(visibleCafeResultCount, items.length)}개만 먼저 표시 중입니다. 지도를 함께 보며 필요한 만큼 더 불러오세요.</p><button type="button">${nextCount}개 더 보기</button>`;
+  pager.querySelector('button').addEventListener('click', () => {
+    visibleCafeResultCount += cafeResultPageSize;
+    renderCafeResults({ keepMapViewport: true });
+  });
+  return pager;
+}
+
+function renderCafeResults(options = {}) {
   if (!hasPublicSurface) return;
 
   if (cafeLoadState === 'loading') {
@@ -886,8 +978,10 @@ function renderCafeResults() {
   const items = filteredCafes();
   if (selectedCafeId && !items.some((cafe) => cafe.id === selectedCafeId)) selectedCafeId = '';
   resultCount.textContent = `${items.length}개 카페`;
-  cafeGrid.replaceChildren(...(items.length ? items.map(renderCafe) : [renderEmptyState()]));
-  renderMapPins(items);
+  const visibleItems = items.slice(0, visibleCafeResultCount);
+  cafeGrid.replaceChildren(...(items.length ? [...visibleItems.map(renderCafe), renderResultPager(items)] : [renderEmptyState()]));
+  renderMapPins(items, { keepViewport: Boolean(options.keepMapViewport) });
+  renderAreaRail();
 }
 
 function renderSavedList() {
@@ -1689,6 +1783,7 @@ function renderAdmin() {
 
 function renderApp() {
   renderPublic();
+  renderAreaRail();
   renderAdmin();
   retroDesktop?.render();
 }
@@ -1696,30 +1791,24 @@ function renderApp() {
 searchForm?.addEventListener('submit', (event) => {
   event.preventDefault();
   searchQuery = readSearchQuery();
+  resetCafeResultLimit();
   writeSearchStateToUrl();
   renderCafeResults();
 });
 
 searchInput?.addEventListener('input', () => {
   searchQuery = readSearchQuery();
+  resetCafeResultLimit();
   writeSearchStateToUrl();
   renderCafeResults();
 });
 
 locationInput?.addEventListener('input', () => {
   searchQuery = readSearchQuery();
+  resetCafeResultLimit();
   writeSearchStateToUrl();
   renderCafeResults();
-});
-
-locationPresetActions.forEach((button) => {
-  button.addEventListener('click', () => {
-    if (!locationInput) return;
-    locationInput.value = button.dataset.locationPreset || '';
-    searchQuery = readSearchQuery();
-    writeSearchStateToUrl();
-    renderCafeResults();
-  });
+  renderAreaRail();
 });
 
 reportForm?.addEventListener('submit', submitReport);
