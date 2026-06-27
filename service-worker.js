@@ -1,5 +1,5 @@
-const CACHE_NAME = 'brewmap-pwa-v16';
-const ASSET_VERSION = '20260624-2';
+const CACHE_NAME = 'brewmap-pwa-v17';
+const ASSET_VERSION = '20260627-curation-preview';
 const APP_SHELL = [
   '/',
   '/retro',
@@ -13,6 +13,9 @@ const APP_SHELL = [
   '/assets/brewmap-brand-icon.svg',
   '/assets/brewmap-cafe-marker.svg',
   '/assets/brewmap-cafe-marker-selected.svg',
+  '/assets/curation/jeonpo-local-espresso.png',
+  '/assets/curation/haeundae-seaside-cafe.png',
+  '/assets/curation/handdrip-detail-tools.png',
   '/manifest.webmanifest',
   '/data/seed-cafes.csv',
 ];

@@ -111,6 +111,28 @@ const confidenceLevels = ['A', 'B', 'C', 'D', 'X'];
 const verificationSources = ['owner_verified', 'admin_verified', 'user_report', 'menu_photo'];
 const csvRequiredColumns = ['id', 'name', 'city', 'area', 'address', 'latitude', 'longitude', 'capabilities', 'confidence', 'verification_source'];
 const csvOptionalColumns = ['verified_at', 'naver_map_url', 'kakao_map_url', 'google_map_url'];
+const curationAssets = {
+  jeonpo: '/assets/curation/jeonpo-local-espresso.png',
+  haeundae: '/assets/curation/haeundae-seaside-cafe.png',
+  detail: '/assets/curation/handdrip-detail-tools.png',
+};
+const areaCuration = {
+  전포: {
+    image: curationAssets.jeonpo,
+    label: '전포 골목 에스프레소 바',
+    summary: '낮은 조도의 바 자리와 작은 골목의 질감이 먼저 느껴지는 로컬 무드입니다.',
+  },
+  해운대: {
+    image: curationAssets.haeundae,
+    label: '해운대 바다 앞 조용한 카페',
+    summary: '큰 창 너머 바다와 나무 테이블의 결이 차분하게 이어지는 무드입니다.',
+  },
+};
+const defaultCuration = {
+  image: curationAssets.detail,
+  label: '손때 묻은 핸드드립 도구',
+  summary: '도구, 원두, 나무 바의 촉감이 카페의 성격을 조용하게 보여주는 무드입니다.',
+};
 const savedStorageKey = 'brewmap.savedCafes.v1';
 const neighborhoodMapZoom = 16;
 const clusterBreakoutZoom = 16;
@@ -169,6 +191,7 @@ const reportStatus = document.querySelector('[data-report-status]');
 const detailDialog = document.querySelector('[data-detail-dialog]');
 const detailClose = document.querySelector('[data-detail-close]');
 const detailBody = document.querySelector('[data-detail-body]');
+const discoverPresetActions = document.querySelectorAll('[data-discover-preset]');
 const adminPendingCount = document.querySelector('[data-admin-pending-count]');
 const adminCafeCount = document.querySelector('[data-admin-cafe-count]');
 const adminTagCount = document.querySelector('[data-admin-tag-count]');
@@ -587,6 +610,10 @@ function mapLinksMarkup(cafe) {
     ['kakao', '카카오맵'],
     ['google', 'Google Maps'],
   ].map(([key, label]) => `<a href="${escapeHtml(safeUrl(cafe.links[key]))}" target="_blank" rel="noreferrer">${label}</a>`).join('');
+}
+
+function curationForCafe(cafe) {
+  return areaCuration[cafe.area] || defaultCuration;
 }
 
 function setReportStatus(message) {
@@ -1180,20 +1207,34 @@ function renderDetail(cafe) {
   if (!cafe) return;
 
   const isSaved = savedCafeIds.has(cafe.id);
-  detailBody.className = 'detail-body';
+  const curation = curationForCafe(cafe);
+  const primaryTags = cafe.capabilities.slice(0, 3).map(tagLabel).join(' · ');
+  detailBody.className = 'detail-body is-curation-detail';
   detailBody.innerHTML = `
-    <p class="eyebrow">${escapeHtml(cafe.city)} · ${escapeHtml(cafe.area)}</p>
-    <h2>${escapeHtml(cafe.name)}</h2>
-    <p>${escapeHtml(cafe.address)}</p>
-    <dl class="metadata"><div><dt>검증 출처</dt><dd>${escapeHtml(verificationSourceLabel(cafe.source))}</dd></div><div><dt>최근 확인</dt><dd>${escapeHtml(cafe.verifiedAt || '-')}</dd></div><div><dt>신뢰도</dt><dd>${escapeHtml(confidenceLabel(cafe.confidence))}</dd></div><div><dt>저장 상태</dt><dd>${isSaved ? '저장됨' : '미저장'}</dd></div></dl>
-    <div>${tagsMarkup(cafe)}</div>
-    <div class="detail-neighborhood-map map-surface" data-cafe-neighborhood-map aria-label="${escapeHtml(cafe.name)} 주변 고정 동네 지도">
-      <div class="map-base-layer" data-cafe-neighborhood-base aria-hidden="true"></div>
-      <div class="map-marker-layer" data-cafe-neighborhood-marker></div>
-      <span class="map-status">주변 동네 고정 지도</span>
-      <a class="map-attribution" href="${escapeHtml(activeMapProvider.attribution?.url || '#')}" target="_blank" rel="noreferrer">${escapeHtml(activeMapProvider.attribution?.label || '지도 데이터')}</a>
+    <section class="detail-visual" aria-label="${escapeHtml(cafe.name)} 분위기 큐레이션">
+      <img src="${escapeHtml(curation.image)}" alt="${escapeHtml(cafe.area)} ${escapeHtml(curation.label)} 분위기" decoding="async" />
+      <div class="detail-visual-copy">
+        <p class="eyebrow">${escapeHtml(cafe.city)} · ${escapeHtml(cafe.area)}</p>
+        <h2>${escapeHtml(cafe.name)}</h2>
+        <p>${escapeHtml(curation.summary)}</p>
+      </div>
+    </section>
+    <div class="detail-curation-grid">
+      <section class="detail-curation-copy">
+        <p class="detail-mood-label">${escapeHtml(curation.label)}</p>
+        <p>${escapeHtml(primaryTags || '커피 태그 확인 중')}</p>
+        <div class="tag-list">${tagsMarkup(cafe)}</div>
+        <dl class="metadata detail-metadata"><div><dt>검증 출처</dt><dd>${escapeHtml(verificationSourceLabel(cafe.source))}</dd></div><div><dt>최근 확인</dt><dd>${escapeHtml(cafe.verifiedAt || '-')}</dd></div><div><dt>신뢰도</dt><dd>${escapeHtml(confidenceLabel(cafe.confidence))}</dd></div><div><dt>저장 상태</dt><dd>${isSaved ? '저장됨' : '미저장'}</dd></div></dl>
+        <p class="detail-address">${escapeHtml(cafe.address)}</p>
+        <div class="modal-actions"><button type="button" class="${isSaved ? 'is-saved' : ''}" aria-pressed="${isSaved}" data-modal-save>${isSaved ? '저장됨' : '저장'}</button><button type="button" data-modal-report>정보 제보</button>${mapLinksMarkup(cafe)}</div>
+      </section>
+      <div class="detail-neighborhood-map map-surface" data-cafe-neighborhood-map aria-label="${escapeHtml(cafe.name)} 주변 고정 동네 지도">
+        <div class="map-base-layer" data-cafe-neighborhood-base aria-hidden="true"></div>
+        <div class="map-marker-layer" data-cafe-neighborhood-marker></div>
+        <span class="map-status">주변 동네 고정 지도</span>
+        <a class="map-attribution" href="${escapeHtml(activeMapProvider.attribution?.url || '#')}" target="_blank" rel="noreferrer">${escapeHtml(activeMapProvider.attribution?.label || '지도 데이터')}</a>
+      </div>
     </div>
-    <div class="modal-actions"><button type="button" class="${isSaved ? 'is-saved' : ''}" aria-pressed="${isSaved}" data-modal-save>${isSaved ? '저장됨' : '저장'}</button><button type="button" data-modal-report>정보 제보</button>${mapLinksMarkup(cafe)}</div>
   `;
   requestAnimationFrame(() => renderCafeNeighborhoodMap(cafe));
   detailBody.querySelector('[data-modal-save]').addEventListener('click', () => toggleSaved(cafe.id));
@@ -1876,6 +1917,14 @@ csvValidate?.addEventListener('click', validateCsvFromAdmin);
 csvImport?.addEventListener('click', importCsvRows);
 loginAction?.addEventListener('click', () => setSavedStatus('로그인 기능은 서버 계정 연결 단계에서 제공됩니다. 지금은 이 기기에 임시 저장됩니다.'));
 loginLaterAction?.addEventListener('click', () => setSavedStatus('둘러보기를 계속합니다. 저장한 카페는 현재 기기에 남아 있습니다.'));
+discoverPresetActions.forEach((button) => {
+  button.addEventListener('click', () => {
+    const preset = button.dataset.discoverPreset;
+    if (!preset) return;
+    applyLocationPreset(preset);
+    document.querySelector('#cafes')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
 
 async function startBrewMap() {
   updateTopLayerOffset();

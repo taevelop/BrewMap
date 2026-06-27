@@ -19,6 +19,9 @@ const fileCopies = [
   ['assets/brewmap-brand-icon.svg', 'assets/brewmap-brand-icon.svg'],
   ['assets/brewmap-cafe-marker.svg', 'assets/brewmap-cafe-marker.svg'],
   ['assets/brewmap-cafe-marker-selected.svg', 'assets/brewmap-cafe-marker-selected.svg'],
+  ['assets/curation/jeonpo-local-espresso.png', 'assets/curation/jeonpo-local-espresso.png'],
+  ['assets/curation/haeundae-seaside-cafe.png', 'assets/curation/haeundae-seaside-cafe.png'],
+  ['assets/curation/handdrip-detail-tools.png', 'assets/curation/handdrip-detail-tools.png'],
 ];
 
 async function copyFileToPublic([source, target]) {
