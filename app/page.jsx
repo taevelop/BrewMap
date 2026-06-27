@@ -1,6 +1,127 @@
 import BrewMapRuntime from './components/BrewMapRuntime';
 
-const publicShell = "<main class=\"app-shell\">\r\n      <div class=\"top-layer\">\r\n        <nav class=\"top-nav\" aria-label=\"BrewMap 주요 메뉴\">\r\n          <a class=\"brand\" href=\"#home\" aria-label=\"브루맵 홈으로 이동\"><img class=\"brand-mark\" src=\"/assets/brewmap-brand-icon.svg\" alt=\"\" width=\"38\" height=\"38\" /><span>브루맵</span></a>\r\n          <div class=\"nav-actions\">\r\n            <a href=\"#home\">검색</a><a href=\"#cafes\">결과</a><a href=\"#map\">지도</a><a href=\"#saved\">저장</a><a href=\"#report\">제보</a>\r\n          </div>\r\n        </nav>\r\n      </div>\r\n\r\n      <section class=\"search-shell\" id=\"home\">\r\n        <header class=\"search-header\">\r\n          <div class=\"search-intro\">\r\n            <p class=\"eyebrow\">커피 찾기</p>\r\n            <h1>마시고 싶은 커피를 파는 카페를 찾아보세요</h1>\r\n            <p>메뉴 사진과 최근 확인 정보를 기준으로 부산 카페의 커피 제공 여부를 확인합니다.</p>\r\n            <div class=\"hero-proof\" aria-label=\"BrewMap 핵심 기준\">\r\n              <span><strong>별점 없음</strong> 커피 가능 여부 우선</span>\r\n              <span><strong>검증 표시</strong> 출처 · 최근 확인일</span>\r\n              <span><strong>부산 카페</strong> 지역별 검색</span>\r\n            </div>\r\n          </div>\r\n          <form class=\"search-card\" role=\"search\" data-search-form>\r\n            <label><span>커피</span><input aria-label=\"카페 또는 커피 검색\" placeholder=\"필터커피, 디카페인, 카페명\" data-search-input /></label>\r\n            <label><span>지역</span><input aria-label=\"지역 검색\" placeholder=\"부산 전포, 광안리\" data-location-input /></label>\r\n            <button type=\"submit\">검색</button>\r\n          </form>\r\n        </header>\r\n\r\n        <nav class=\"area-rail\" aria-label=\"부산 권역 빠른 탐색\" data-area-rail>\r\n          <span>부산 권역</span>\r\n          <button type=\"button\" data-location-preset=\"부산\">전체 부산</button>\r\n        </nav>\r\n\r\n        <div class=\"search-layout\">\r\n          <aside class=\"filter-panel\" aria-labelledby=\"filter-heading\">\r\n            <div class=\"panel-heading\">\r\n              <p class=\"eyebrow\">검색 조건</p>\r\n              <h2 id=\"filter-heading\">커피 조건</h2>\r\n            </div>\r\n            <div class=\"filter-row\" aria-label=\"커피 필터\" data-filter-row></div>\r\n            <div class=\"quality-panel\" aria-label=\"BrewMap 데이터 기준\">\r\n              <span><strong>기준</strong> 리뷰/별점 제외</span>\r\n              <span><strong>검증</strong> 출처와 최근 확인일 표시</span>\r\n              <span><strong>지역</strong> 부산 카페 우선</span>\r\n            </div>\r\n          </aside>\r\n\r\n          <section class=\"result-panel\" id=\"cafes\" aria-label=\"BrewMap 카페 검색 결과\">\r\n            <div class=\"result-heading\">\r\n              <div>\r\n                <p class=\"eyebrow\">검색 결과</p>\r\n                <h2>조건에 맞는 카페</h2>\r\n              </div>\r\n              <strong data-result-count aria-live=\"polite\">불러오는 중</strong>\r\n            </div>\r\n            <div class=\"cafe-grid\" data-cafe-grid></div>\r\n          </section>\r\n\r\n          <section class=\"map-card\" id=\"map\" aria-label=\"BrewMap 카페 지도\">\r\n            <div class=\"map-toolbar\"><span>결과 지도</span><button type=\"button\" data-location-action>내 위치</button></div>\r\n            <div class=\"map-surface\" data-map-surface tabindex=\"0\" role=\"application\" aria-label=\"카페 지도. 드래그하거나 키보드로 이동할 수 있습니다.\">\r\n              <div class=\"map-base-layer\" data-map-base-layer aria-hidden=\"true\"></div>\r\n              <div class=\"map-marker-layer\" data-map-marker-layer></div>\r\n              <div class=\"map-controls\" aria-label=\"지도 확대/축소\">\r\n                <button type=\"button\" data-map-zoom-in aria-label=\"지도 확대\" title=\"지도 확대\">+</button>\r\n                <button type=\"button\" data-map-zoom-out aria-label=\"지도 축소\" title=\"지도 축소\">-</button>\r\n              </div>\r\n              <a class=\"map-attribution\" href=\"#\" target=\"_blank\" rel=\"noreferrer\" data-map-attribution hidden>지도 데이터</a>\r\n              <p class=\"map-status\" data-map-status aria-live=\"polite\"></p>\r\n            </div>\r\n          </section>\r\n        </div>\r\n      </section>\r\n\r\n      <section class=\"ops-grid\">\r\n        <article class=\"panel saved-panel\" id=\"saved\">\r\n          <p class=\"eyebrow\">저장한 카페</p>\r\n          <h2>나중에 볼 카페</h2>\r\n          <p>마음에 드는 카페를 저장해 두고 나중에 다시 확인하세요.</p>\r\n          <div class=\"saved-summary\"><strong data-saved-count>0개</strong><span>저장됨</span></div><p class=\"saved-login-note\">저장한 카페를 여러 기기에서 확인하려면 로그인하세요.</p><div class=\"saved-login-actions\"><a href=\"#saved\" data-login-action>로그인</a><button type=\"button\" data-login-later>둘러보기 계속</button></div><p class=\"form-status\" data-saved-status aria-live=\"polite\"></p>\r\n          <ul class=\"saved-list\" data-saved-list></ul>\r\n        </article>\r\n        <article class=\"panel report-panel\" id=\"report\">\r\n          <p class=\"eyebrow\">정보 제보</p>\r\n          <h2>정보 수정 제보</h2>\r\n          <p>카페 정보가 다르다면 제보해 주세요. 운영 검토 후 반영합니다.</p>\r\n          <form class=\"report-form\" data-report-form>\r\n            <label>카페<select data-report-cafe></select></label>\r\n            <label>제보 유형<select data-report-type><option value=\"update\">수정</option><option value=\"add\">추가</option><option value=\"delete\">삭제</option><option value=\"closed\">폐업</option><option value=\"menu_change\">메뉴 변경</option></select></label>\r\n            <label>제보 내용<textarea data-report-detail rows=\"4\" placeholder=\"예: 디카페인 메뉴가 없어졌습니다.\" required></textarea></label>\r\n            <button type=\"submit\">정보 제보하기</button>\r\n            <p class=\"form-status\" data-report-status aria-live=\"polite\"></p>\r\n          </form>\r\n        </article>\r\n      </section>\r\n    </main>\r\n    <dialog class=\"detail-dialog\" data-detail-dialog>\r\n      <div class=\"detail-modal\">\r\n        <button class=\"modal-close\" type=\"button\" aria-label=\"상세 닫기\" data-detail-close>닫기</button>\r\n        <div data-detail-body></div>\r\n      </div>\r\n    </dialog>";
+const publicShell = String.raw`<main class="app-shell">
+  <div class="top-layer">
+    <nav class="top-nav" aria-label="BrewMap 주요 메뉴">
+      <a class="brand" href="#home" aria-label="브루맵 홈으로 이동"><img class="brand-mark" src="/assets/brewmap-brand-icon.svg" alt="" width="38" height="38" /><span>브루맵</span></a>
+      <div class="nav-actions">
+        <a href="#home">발견</a><a href="#cafes">결과</a><a href="#map">지도</a><a href="#saved">저장</a><a href="#report">제보</a>
+      </div>
+    </nav>
+  </div>
+
+  <section class="search-shell" id="home">
+    <header class="search-header">
+      <div class="search-intro">
+        <p class="eyebrow">Local Discover</p>
+        <h1>마시고 싶은 커피가 있는 부산 로컬</h1>
+        <p>골목의 온도와 바다 앞 조용한 자리를 먼저 고릅니다.</p>
+        <div class="hero-proof" aria-label="BrewMap 핵심 기준">
+          <span><strong>별점 없음</strong> 커피 가능 여부 우선</span>
+          <span><strong>검증 표시</strong> 출처 · 최근 확인일</span>
+          <span><strong>부산 카페</strong> 지역별 검색</span>
+        </div>
+      </div>
+      <form class="search-card" role="search" data-search-form>
+        <label><span>커피</span><input aria-label="카페 또는 커피 검색" placeholder="필터커피, 디카페인, 카페명" data-search-input /></label>
+        <label><span>지역</span><input aria-label="지역 검색" placeholder="부산 전포, 해운대" data-location-input /></label>
+        <button type="submit">검색</button>
+      </form>
+    </header>
+
+    <section class="local-discover" aria-labelledby="local-discover-heading">
+      <div class="local-discover-copy">
+        <p class="eyebrow">Busan Local</p>
+        <h2 id="local-discover-heading">오늘의 부산 로컬</h2>
+      </div>
+      <div class="local-region-grid">
+        <button class="local-region-card" type="button" data-discover-preset="전포" aria-label="부산 전포 카페 보기">
+          <img src="/assets/curation/jeonpo-local-espresso.png" alt="전포 골목 에스프레소 바 분위기" loading="eager" decoding="async" />
+          <span class="local-region-label">부산 - 전포</span>
+          <span class="local-region-note">골목 에스프레소</span>
+        </button>
+        <button class="local-region-card" type="button" data-discover-preset="해운대" aria-label="부산 해운대 카페 보기">
+          <img src="/assets/curation/haeundae-seaside-cafe.png" alt="해운대 조용한 바다 앞 카페 분위기" loading="eager" decoding="async" />
+          <span class="local-region-label">부산 - 해운대</span>
+          <span class="local-region-note">바다 앞 커피</span>
+        </button>
+      </div>
+    </section>
+
+    <nav class="area-rail" aria-label="부산 권역 빠른 탐색" data-area-rail>
+      <span>부산 권역</span>
+      <button type="button" data-location-preset="부산">전체 부산</button>
+    </nav>
+
+    <div class="search-layout">
+      <aside class="filter-panel" aria-labelledby="filter-heading">
+        <div class="panel-heading">
+          <p class="eyebrow">검색 조건</p>
+          <h2 id="filter-heading">커피 조건</h2>
+        </div>
+        <div class="filter-row" aria-label="커피 필터" data-filter-row></div>
+        <div class="quality-panel" aria-label="BrewMap 데이터 기준">
+          <span><strong>기준</strong> 리뷰/별점 제외</span>
+          <span><strong>검증</strong> 출처와 최근 확인일 표시</span>
+          <span><strong>지역</strong> 부산 카페 우선</span>
+        </div>
+      </aside>
+
+      <section class="result-panel" id="cafes" aria-label="BrewMap 카페 검색 결과">
+        <div class="result-heading">
+          <div>
+            <p class="eyebrow">검색 결과</p>
+            <h2>조건에 맞는 카페</h2>
+          </div>
+          <strong data-result-count aria-live="polite">불러오는 중</strong>
+        </div>
+        <div class="cafe-grid" data-cafe-grid></div>
+      </section>
+
+      <section class="map-card" id="map" aria-label="BrewMap 카페 지도">
+        <div class="map-toolbar"><span>결과 지도</span><button type="button" data-location-action>내 위치</button></div>
+        <div class="map-surface" data-map-surface tabindex="0" role="application" aria-label="카페 지도. 드래그하거나 키보드로 이동할 수 있습니다.">
+          <div class="map-base-layer" data-map-base-layer aria-hidden="true"></div>
+          <div class="map-marker-layer" data-map-marker-layer></div>
+          <div class="map-controls" aria-label="지도 확대/축소">
+            <button type="button" data-map-zoom-in aria-label="지도 확대" title="지도 확대">+</button>
+            <button type="button" data-map-zoom-out aria-label="지도 축소" title="지도 축소">-</button>
+          </div>
+          <a class="map-attribution" href="#" target="_blank" rel="noreferrer" data-map-attribution hidden>지도 데이터</a>
+          <p class="map-status" data-map-status aria-live="polite"></p>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <section class="ops-grid">
+    <article class="panel saved-panel" id="saved">
+      <p class="eyebrow">저장한 카페</p>
+      <h2>나중에 볼 카페</h2>
+      <p>마음에 드는 카페를 저장해 두고 나중에 다시 확인하세요.</p>
+      <div class="saved-summary"><strong data-saved-count>0개</strong><span>저장됨</span></div><p class="saved-login-note">저장한 카페를 여러 기기에서 확인하려면 로그인하세요.</p><div class="saved-login-actions"><a href="#saved" data-login-action>로그인</a><button type="button" data-login-later>둘러보기 계속</button></div><p class="form-status" data-saved-status aria-live="polite"></p>
+      <ul class="saved-list" data-saved-list></ul>
+    </article>
+    <article class="panel report-panel" id="report">
+      <p class="eyebrow">정보 제보</p>
+      <h2>정보 수정 제보</h2>
+      <p>카페 정보가 다르다면 제보해 주세요. 운영 검토 후 반영합니다.</p>
+      <form class="report-form" data-report-form>
+        <label>카페<select data-report-cafe></select></label>
+        <label>제보 유형<select data-report-type><option value="update">수정</option><option value="add">추가</option><option value="delete">삭제</option><option value="closed">폐업</option><option value="menu_change">메뉴 변경</option></select></label>
+        <label>제보 내용<textarea data-report-detail rows="4" placeholder="예: 디카페인 메뉴가 없어졌습니다." required></textarea></label>
+        <button type="submit">정보 제보하기</button>
+        <p class="form-status" data-report-status aria-live="polite"></p>
+      </form>
+    </article>
+  </section>
+</main>
+<dialog class="detail-dialog" data-detail-dialog>
+  <div class="detail-modal">
+    <button class="modal-close" type="button" aria-label="상세 닫기" data-detail-close>닫기</button>
+    <div data-detail-body></div>
+  </div>
+</dialog>`;
 
 export default function Page() {
   return (
