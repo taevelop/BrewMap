@@ -2881,3 +2881,727 @@ h3,
       "results";
   }
 }
+
+
+/* Requested UX refinements: map interaction, compact controls, and mobile overflow guards. */
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.app-shell,
+.top-layer,
+.search-shell,
+.search-layout,
+.search-header,
+.area-rail,
+.filter-panel,
+.result-panel,
+.map-card,
+.cafe-card,
+.detail-modal {
+  max-width: 100%;
+}
+
+.map-card .map-surface {
+  cursor: grab;
+  touch-action: none;
+}
+
+.map-card .map-surface.is-dragging {
+  cursor: grabbing;
+}
+
+.detail-neighborhood-map {
+  cursor: default;
+  touch-action: auto;
+}
+
+.area-rail span,
+.quality-panel span,
+.metadata div,
+.result-heading strong,
+.cafe-card-topline strong,
+.tag,
+.coffee-match {
+  cursor: default;
+  box-shadow: none;
+}
+
+.area-rail span,
+.quality-panel span {
+  border-color: transparent;
+  color: var(--brewmap-muted);
+  background: transparent;
+}
+
+.metadata div,
+.result-heading strong,
+.cafe-card-topline strong,
+.tag {
+  border-color: var(--brewmap-border);
+  color: var(--brewmap-espresso);
+  background: var(--brewmap-soft);
+}
+
+.coffee-match {
+  display: inline-block;
+  width: fit-content;
+  max-width: 100%;
+  color: #fff;
+  background: var(--retro-lilac);
+  overflow-wrap: anywhere;
+}
+
+.nav-actions a,
+.search-card button,
+.area-rail button,
+.filter-row button,
+.card-actions button,
+.map-toolbar button,
+.map-controls button,
+.modal-actions button,
+.modal-close {
+  cursor: pointer;
+}
+
+.card-actions button,
+.search-card button,
+.map-toolbar button,
+.map-controls button,
+.modal-actions button,
+.modal-close {
+  color: #fff;
+  background: var(--brewmap-orange);
+}
+
+.card-actions a,
+.modal-actions a {
+  color: var(--brewmap-espresso);
+  background: var(--brewmap-surface);
+}
+
+@media (min-width: 1181px) {
+  .search-layout,
+  .search-layout:has(.map-card:target) {
+    gap: 0;
+  }
+
+  .search-header,
+  .area-rail {
+    margin-bottom: 0;
+  }
+}
+
+@media (max-width: 1180px) {
+  .search-layout,
+  .search-layout:has(.map-card:target) {
+    gap: 8px;
+  }
+}
+
+@media (max-width: 900px) {
+  .top-layer {
+    padding: 6px 8px;
+  }
+
+  .top-nav {
+    gap: 8px;
+    padding: 6px;
+  }
+
+  .brand {
+    min-height: 34px;
+  }
+
+  .brand-mark {
+    width: 32px;
+    height: 32px;
+  }
+
+  .nav-actions {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 5px;
+  }
+
+  .nav-actions a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    min-height: 30px;
+    padding: 5px 6px;
+    font-size: .85rem;
+    line-height: 1.1;
+    text-align: center;
+  }
+
+  .search-shell {
+    padding: 8px;
+  }
+
+  .search-header {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-bottom: 8px;
+    padding: 38px 10px 10px;
+  }
+
+  .search-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 6px;
+    padding: 6px;
+  }
+
+  .search-card label {
+    min-width: 0;
+    padding: 5px 6px;
+  }
+
+  .search-card span {
+    font-size: .7rem;
+  }
+
+  .search-card input {
+    min-width: 0;
+    font-size: .86rem;
+    text-overflow: ellipsis;
+  }
+
+  .search-card button {
+    grid-column: 1 / -1;
+    min-height: 34px;
+    padding: 7px 10px;
+  }
+
+  .area-rail {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(82px, 1fr));
+    gap: 6px;
+    margin-bottom: 8px;
+    padding: 6px;
+    overflow: visible;
+    scroll-snap-type: none;
+  }
+
+  .area-rail span {
+    position: static;
+    grid-column: 1 / -1;
+    width: auto;
+    padding: 0 2px 2px;
+  }
+
+  .area-rail button {
+    width: 100%;
+    min-width: 0;
+    padding: 6px 5px;
+    line-height: 1.1;
+    text-align: center;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .area-rail button small {
+    display: inline-block;
+    margin-left: 4px;
+    padding: 1px 4px;
+  }
+
+  .filter-panel,
+  .result-panel,
+  .panel,
+  .admin-tool {
+    padding: 38px 10px 10px;
+  }
+
+  .filter-panel {
+    gap: 8px;
+  }
+
+  .filter-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    overflow: visible;
+    padding-bottom: 0;
+  }
+
+  .filter-row button {
+    width: 100%;
+    min-width: 0;
+    min-height: 34px;
+    padding: 7px 6px;
+    line-height: 1.1;
+    text-align: center;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .result-heading {
+    gap: 8px;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+  }
+
+  .result-heading strong,
+  .cafe-card-topline strong {
+    padding: 5px 7px;
+  }
+
+  .cafe-grid {
+    gap: 8px;
+  }
+
+  .cafe-card {
+    grid-template-columns: 34px minmax(0, 1fr);
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .result-rank {
+    width: 32px;
+    height: 32px;
+  }
+
+  .cafe-card-body {
+    min-width: 0;
+    gap: 6px;
+  }
+
+  .cafe-card h3 {
+    font-size: 1.05rem;
+  }
+
+  .cafe-address {
+    color: var(--brewmap-espresso);
+  }
+
+  .card-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    overflow: visible;
+    padding-bottom: 0;
+  }
+
+  .card-actions button {
+    width: 100%;
+    min-width: 0;
+    padding: 8px 6px;
+    white-space: normal;
+  }
+
+  .map-card {
+    padding: 38px 8px 8px;
+  }
+
+  .map-surface,
+  .map-card:target .map-surface {
+    height: clamp(300px, 48vh, 430px);
+    min-height: 300px;
+  }
+
+  .detail-modal {
+    width: min(calc(100vw - 18px), 760px);
+    padding: 42px 18px 18px;
+  }
+
+  .modal-actions {
+    gap: 8px;
+  }
+
+  .modal-actions a,
+  .modal-actions button {
+    padding: 8px 9px;
+  }
+}
+
+@media (max-width: 520px) {
+  body {
+    min-width: 0;
+  }
+
+  .top-layer {
+    padding: 5px;
+  }
+
+  .top-nav {
+    padding: 6px;
+  }
+
+  .nav-actions {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .nav-actions a {
+    padding: 5px 3px;
+    font-size: .8rem;
+  }
+
+  .search-shell,
+  .ops-grid,
+  .admin-workspace {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+
+  .search-header {
+    padding: 36px 8px 8px;
+  }
+
+  .search-card {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 5px;
+    padding: 5px;
+  }
+
+  .search-card label {
+    padding: 5px;
+  }
+
+  .search-card input {
+    font-size: .82rem;
+  }
+
+  .area-rail {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px;
+    padding: 5px;
+  }
+
+  .filter-panel,
+  .result-panel,
+  .panel,
+  .admin-tool {
+    padding: 38px 8px 8px;
+  }
+
+  .filter-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .map-surface,
+  .map-card:target .map-surface {
+    height: 320px;
+    min-height: 300px;
+  }
+
+  .detail-modal {
+    padding: 42px 14px 14px;
+  }
+}
+
+
+.cafe-card .coffee-match {
+  color: #fff;
+  background: var(--retro-lilac);
+}
+
+
+/* Follow-up search and result-card refinements. */
+.search-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) max-content;
+  align-items: stretch;
+  align-self: center;
+  gap: 8px;
+  padding: 8px;
+}
+
+.search-card label {
+  min-width: 0;
+  padding: 7px 9px;
+}
+
+.search-card button {
+  align-self: stretch;
+  width: auto;
+  min-width: 68px;
+  min-height: 0;
+  padding: 8px 14px;
+  white-space: nowrap;
+}
+
+.cafe-card h3 {
+  order: -2;
+  font-size: clamp(1.75rem, 2.2vw, 2rem);
+  line-height: 1.12;
+}
+
+.cafe-card-topline {
+  order: -1;
+  margin-bottom: 0;
+}
+
+.cafe-card-topline strong {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .search-card {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) max-content;
+    align-items: stretch;
+    gap: 5px;
+    padding: 5px;
+  }
+
+  .search-card label {
+    padding: 5px;
+  }
+
+  .search-card button {
+    grid-column: auto;
+    min-width: 54px;
+    min-height: 0;
+    padding: 6px 9px;
+  }
+
+  .area-rail,
+  .filter-panel {
+    position: relative;
+    overflow: hidden;
+    border: 2px solid var(--retro-line);
+    border-radius: 6px;
+    background: var(--retro-window);
+    box-shadow: 6px 6px 0 rgba(22, 27, 36, .34);
+  }
+
+  .area-rail {
+    padding: 42px 8px 8px;
+  }
+
+  .area-rail::before {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    height: 30px;
+    border-bottom: 2px solid var(--retro-line);
+    background:
+      linear-gradient(90deg, var(--retro-blue) 0%, var(--retro-teal) 54%, var(--retro-lilac) 100%);
+    content: "";
+  }
+
+  .area-rail::after {
+    position: absolute;
+    top: 9px;
+    left: 12px;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    background: var(--retro-amber);
+    box-shadow: 16px 0 0 var(--retro-coral), 32px 0 0 var(--retro-highlight);
+    content: "";
+  }
+
+  .area-rail span {
+    grid-column: 1 / -1;
+    padding: 0 2px 2px;
+    color: var(--retro-ink);
+    background: transparent;
+  }
+
+  .filter-panel::before,
+  .filter-panel::after {
+    display: block;
+  }
+
+  .cafe-card h3 {
+    font-size: 1.55rem;
+    line-height: 1.12;
+  }
+}
+
+@media (max-width: 520px) {
+  .search-card {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) max-content;
+    gap: 4px;
+    padding: 4px;
+  }
+
+  .search-card label {
+    padding: 4px 5px;
+  }
+
+  .search-card input {
+    font-size: .78rem;
+  }
+
+  .search-card button {
+    min-width: 50px;
+    padding: 6px 7px;
+  }
+
+  .area-rail {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    padding: 42px 6px 6px;
+  }
+}
+
+
+/* Final list-card and window-theme alignment. */
+.area-rail {
+  position: relative;
+  overflow: hidden;
+  border: 2px solid var(--retro-line);
+  border-radius: 6px;
+  padding: 42px 10px 10px;
+  background: var(--retro-window);
+  box-shadow: 6px 6px 0 rgba(22, 27, 36, .34);
+}
+
+.area-rail::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 30px;
+  border-bottom: 2px solid var(--retro-line);
+  background:
+    linear-gradient(90deg, var(--retro-blue) 0%, var(--retro-teal) 54%, var(--retro-lilac) 100%);
+  content: "";
+}
+
+.area-rail::after {
+  position: absolute;
+  top: 9px;
+  left: 12px;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--retro-amber);
+  box-shadow: 16px 0 0 var(--retro-coral), 32px 0 0 var(--retro-highlight);
+  content: "";
+}
+
+.area-rail span {
+  position: relative;
+  z-index: 1;
+  color: var(--retro-ink);
+  background: transparent;
+}
+
+.area-rail button {
+  position: relative;
+  z-index: 1;
+}
+
+.cafe-card {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  align-items: start;
+}
+
+.cafe-card-body {
+  min-width: 0;
+}
+
+.cafe-card-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+
+.cafe-card-title-row h3 {
+  min-width: 0;
+  margin: 0;
+  font-size: clamp(1.75rem, 2.2vw, 2rem);
+  line-height: 1.12;
+}
+
+.cafe-area-badge {
+  flex: 0 0 auto;
+  border: 2px solid var(--retro-line);
+  border-radius: 4px;
+  padding: 5px 8px;
+  color: var(--retro-ink);
+  background: var(--brewmap-cream);
+  box-shadow: inset 2px 2px 0 var(--retro-highlight);
+  font-size: .82rem;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.cafe-card .cafe-address,
+.cafe-card-topline {
+  display: none;
+}
+
+.cafe-card .metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+}
+
+.cafe-card .metadata div {
+  width: fit-content;
+  max-width: 100%;
+  padding: 6px 8px;
+  border: 2px solid var(--brewmap-border);
+  border-radius: 4px;
+  background: var(--brewmap-soft);
+}
+
+.cafe-card .metadata dt {
+  font-size: .68rem;
+  line-height: 1.1;
+}
+
+.cafe-card .metadata dd {
+  margin-top: 2px;
+  font-size: .92rem;
+  line-height: 1.25;
+}
+
+.cafe-card .tag-list {
+  display: flex;
+}
+
+@media (max-width: 900px) {
+  .area-rail {
+    padding: 42px 8px 8px;
+  }
+
+  .cafe-card {
+    grid-template-columns: 34px minmax(0, 1fr);
+  }
+
+  .cafe-card-title-row {
+    gap: 8px;
+  }
+
+  .cafe-card-title-row h3 {
+    font-size: 1.55rem;
+    line-height: 1.12;
+  }
+
+  .cafe-area-badge {
+    padding: 4px 6px;
+    font-size: .76rem;
+  }
+
+  .cafe-card .metadata,
+  .cafe-card .tag-list {
+    display: flex;
+  }
+
+  .cafe-card .metadata div {
+    padding: 5px 7px;
+  }
+}
+
+@media (max-width: 520px) {
+  .area-rail {
+    padding: 42px 6px 6px;
+  }
+
+  .cafe-card-title-row h3 {
+    font-size: 1.45rem;
+  }
+}

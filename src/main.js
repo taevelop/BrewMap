@@ -422,6 +422,15 @@ function zoomMapBy(delta, clientX, clientY) {
   zoomMapTo(mapViewport.zoom + delta, clientX, clientY);
 }
 
+function panMapBy(deltaX, deltaY, startViewport = mapViewport) {
+  const center = projectCoordinates(startViewport.latitude, startViewport.longitude, startViewport.zoom);
+  setMapViewportFromCenterPoint({
+    x: center.x - deltaX,
+    y: center.y - deltaY,
+  }, startViewport.zoom);
+  rerenderCurrentMap();
+}
+
 function requestUserLocation() {
   if (!navigator.geolocation) {
     setMapStatus('현재 위치를 확인할 수 없습니다.');
@@ -769,7 +778,6 @@ function selectCafe(cafeId, options = {}) {
 }
 
 function renderCafe(cafe, index = 0) {
-  const isSaved = savedCafeIds.has(cafe.id);
   const isSelected = selectedCafeId === cafe.id;
   const primaryTags = cafe.capabilities.slice(0, 3).map(tagLabel).join(' · ');
   const card = document.createElement('article');
@@ -779,19 +787,15 @@ function renderCafe(cafe, index = 0) {
   card.innerHTML = `
     <div class="result-rank" aria-hidden="true">${String(index + 1).padStart(2, '0')}</div>
     <div class="cafe-card-body">
-      <div class="cafe-card-topline"><span>${escapeHtml(cafe.city)} · ${escapeHtml(cafe.area)}</span><strong>${escapeHtml(cafe.verifiedAt || '확인일 준비 중')} 확인</strong></div>
-      <h3>${escapeHtml(cafe.name)}</h3>
+      <div class="cafe-card-title-row"><h3>${escapeHtml(cafe.name)}</h3><span class="cafe-area-badge">${escapeHtml(`${cafe.city} \u00b7 ${cafe.area}`)}</span></div>
       <p class="coffee-match">${escapeHtml(primaryTags || '커피 태그 확인 중')}</p>
-      <p class="cafe-address">${escapeHtml(cafe.address)}</p>
-      <dl class="metadata"><div><dt>제공 커피</dt><dd>${escapeHtml(primaryTags || '확인 중')}</dd></div><div><dt>확인 근거</dt><dd>${escapeHtml(verificationSourceLabel(cafe.source))}</dd></div><div><dt>신뢰도</dt><dd>${escapeHtml(confidenceLabel(cafe.confidence))}</dd></div></dl>
+      <dl class="metadata cafe-card-coffee-meta"><div><dt>제공 커피</dt><dd>${escapeHtml(primaryTags || '확인 중')}</dd></div></dl>
       <div class="tag-list">${tagsMarkup(cafe)}</div>
-      <div class="card-actions"><button type="button" data-focus-map-action>지도에서 보기</button><button type="button" data-detail-action>상세</button><button type="button" class="${isSaved ? 'is-saved' : ''}" aria-pressed="${isSaved}" data-save-action>${isSaved ? '저장됨' : '저장'}</button><button type="button" data-report-action>정보 제보</button>${mapLinksMarkup(cafe)}</div>
+      <div class="card-actions"><button type="button" data-focus-map-action>지도에서 보기</button><button type="button" data-detail-action>상세</button></div>
     </div>
   `;
   card.querySelector('[data-focus-map-action]').addEventListener('click', () => selectCafe(cafe.id, { focusMap: true, scrollMap: true }));
   card.querySelector('[data-detail-action]').addEventListener('click', () => selectCafe(cafe.id, { openDetail: true }));
-  card.querySelector('[data-save-action]').addEventListener('click', () => toggleSaved(cafe.id));
-  card.querySelector('[data-report-action]').addEventListener('click', () => startReport(cafe.id));
   return card;
 }
 
@@ -846,7 +850,11 @@ function renderCafeNeighborhoodMap(cafe) {
 
   const baseLayer = mapEl.querySelector('[data-cafe-neighborhood-base]');
   const markerLayer = mapEl.querySelector('[data-cafe-neighborhood-marker]');
-  const size = { width: mapEl.clientWidth || 520, height: mapEl.clientHeight || 240 };
+  const rect = mapEl.getBoundingClientRect();
+  const size = {
+    width: Math.max(Math.round(rect.width || mapEl.clientWidth || 520), 280),
+    height: Math.max(Math.round(rect.height || mapEl.clientHeight || 240), 220),
+  };
   const viewport = activeMapProvider.normalizeViewport({
     latitude: Number(cafe.latitude),
     longitude: Number(cafe.longitude),
@@ -913,6 +921,7 @@ function renderMapPins(items, options = {}) {
 
 function bindMapInteractions() {
   if (!hasMapSurface || !mapZoomInAction || !mapZoomOutAction) return;
+  let dragState = null;
   mapZoomInAction.addEventListener('click', () => zoomMapBy(1));
   mapZoomOutAction.addEventListener('click', () => zoomMapBy(-1));
 
@@ -923,7 +932,35 @@ function bindMapInteractions() {
 
   mapSurface.addEventListener('pointerdown', (event) => {
     if (event.button !== 0 || event.target.closest('button, a')) return;
-    setMapStatus('브루맵 지도는 선택한 카페 주변만 보이도록 고정되어 있습니다.');
+    event.preventDefault();
+    dragState = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      startViewport: { ...mapViewport },
+    };
+    mapSurface.classList.add('is-dragging');
+    mapSurface.setPointerCapture?.(event.pointerId);
+  });
+
+  mapSurface.addEventListener('pointermove', (event) => {
+    if (!dragState || dragState.pointerId !== event.pointerId) return;
+    event.preventDefault();
+    panMapBy(event.clientX - dragState.startX, event.clientY - dragState.startY, dragState.startViewport);
+  });
+
+  const endDrag = (event) => {
+    if (!dragState || dragState.pointerId !== event.pointerId) return;
+    mapSurface.classList.remove('is-dragging');
+    mapSurface.releasePointerCapture?.(event.pointerId);
+    dragState = null;
+  };
+
+  mapSurface.addEventListener('pointerup', endDrag);
+  mapSurface.addEventListener('pointercancel', endDrag);
+  mapSurface.addEventListener('lostpointercapture', () => {
+    mapSurface.classList.remove('is-dragging');
+    dragState = null;
   });
 
   mapSurface.addEventListener('keydown', (event) => {
@@ -1158,7 +1195,7 @@ function renderDetail(cafe) {
     </div>
     <div class="modal-actions"><button type="button" class="${isSaved ? 'is-saved' : ''}" aria-pressed="${isSaved}" data-modal-save>${isSaved ? '저장됨' : '저장'}</button><button type="button" data-modal-report>정보 제보</button>${mapLinksMarkup(cafe)}</div>
   `;
-  renderCafeNeighborhoodMap(cafe);
+  requestAnimationFrame(() => renderCafeNeighborhoodMap(cafe));
   detailBody.querySelector('[data-modal-save]').addEventListener('click', () => toggleSaved(cafe.id));
   detailBody.querySelector('[data-modal-report]').addEventListener('click', () => {
     closeDetail();
