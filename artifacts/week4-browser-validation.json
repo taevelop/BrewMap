@@ -1,0 +1,136 @@
+{
+  "url": "http://127.0.0.1:4210/",
+  "checks": [
+    {
+      "name": "initial visible cards render",
+      "ok": true,
+      "detail": {
+        "initialCardCount": 12
+      }
+    },
+    {
+      "name": "initial result count is 100+",
+      "ok": true,
+      "detail": {
+        "initialResultText": "113개 카페",
+        "initialResultCount": 113
+      }
+    },
+    {
+      "name": "map markers render",
+      "ok": true,
+      "detail": {
+        "initialMarkerCount": 18
+      }
+    },
+    {
+      "name": "core filter buttons render",
+      "ok": true,
+      "detail": {
+        "filterTexts": [
+          "필터커피",
+          "콜드브루",
+          "디카페인",
+          "플랫화이트",
+          "싱글오리진",
+          "원두구매"
+        ]
+      }
+    },
+    {
+      "name": "filter coffee button exists",
+      "ok": true,
+      "detail": {
+        "filterTexts": [
+          "필터커피",
+          "콜드브루",
+          "디카페인",
+          "플랫화이트",
+          "싱글오리진",
+          "원두구매"
+        ]
+      }
+    },
+    {
+      "name": "filter updates result count",
+      "ok": true,
+      "detail": {
+        "filteredResultText": "24개 카페",
+        "filteredResultCount": 24,
+        "initialResultCount": 113,
+        "filteredCardCount": 12
+      }
+    },
+    {
+      "name": "filter marks selected state",
+      "ok": true,
+      "detail": {
+        "filterClass": "is-active"
+      }
+    },
+    {
+      "name": "filter syncs to URL",
+      "ok": true,
+      "detail": {
+        "filteredUrl": "http://127.0.0.1:4210/?coffee=filter_coffee"
+      }
+    },
+    {
+      "name": "detail modal opens",
+      "ok": true,
+      "detail": {
+        "detailPreview": "부산 · 동래\n\n레이지모먼트 커피스탠드\n\n도구, 원두, 나무 바의 촉감이 카페의 성격을 조용하게 보여주는 무드입니다.\n\n손때 묻은 핸드드립 도구\n\n에스프레소 머신 · 스페셜티 커피 · 필터커피\n\n에스프레소 머신\n스페셜티 커피\n필터커피\n검증 출처\n관리자 확인\n최근 확인\n2026-06-16\n신뢰도\nB 등급\n저장 상태\n미저장\n\n부산 동래구 온천천로285번길 19"
+      }
+    },
+    {
+      "name": "detail shows coffee or verification info",
+      "ok": true,
+      "detail": {
+        "detailPreview": "부산 · 동래\n\n레이지모먼트 커피스탠드\n\n도구, 원두, 나무 바의 촉감이 카페의 성격을 조용하게 보여주는 무드입니다.\n\n손때 묻은 핸드드립 도구\n\n에스프레소 머신 · 스페셜티 커피 · 필터커피\n\n에스프레소 머신\n스페셜티 커피\n필터커피\n검증 출처\n관리자 확인\n최근 확인\n2026-06-16\n신뢰도\nB 등급\n저장 상태\n미저장\n\n부산 동래구 온천천로285번길 19\n\n저장\n정보 제보\n네이버지도\n카카오맵\nGoogle Maps\n주변 동네 고정 지도\n© OpenStreetMap"
+      }
+    },
+    {
+      "name": "external map links exist",
+      "ok": true,
+      "detail": {
+        "modalLinks": [
+          {
+            "text": "네이버지도",
+            "href": "https://map.naver.com/p/entry/place/1195066445?lng=129.08574&lat=35.19616&placePath=%2Fhome&entry=plt&searchType=place"
+          },
+          {
+            "text": "카카오맵",
+            "href": "https://map.kakao.com/link/search/%EB%B6%80%EC%82%B0%20%EB%8F%99%EB%9E%98%EA%B5%AC%20%EC%98%A8%EC%B2%9C%EC%B2%9C%EB%A1%9C285%EB%B2%88%EA%B8%B8%2019%20%EB%A0%88%EC%9D%B4%EC%A7%80%EB%AA%A8%EB%A8%BC%ED%8A%B8%20%EC%BB%A4%ED%94%BC%EC%8A%A4%ED%83%A0%EB%93%9C"
+          },
+          {
+            "text": "Google Maps",
+            "href": "https://www.google.com/maps/search/?api=1&query=%EB%B6%80%EC%82%B0%20%EB%8F%99%EB%9E%98%EA%B5%AC%20%EC%98%A8%EC%B2%9C%EC%B2%9C%EB%A1%9C285%EB%B2%88%EA%B8%B8%2019%20%EB%A0%88%EC%9D%B4%EC%A7%80%EB%AA%A8%EB%A8%BC%ED%8A%B8%20%EC%BB%A4%ED%94%BC%EC%8A%A4%ED%83%A0%EB%93%9C"
+          }
+        ]
+      }
+    },
+    {
+      "name": "local save toggles from detail",
+      "ok": true,
+      "detail": {
+        "saveBefore": "저장",
+        "saveAfter": "저장됨",
+        "savedCountText": "1개"
+      }
+    },
+    {
+      "name": "empty state handles no-result search",
+      "ok": true,
+      "detail": {
+        "emptyText": "조건에 맞는 카페를 찾지 못했습니다\n\n지역이나 커피 조건을 하나 줄여보세요.\n\n전체 초기화\n정보 제보",
+        "emptyActionCount": 2,
+        "noResultCardCount": 0
+      }
+    }
+  ],
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+  ],
+  "pageErrors": [],
+  "ok": true
+}
