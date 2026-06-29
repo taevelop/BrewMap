@@ -1,5 +1,5 @@
-const CACHE_NAME = 'brewmap-pwa-v17';
-const ASSET_VERSION = '20260627-curation-preview';
+const CACHE_NAME = 'brewmap-pwa-v18';
+const ASSET_VERSION = '20260629-runtime-recovery';
 const APP_SHELL = [
   '/',
   '/retro',
@@ -24,8 +24,7 @@ void ASSET_VERSION;
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(APP_SHELL))
+    precacheAppShell()
       .then(() => self.skipWaiting()),
   );
 });
@@ -38,8 +37,47 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-function cacheFreshResponse(request, response) {
-  if (!response || !response.ok) return response;
+function responseContentType(response) {
+  return response.headers.get('content-type')?.toLowerCase() || '';
+}
+
+function isHtmlResponse(response) {
+  return responseContentType(response).includes('text/html');
+}
+
+async function isVercelLoginResponse(response) {
+  if (!isHtmlResponse(response)) return false;
+
+  const body = await response.clone().text().catch(() => '');
+  return /<title>\s*Login [–-] Vercel\s*<\/title>/i.test(body) || body.includes('data-dpl-id=');
+}
+
+async function shouldCacheResponse(request, response) {
+  if (!response || !response.ok) return false;
+  if (await isVercelLoginResponse(response)) return false;
+
+  const requestUrl = new URL(request.url, self.location.origin);
+  if (isHtmlResponse(response)) return ['/', '/retro'].includes(requestUrl.pathname);
+
+  return true;
+}
+
+async function precacheAppShell() {
+  const cache = await caches.open(CACHE_NAME);
+
+  await Promise.all(APP_SHELL.map(async (url) => {
+    try {
+      const request = new Request(url, { cache: 'reload' });
+      const response = await fetch(request);
+      if (await shouldCacheResponse(request, response)) await cache.put(url, response.clone());
+    } catch {
+      // A protected or offline asset should not block service worker activation.
+    }
+  }));
+}
+
+async function cacheFreshResponse(request, response) {
+  if (!(await shouldCacheResponse(request, response))) return response;
   const copy = response.clone();
   caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
   return response;
@@ -62,7 +100,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (request.mode === 'navigate') {
-    event.respondWith(networkFirst(request, '/'));
+    event.respondWith(fetch(request).catch(() => caches.match(request).then((cached) => cached || caches.match('/'))));
     return;
   }
 
