@@ -790,7 +790,7 @@ async function requestEmailLogin(event) {
   setAuthState('pending', '로그인 링크를 요청하고 있습니다.');
 
   try {
-    const response = await fetch(`${supabaseProjectUrl}/auth/v1/otp`, {
+    const response = await fetch(`${supabaseProjectUrl}/auth/v1/otp?redirect_to=${encodeURIComponent(authRedirectUrl())}`, {
       method: 'POST',
       headers: {
         apikey: supabasePublishableKey,
@@ -800,7 +800,6 @@ async function requestEmailLogin(event) {
         email,
         type: 'magiclink',
         create_user: true,
-        options: { email_redirect_to: authRedirectUrl() },
       }),
     });
 
