@@ -134,6 +134,10 @@ const defaultCuration = {
   summary: '도구, 원두, 나무 바의 촉감이 카페의 성격을 조용하게 보여주는 무드입니다.',
 };
 const savedStorageKey = 'brewmap.savedCafes.v1';
+const authSessionStorageKey = 'brewmap.authSession.v1';
+const authPendingEmailStorageKey = 'brewmap.authPendingEmail.v1';
+const supabaseProjectUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').replace(/\/+$/, '');
+const supabasePublishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || '';
 const neighborhoodMapZoom = 16;
 const clusterBreakoutZoom = 16;
 const activeMapProvider = getMapProvider();
@@ -181,8 +185,12 @@ const resultCount = document.querySelector('[data-result-count]');
 const savedCount = document.querySelector('[data-saved-count]');
 const savedList = document.querySelector('[data-saved-list]');
 const savedStatus = document.querySelector('[data-saved-status]');
+const savedAuthNote = document.querySelector('[data-saved-auth-note]');
+const loginForm = document.querySelector('[data-login-form]');
+const loginEmailInput = document.querySelector('[data-login-email]');
 const loginAction = document.querySelector('[data-login-action]');
 const loginLaterAction = document.querySelector('[data-login-later]');
+const logoutAction = document.querySelector('[data-logout-action]');
 const reportForm = document.querySelector('[data-report-form]');
 const reportCafeSelect = document.querySelector('[data-report-cafe]');
 const reportTypeSelect = document.querySelector('[data-report-type]');
@@ -240,6 +248,9 @@ const adminTagFields = {
 
 const selectedFilters = new Set();
 let savedCafeIds = new Set();
+let authState = 'guest';
+let authSession = null;
+let authSyncMessage = '';
 let searchQuery = '';
 let selectedCafeId = '';
 let selectedAdminCafeId = '';
@@ -537,6 +548,293 @@ function persistSavedCafeIds() {
   }
 }
 
+function readJsonStorageValue(key, fallback) {
+  if (typeof localStorage === 'undefined') return fallback;
+
+  try {
+    const storedValue = localStorage.getItem(key);
+    return storedValue ? JSON.parse(storedValue) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function writeJsonStorageValue(key, value) {
+  if (typeof localStorage === 'undefined') return;
+
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // Storage can fail in private browsing or restricted environments.
+  }
+}
+
+function removeStorageValue(key) {
+  if (typeof localStorage === 'undefined') return;
+
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // Storage can fail in private browsing or restricted environments.
+  }
+}
+
+function supabaseAuthEnabled() {
+  return Boolean(supabaseProjectUrl && supabasePublishableKey);
+}
+
+function authRedirectUrl() {
+  if (typeof window === 'undefined') return '';
+  return `${window.location.origin}${window.location.pathname}`;
+}
+
+function normalizeSavedCafeIds(ids) {
+  const values = ids instanceof Set ? [...ids] : Array.isArray(ids) ? ids : [];
+  return new Set(values.filter((id) => typeof id === 'string' && cafeById(id)));
+}
+
+function readAuthSessionFromStorage() {
+  const session = readJsonStorageValue(authSessionStorageKey, null);
+  if (!session?.accessToken) return null;
+
+  if (session.expiresAt && Date.now() > session.expiresAt) {
+    removeStorageValue(authSessionStorageKey);
+    return null;
+  }
+
+  return session;
+}
+
+function writeAuthSession(session) {
+  authSession = session;
+  writeJsonStorageValue(authSessionStorageKey, session);
+}
+
+function clearAuthSession() {
+  authSession = null;
+  removeStorageValue(authSessionStorageKey);
+  removeStorageValue(authPendingEmailStorageKey);
+}
+
+function authSessionFromUrl() {
+  if (typeof window === 'undefined' || !window.location.hash.includes('access_token')) return null;
+
+  const params = new URLSearchParams(window.location.hash.slice(1));
+  const accessToken = params.get('access_token');
+  if (!accessToken) return null;
+
+  const expiresIn = Number(params.get('expires_in') || 3600);
+  const pendingEmail = readJsonStorageValue(authPendingEmailStorageKey, '');
+
+  return {
+    accessToken,
+    refreshToken: params.get('refresh_token') || '',
+    tokenType: params.get('token_type') || 'bearer',
+    expiresAt: Date.now() + Math.max(expiresIn - 60, 60) * 1000,
+    email: pendingEmail,
+  };
+}
+
+function clearAuthCallbackFromUrl() {
+  if (typeof window === 'undefined' || !window.location.hash.includes('access_token')) return;
+  window.history.replaceState({}, '', `${window.location.pathname}${window.location.search}#saved`);
+}
+
+function bootstrapAuthSession() {
+  const callbackSession = authSessionFromUrl();
+
+  if (callbackSession) {
+    writeAuthSession(callbackSession);
+    clearAuthCallbackFromUrl();
+    return { session: callbackSession, fromCallback: true };
+  }
+
+  authSession = readAuthSessionFromStorage();
+  return { session: authSession, fromCallback: false };
+}
+
+function currentAccessToken() {
+  if (!authSession?.accessToken) return '';
+
+  if (authSession.expiresAt && Date.now() > authSession.expiresAt) {
+    clearAuthSession();
+    authState = 'guest';
+    return '';
+  }
+
+  return authSession.accessToken;
+}
+
+function setAuthState(nextState, message = '') {
+  authState = nextState;
+  authSyncMessage = message;
+  renderSavedAuthUi();
+  if (message) setSavedStatus(message);
+}
+
+function renderSavedAuthUi() {
+  if (!hasSavedSurface) return;
+
+  if (loginForm) loginForm.dataset.state = authState;
+  if (loginEmailInput) loginEmailInput.disabled = authState === 'pending' || authState === 'authenticated';
+  if (loginAction) {
+    loginAction.disabled = authState === 'pending' || authState === 'authenticated' || !supabaseAuthEnabled();
+    loginAction.textContent = authState === 'pending' ? '처리 중' : '로그인 링크 받기';
+  }
+  if (loginLaterAction) loginLaterAction.hidden = authState === 'authenticated';
+  if (logoutAction) logoutAction.hidden = authState !== 'authenticated';
+
+  if (!savedAuthNote) return;
+  if (!supabaseAuthEnabled()) {
+    savedAuthNote.textContent = 'Supabase 환경 변수가 없어 현재 기기 기준으로 임시 저장합니다.';
+    return;
+  }
+
+  if (authState === 'authenticated') {
+    savedAuthNote.textContent = authSession?.email ? `${authSession.email} 계정에 저장됩니다.` : '로그인 계정에 저장됩니다.';
+  } else if (authState === 'pending') {
+    savedAuthNote.textContent = '로그인 또는 저장 동기화를 처리하고 있습니다.';
+  } else if (authState === 'offline') {
+    savedAuthNote.textContent = '계정 저장 동기화에 실패해 현재 기기 저장을 유지합니다.';
+  } else {
+    savedAuthNote.textContent = '저장한 카페를 여러 기기에서 확인하려면 이메일로 로그인하세요.';
+  }
+}
+
+async function requestSavedCafeApi(method, cafeId = '') {
+  const token = currentAccessToken();
+  if (!token) throw new Error('Supabase access token is required.');
+
+  const headers = { authorization: `Bearer ${token}` };
+  const options = { method, headers, cache: 'no-store' };
+
+  if (method !== 'GET') {
+    headers['content-type'] = 'application/json';
+    options.body = JSON.stringify({ cafeId });
+  }
+
+  const response = await fetch('/api/saved-cafes', options);
+  const payload = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      clearAuthSession();
+      authState = 'guest';
+    }
+    throw new Error(payload.message || `Saved cafes API failed with ${response.status}.`);
+  }
+
+  return normalizeSavedCafeIds(payload.savedCafeIds || []);
+}
+
+function refreshSavedSurfaces(options = {}) {
+  renderCafeResults({ keepMapViewport: Boolean(options.keepMapViewport) });
+  renderSavedList();
+  retroDesktop?.render();
+
+  if (detailDialog?.open) {
+    const detailCafe = options.detailCafeId ? cafeById(options.detailCafeId) : cafeById(selectedCafeId);
+    if (detailCafe) renderDetail(detailCafe);
+  }
+}
+
+async function syncSavedCafesFromServer(options = {}) {
+  const { mergeLocal = false, showSuccess = false } = options;
+  const localSavedCafeIds = readSavedCafeIds();
+  if (!currentAccessToken()) {
+    setAuthState('guest');
+    return false;
+  }
+
+  setAuthState('pending', '저장 목록을 계정과 동기화하고 있습니다.');
+
+  try {
+    let serverSavedCafeIds = await requestSavedCafeApi('GET');
+
+    if (mergeLocal) {
+      for (const cafeId of localSavedCafeIds) {
+        if (!serverSavedCafeIds.has(cafeId)) serverSavedCafeIds = await requestSavedCafeApi('POST', cafeId);
+      }
+    }
+
+    savedCafeIds = serverSavedCafeIds;
+    persistSavedCafeIds();
+    setAuthState('authenticated', showSuccess || mergeLocal ? '계정 저장 목록과 동기화했습니다.' : '계정 저장 목록을 불러왔습니다.');
+    refreshSavedSurfaces({ keepMapViewport: true });
+    return true;
+  } catch (error) {
+    savedCafeIds = localSavedCafeIds;
+    persistSavedCafeIds();
+    if (authState !== 'guest') setAuthState('offline', `저장 동기화에 실패했습니다. 현재 기기 저장을 유지합니다. ${error.message}`);
+    refreshSavedSurfaces({ keepMapViewport: true });
+    return false;
+  }
+}
+
+async function requestEmailLogin(event) {
+  event?.preventDefault();
+  if (!hasSavedSurface) return;
+
+  const email = loginEmailInput?.value.trim() || '';
+  if (!email) {
+    setSavedStatus('로그인 링크를 받을 이메일을 입력해 주세요.');
+    loginEmailInput?.focus();
+    return;
+  }
+
+  if (!supabaseAuthEnabled()) {
+    setAuthState('offline', 'Supabase 환경 변수가 없어 로그인 요청을 보낼 수 없습니다.');
+    return;
+  }
+
+  setAuthState('pending', '로그인 링크를 요청하고 있습니다.');
+
+  try {
+    const response = await fetch(`${supabaseProjectUrl}/auth/v1/otp`, {
+      method: 'POST',
+      headers: {
+        apikey: supabasePublishableKey,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        email,
+        type: 'magiclink',
+        create_user: true,
+        options: { email_redirect_to: authRedirectUrl() },
+      }),
+    });
+
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(body.slice(0, 160) || `Supabase Auth failed with ${response.status}.`);
+    }
+
+    writeJsonStorageValue(authPendingEmailStorageKey, email);
+    setAuthState('guest', `${email}로 로그인 링크를 보냈습니다. 메일에서 링크를 열면 저장 목록을 계정과 동기화합니다.`);
+  } catch (error) {
+    setAuthState('offline', `로그인 링크 요청에 실패했습니다. ${error.message}`);
+  }
+}
+
+async function logoutSavedAccount() {
+  const token = currentAccessToken();
+
+  if (token && supabaseAuthEnabled()) {
+    await fetch(`${supabaseProjectUrl}/auth/v1/logout`, {
+      method: 'POST',
+      headers: {
+        apikey: supabasePublishableKey,
+        authorization: `Bearer ${token}`,
+      },
+    }).catch(() => {});
+  }
+
+  clearAuthSession();
+  savedCafeIds = readSavedCafeIds();
+  setAuthState('guest', '로그아웃했습니다. 저장 목록은 현재 기기 임시 저장으로 유지됩니다.');
+  refreshSavedSurfaces({ keepMapViewport: true });
+}
+
 function addAdminLog(action, targetTable, targetId, summary) {
   adminLogs.unshift({
     id: `log-${Date.now()}-${adminLogs.length}`,
@@ -752,20 +1050,36 @@ function filteredCafes() {
   });
 }
 
-function toggleSaved(cafeId) {
+async function toggleSaved(cafeId) {
   const cafe = cafeById(cafeId);
   const shouldSave = !savedCafeIds.has(cafeId);
   if (shouldSave) savedCafeIds.add(cafeId);
   else savedCafeIds.delete(cafeId);
 
   setSavedStatus(shouldSave
-    ? `${cafe?.name || '카페'}를 저장했습니다. 로그인하면 다른 기기에서도 볼 수 있어요.`
+    ? `${cafe?.name || '카페'}를 저장했습니다.`
     : `${cafe?.name || '카페'} 저장을 해제했습니다.`);
   persistSavedCafeIds();
-  renderCafeResults({ keepMapViewport: true });
-  renderSavedList();
-  retroDesktop?.render();
-  if (detailDialog?.open) renderDetail(cafeById(cafeId));
+  refreshSavedSurfaces({ keepMapViewport: true, detailCafeId: cafeId });
+
+  if (!authSession || authState === 'guest') {
+    setSavedStatus(shouldSave
+      ? `${cafe?.name || '카페'}를 현재 기기에 저장했습니다. 로그인하면 다른 기기에서도 볼 수 있어요.`
+      : `${cafe?.name || '카페'} 저장을 해제했습니다.`);
+    return;
+  }
+
+  try {
+    savedCafeIds = await requestSavedCafeApi(shouldSave ? 'POST' : 'DELETE', cafeId);
+    persistSavedCafeIds();
+    setAuthState('authenticated', shouldSave
+      ? `${cafe?.name || '카페'}를 계정에 저장했습니다.`
+      : `${cafe?.name || '카페'} 계정 저장을 해제했습니다.`);
+  } catch (error) {
+    setAuthState(authState === 'guest' ? 'guest' : 'offline', `서버 저장 동기화에 실패했습니다. 현재 기기 저장은 유지됩니다. ${error.message}`);
+  }
+
+  refreshSavedSurfaces({ keepMapViewport: true, detailCafeId: cafeId });
 }
 
 function focusMapOnCafe(cafe) {
@@ -1050,6 +1364,7 @@ function renderCafeResults(options = {}) {
 
 function renderSavedList() {
   if (!hasSavedSurface) return;
+  renderSavedAuthUi();
   const savedItems = cafes.filter((cafe) => cafe.status !== 'hidden' && savedCafeIds.has(cafe.id));
   savedCount.textContent = `${savedItems.length}개`;
 
@@ -1915,8 +2230,9 @@ adminTagNew?.addEventListener('click', resetTagForm);
 csvSample?.addEventListener('click', loadCsvSample);
 csvValidate?.addEventListener('click', validateCsvFromAdmin);
 csvImport?.addEventListener('click', importCsvRows);
-loginAction?.addEventListener('click', () => setSavedStatus('로그인 기능은 서버 계정 연결 단계에서 제공됩니다. 지금은 이 기기에 임시 저장됩니다.'));
-loginLaterAction?.addEventListener('click', () => setSavedStatus('둘러보기를 계속합니다. 저장한 카페는 현재 기기에 남아 있습니다.'));
+loginForm?.addEventListener('submit', requestEmailLogin);
+loginLaterAction?.addEventListener('click', () => setAuthState(authState, '둘러보기를 계속합니다. 저장한 카페는 현재 기기에 남아 있습니다.'));
+logoutAction?.addEventListener('click', logoutSavedAccount);
 discoverPresetActions.forEach((button) => {
   button.addEventListener('click', () => {
     const preset = button.dataset.discoverPreset;
@@ -1932,6 +2248,9 @@ async function startBrewMap() {
   registerServiceWorker();
   await loadCafes();
   savedCafeIds = readSavedCafeIds();
+  const authBootstrap = bootstrapAuthSession();
+  if (authBootstrap.session) await syncSavedCafesFromServer({ mergeLocal: authBootstrap.fromCallback, showSuccess: authBootstrap.fromCallback });
+  else renderSavedAuthUi();
   if (retroDesktopRoot) {
     const { createRetroDesktop } = await import('./retro-desktop.js');
     retroDesktop = createRetroDesktop({

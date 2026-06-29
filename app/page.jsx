@@ -99,7 +99,15 @@ const publicShell = String.raw`<main class="app-shell">
       <p class="eyebrow">저장한 카페</p>
       <h2>나중에 볼 카페</h2>
       <p>마음에 드는 카페를 저장해 두고 나중에 다시 확인하세요.</p>
-      <div class="saved-summary"><strong data-saved-count>0개</strong><span>저장됨</span></div><p class="saved-login-note">저장한 카페를 여러 기기에서 확인하려면 로그인하세요.</p><div class="saved-login-actions"><a href="#saved" data-login-action>로그인</a><button type="button" data-login-later>둘러보기 계속</button></div><p class="form-status" data-saved-status aria-live="polite"></p>
+      <div class="saved-summary"><strong data-saved-count>0개</strong><span>저장됨</span></div>
+      <p class="saved-login-note" data-saved-auth-note>저장한 카페를 여러 기기에서 확인하려면 이메일로 로그인하세요.</p>
+      <form class="saved-login-actions" data-login-form>
+        <label class="saved-login-email"><span>이메일</span><input type="email" autocomplete="email" inputmode="email" placeholder="you@example.com" data-login-email /></label>
+        <button type="submit" data-login-action>로그인 링크 받기</button>
+        <button type="button" data-login-later>둘러보기 계속</button>
+        <button type="button" data-logout-action hidden>로그아웃</button>
+      </form>
+      <p class="form-status" data-saved-status aria-live="polite"></p>
       <ul class="saved-list" data-saved-list></ul>
     </article>
     <article class="panel report-panel" id="report">
