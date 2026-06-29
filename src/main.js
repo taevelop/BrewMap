@@ -2038,11 +2038,40 @@ function normalizeCafePayload(cafe) {
   };
 }
 
+function responseContentType(response) {
+  return response.headers.get('content-type')?.toLowerCase() || '';
+}
+
+function htmlTitleFromText(text) {
+  return text.match(/<title>(.*?)<\/title>/i)?.[1]?.trim() || '';
+}
+
+function isLikelyHtml(text) {
+  return /^\s*<!doctype html/i.test(text) || /^\s*<html[\s>]/i.test(text);
+}
+
+async function assertExpectedResponse(response, label, expectedTypes) {
+  if (!response.ok) throw new Error(`${label} request failed with ${response.status}`);
+
+  const contentType = responseContentType(response);
+  if (contentType.includes('text/html')) {
+    const title = htmlTitleFromText(await response.clone().text().catch(() => ''));
+    const page = title ? ` (${title})` : '';
+    throw new Error(`${label} returned an HTML page${page}. Vercel Deployment Protection or domain routing may be blocking app data.`);
+  }
+
+  if (expectedTypes.length && contentType && !expectedTypes.some((type) => contentType.includes(type))) {
+    throw new Error(`${label} returned ${contentType} instead of ${expectedTypes.join(' or ')}.`);
+  }
+}
+
 async function loadSupabaseCafes() {
   const response = await fetch('/api/cafes', { cache: 'no-store' });
-  if (!response.ok) throw new Error(`Cafe API request failed with ${response.status}`);
+  await assertExpectedResponse(response, 'Cafe API', ['application/json']);
 
-  const payload = await response.json();
+  const payload = await response.json().catch(() => {
+    throw new Error('Cafe API response is not valid JSON.');
+  });
   if (!Array.isArray(payload.cafes)) throw new Error('Cafe API response is invalid.');
 
   cafes = payload.cafes.map(normalizeCafePayload);
@@ -2052,9 +2081,16 @@ async function loadSupabaseCafes() {
 async function loadSeedCafeFallback(cause) {
   try {
     const response = await fetch('/data/seed-cafes.csv', { cache: 'no-store' });
-    if (!response.ok) throw new Error(`Seed CSV request failed with ${response.status}`);
+    await assertExpectedResponse(response, 'Seed CSV', ['text/csv', 'text/plain', 'application/octet-stream', 'application/vnd.ms-excel']);
 
-    const validation = validateCsvImportText(await response.text());
+    const csvText = await response.text();
+    if (isLikelyHtml(csvText)) {
+      const title = htmlTitleFromText(csvText);
+      const page = title ? ` (${title})` : '';
+      throw new Error(`Seed CSV returned an HTML page${page}. Vercel Deployment Protection or cached routing may be blocking fallback data.`);
+    }
+
+    const validation = validateCsvImportText(csvText);
     if (validation.errors.length) throw new Error(validation.errors.join('; '));
 
     cafes = validation.validRows.map(csvRecordToCafe);
