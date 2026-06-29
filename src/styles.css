@@ -1102,6 +1102,48 @@ h3 {
   gap: 8px;
   margin-bottom: 10px;
 }
+.saved-login-actions {
+  align-items: end;
+}
+
+.saved-login-email {
+  display: grid;
+  flex: 1 1 220px;
+  min-width: min(100%, 220px);
+  gap: 4px;
+  color: #34423e;
+  font-weight: 800;
+}
+
+.saved-login-email span {
+  font-size: 0.78rem;
+  letter-spacing: 0;
+}
+
+.saved-login-email input {
+  min-height: 40px;
+  width: 100%;
+  border: 1px solid #d9dfda;
+  border-radius: 8px;
+  padding: 9px 10px;
+  color: #2d1b12;
+  background: #fff;
+  font: inherit;
+}
+
+.saved-login-actions [hidden] {
+  display: none !important;
+}
+
+.saved-login-actions[data-state="authenticated"] .saved-login-email,
+.saved-login-actions[data-state="authenticated"] [data-login-action],
+.saved-login-actions[data-state="authenticated"] [data-login-later] {
+  display: none;
+}
+
+.saved-login-actions[data-state="authenticated"] [data-logout-action] {
+  display: inline-flex;
+}
 
 .saved-login-actions a,
 .saved-login-actions button,
