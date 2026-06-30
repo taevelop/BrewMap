@@ -3945,9 +3945,14 @@ body {
 .detail-visual-copy {
   position: absolute;
   left: 24px;
+  right: 24px;
   bottom: 22px;
   z-index: 1;
-  max-width: 520px;
+  display: grid;
+  justify-items: start;
+  max-width: min(520px, calc(100% - 48px));
+  max-height: calc(100% - 44px);
+  overflow: hidden;
   color: #fffdf7;
 }
 
@@ -3962,8 +3967,16 @@ body {
 }
 
 .detail-visual-copy p {
+  max-width: min(100%, 500px);
   margin: 8px 0 0;
+  overflow: hidden;
   color: rgba(255, 253, 247, .9);
+}
+
+.detail-visual-copy p:not(.eyebrow) {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
 }
 
 .detail-curation-grid {

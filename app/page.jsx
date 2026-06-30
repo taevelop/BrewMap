@@ -14,8 +14,8 @@ const publicShell = String.raw`<main class="app-shell">
     <header class="search-header">
       <div class="search-intro">
         <p class="eyebrow">Local Discover</p>
-        <h1>마시고 싶은 커피가 있는 부산 로컬</h1>
-        <p>골목의 온도와 바다 앞 조용한 자리를 먼저 고릅니다.</p>
+        <h1>마시고 싶은 커피가 있는 로컬 지도</h1>
+        <p>당신이 찾고 싶은 커피 지도</p>
         <div class="hero-proof" aria-label="BrewMap 핵심 기준">
           <span><strong>별점 없음</strong> 커피 가능 여부 우선</span>
           <span><strong>검증 표시</strong> 출처 · 최근 확인일</span>
@@ -50,7 +50,7 @@ const publicShell = String.raw`<main class="app-shell">
 
     <nav class="area-rail" aria-label="부산 권역 빠른 탐색" data-area-rail>
       <span>부산 권역</span>
-      <button type="button" data-location-preset="부산">전체 부산</button>
+      <button type="button" data-location-preset="부산">부산 전체</button>
     </nav>
 
     <div class="search-layout">
