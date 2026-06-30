@@ -686,7 +686,7 @@ function renderSavedAuthUi() {
 
   if (!savedAuthNote) return;
   if (!supabaseAuthEnabled()) {
-    savedAuthNote.textContent = 'Supabase 환경 변수가 없어 현재 기기 기준으로 임시 저장합니다.';
+    savedAuthNote.textContent = '현재 기기 기준으로 임시 저장합니다.';
     return;
   }
 
@@ -992,7 +992,7 @@ function renderAreaRail() {
   }, new Map());
   const areas = [...areaCounts.keys()].sort((a, b) => preferredAreaOrder(a) - preferredAreaOrder(b) || a.localeCompare(b, 'ko'));
   const controls = [
-    { label: '전체 부산', value: '부산', count: activeCafes().filter((cafe) => cafe.city === '부산').length },
+    { label: '부산 전체', value: '부산', count: activeCafes().filter((cafe) => cafe.city === '부산').length },
     ...areas.map((area) => ({ label: area, value: area, count: areaCounts.get(area) })),
   ];
   const label = document.createElement('span');
@@ -1129,7 +1129,6 @@ function renderCafe(cafe, index = 0) {
     <div class="cafe-card-body">
       <div class="cafe-card-title-row"><h3>${escapeHtml(cafe.name)}</h3><span class="cafe-area-badge">${escapeHtml(`${cafe.city} \u00b7 ${cafe.area}`)}</span></div>
       <p class="coffee-match">${escapeHtml(primaryTags || '커피 태그 확인 중')}</p>
-      <dl class="metadata cafe-card-coffee-meta"><div><dt>제공 커피</dt><dd>${escapeHtml(primaryTags || '확인 중')}</dd></div></dl>
       <div class="tag-list">${tagsMarkup(cafe)}</div>
       <div class="card-actions"><button type="button" data-focus-map-action>지도에서 보기</button><button type="button" data-detail-action>상세</button></div>
     </div>
