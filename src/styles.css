@@ -1094,6 +1094,37 @@ h3 {
   color: #5f6c68;
   line-height: 1.55;
 }
+.saved-auth-state {
+  display: inline-flex;
+  width: fit-content;
+  margin: 0 0 8px;
+  border: 1px solid var(--local-line, #d8c3a6);
+  border-radius: 999px;
+  padding: 5px 9px;
+  color: var(--local-ink, #2d1b12);
+  background: rgba(255, 250, 242, .86);
+  font-size: .82rem;
+  font-weight: 900;
+  line-height: 1.15;
+}
+
+.saved-auth-state[data-state="authenticated"] {
+  color: #fffdf7;
+  background: var(--local-olive, #4f6257);
+}
+
+.saved-auth-state[data-state="checking"],
+.saved-auth-state[data-state="syncing"],
+.saved-auth-state[data-state="pending"] {
+  color: var(--local-ink, #2d1b12);
+  background: var(--brewmap-cream, #f8ebd2);
+}
+
+.saved-auth-state[data-state="offline"],
+.saved-auth-state[data-state="expired"] {
+  color: #fffdf7;
+  background: var(--local-terracotta, #b65d35);
+}
 
 .saved-login-actions,
 .empty-actions {
@@ -1138,6 +1169,10 @@ h3 {
 .saved-login-actions[data-state="authenticated"] .saved-login-email,
 .saved-login-actions[data-state="authenticated"] [data-login-action],
 .saved-login-actions[data-state="authenticated"] [data-login-later] {
+  display: none;
+}
+.saved-login-actions[data-state="checking"],
+.saved-login-actions[data-state="syncing"] {
   display: none;
 }
 
