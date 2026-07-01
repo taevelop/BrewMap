@@ -99,7 +99,8 @@ const publicShell = String.raw`<main class="app-shell">
       <p class="eyebrow">저장한 카페</p>
       <h2>나중에 볼 카페</h2>
       <p>마음에 드는 카페를 저장해 두고 나중에 다시 확인하세요.</p>
-      <div class="saved-summary"><strong data-saved-count>0개</strong><span>저장됨</span></div>
+      <div class="saved-summary"><strong data-saved-count>0개</strong><span data-saved-scope>이 기기 저장</span></div>
+      <p class="saved-auth-state" data-saved-auth-state>로그인 상태 확인 중</p>
       <p class="saved-login-note" data-saved-auth-note>저장한 카페를 여러 기기에서 확인하려면 이메일로 로그인하세요.</p>
       <form class="saved-login-actions" data-login-form>
         <label class="saved-login-email"><span>이메일</span><input type="email" autocomplete="email" inputmode="email" placeholder="you@example.com" data-login-email /></label>

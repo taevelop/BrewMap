@@ -185,6 +185,8 @@ const resultCount = document.querySelector('[data-result-count]');
 const savedCount = document.querySelector('[data-saved-count]');
 const savedList = document.querySelector('[data-saved-list]');
 const savedStatus = document.querySelector('[data-saved-status]');
+const savedScope = document.querySelector('[data-saved-scope]');
+const savedAuthStateLabel = document.querySelector('[data-saved-auth-state]');
 const savedAuthNote = document.querySelector('[data-saved-auth-note]');
 const loginForm = document.querySelector('[data-login-form]');
 const loginEmailInput = document.querySelector('[data-login-email]');
@@ -248,8 +250,9 @@ const adminTagFields = {
 
 const selectedFilters = new Set();
 let savedCafeIds = new Set();
-let authState = 'guest';
+let authState = 'checking';
 let authSession = null;
+let authRecoveryFailed = false;
 let authSyncMessage = '';
 let searchQuery = '';
 let selectedCafeId = '';
@@ -593,11 +596,50 @@ function normalizeSavedCafeIds(ids) {
   return new Set(values.filter((id) => typeof id === 'string' && cafeById(id)));
 }
 
+function authSessionExpired(session) {
+  return Boolean(session?.expiresAt && Date.now() > Number(session.expiresAt));
+}
+
+function authSessionExpiresAt(expiresIn = 3600) {
+  const seconds = Number(expiresIn || 3600);
+  return Date.now() + Math.max(seconds - 60, 60) * 1000;
+}
+
+function authEmailFromAccessToken(accessToken) {
+  if (typeof atob === 'undefined') return '';
+
+  try {
+    const payload = String(accessToken).split('.')[1];
+    if (!payload) return '';
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const decoded = atob(normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '='));
+    return JSON.parse(decoded).email || '';
+  } catch {
+    return '';
+  }
+}
+
+function authSessionFromPayload(payload, fallback = {}) {
+  const accessToken = payload.access_token || payload.accessToken || '';
+  if (!accessToken) return null;
+
+  const expiresAt = payload.expires_at
+    ? Number(payload.expires_at) * 1000
+    : authSessionExpiresAt(payload.expires_in || payload.expiresIn);
+
+  return {
+    accessToken,
+    refreshToken: payload.refresh_token || payload.refreshToken || fallback.refreshToken || '',
+    tokenType: payload.token_type || payload.tokenType || fallback.tokenType || 'bearer',
+    expiresAt,
+    email: payload.user?.email || fallback.email || authEmailFromAccessToken(accessToken),
+  };
+}
 function readAuthSessionFromStorage() {
   const session = readJsonStorageValue(authSessionStorageKey, null);
-  if (!session?.accessToken) return null;
+  if (!session?.accessToken && !session?.refreshToken) return null;
 
-  if (session.expiresAt && Date.now() > session.expiresAt) {
+  if (authSessionExpired(session) && !session.refreshToken) {
     removeStorageValue(authSessionStorageKey);
     return null;
   }
@@ -606,11 +648,13 @@ function readAuthSessionFromStorage() {
 }
 
 function writeAuthSession(session) {
+  authRecoveryFailed = false;
   authSession = session;
   writeJsonStorageValue(authSessionStorageKey, session);
 }
 
 function clearAuthSession() {
+  authRecoveryFailed = false;
   authSession = null;
   removeStorageValue(authSessionStorageKey);
   removeStorageValue(authPendingEmailStorageKey);
@@ -620,19 +664,15 @@ function authSessionFromUrl() {
   if (typeof window === 'undefined' || !window.location.hash.includes('access_token')) return null;
 
   const params = new URLSearchParams(window.location.hash.slice(1));
-  const accessToken = params.get('access_token');
-  if (!accessToken) return null;
-
-  const expiresIn = Number(params.get('expires_in') || 3600);
   const pendingEmail = readJsonStorageValue(authPendingEmailStorageKey, '');
 
-  return {
-    accessToken,
-    refreshToken: params.get('refresh_token') || '',
-    tokenType: params.get('token_type') || 'bearer',
-    expiresAt: Date.now() + Math.max(expiresIn - 60, 60) * 1000,
-    email: pendingEmail,
-  };
+  return authSessionFromPayload({
+    access_token: params.get('access_token'),
+    refresh_token: params.get('refresh_token'),
+    token_type: params.get('token_type'),
+    expires_in: params.get('expires_in'),
+    expires_at: params.get('expires_at'),
+  }, { email: pendingEmail });
 }
 
 function clearAuthCallbackFromUrl() {
@@ -653,16 +693,46 @@ function bootstrapAuthSession() {
   return { session: authSession, fromCallback: false };
 }
 
-function currentAccessToken() {
-  if (!authSession?.accessToken) return '';
-
-  if (authSession.expiresAt && Date.now() > authSession.expiresAt) {
+async function refreshAuthSession() {
+  if (!authSession?.refreshToken || !supabaseAuthEnabled()) {
     clearAuthSession();
-    authState = 'guest';
-    return '';
+    return null;
   }
 
-  return authSession.accessToken;
+  try {
+    const response = await fetch(`${supabaseProjectUrl}/auth/v1/token?grant_type=refresh_token`, {
+      method: 'POST',
+      headers: {
+        apikey: supabasePublishableKey,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ refresh_token: authSession.refreshToken }),
+    });
+
+    if (!response.ok) throw new Error(`Supabase token refresh failed with ${response.status}.`);
+
+    const refreshedSession = authSessionFromPayload(await response.json(), authSession);
+    if (!refreshedSession) throw new Error('Supabase token refresh response is invalid.');
+
+    writeAuthSession(refreshedSession);
+    return refreshedSession;
+  } catch {
+    clearAuthSession();
+    authRecoveryFailed = true;
+    return null;
+  }
+}
+
+async function ensureAuthSession() {
+  if (!authSession) authSession = readAuthSessionFromStorage();
+  if (!authSession) return null;
+  if (authSession.accessToken && !authSessionExpired(authSession)) return authSession;
+  return refreshAuthSession();
+}
+
+async function currentAccessToken() {
+  const session = await ensureAuthSession();
+  return session?.accessToken || '';
 }
 
 function setAuthState(nextState, message = '') {
@@ -672,37 +742,64 @@ function setAuthState(nextState, message = '') {
   if (message) setSavedStatus(message);
 }
 
+function savedScopeText() {
+  if (!supabaseAuthEnabled()) return '이 기기 저장';
+  if (authState === 'authenticated') return '계정 저장';
+  if (authState === 'checking' || authState === 'syncing' || authState === 'pending') return '동기화 확인 중';
+  return savedCafeIds.size ? '이 기기 저장' : '저장됨';
+}
+
+function savedAuthStateText() {
+  if (!supabaseAuthEnabled()) return '이 기기 저장';
+  if (authState === 'authenticated') return '로그인됨';
+  if (authState === 'checking') return '로그인 확인 중';
+  if (authState === 'syncing') return '동기화 중';
+  if (authState === 'pending') return '요청 중';
+  if (authState === 'link_sent') return '링크 발송됨';
+  if (authState === 'offline') return '임시 저장 유지';
+  if (authState === 'expired') return '다시 로그인 필요';
+  return savedCafeIds.size ? '이 기기 저장' : '비로그인 저장';
+}
+
+function savedAuthNoteText() {
+  if (!supabaseAuthEnabled()) return '현재 기기 기준으로 임시 저장합니다.';
+  if (authState === 'authenticated') return authSession?.email ? `${authSession.email} 계정에 저장됩니다.` : '로그인 계정에 저장됩니다.';
+  if (authState === 'checking') return '저장된 로그인 상태를 확인하고 있습니다.';
+  if (authState === 'syncing' || authState === 'pending') return '계정 저장 목록과 동기화하고 있습니다.';
+  if (authState === 'link_sent') {
+    const pendingEmail = readJsonStorageValue(authPendingEmailStorageKey, '') || loginEmailInput?.value.trim() || '입력한 이메일';
+    return `${pendingEmail}로 로그인 링크를 보냈습니다. 메일에서 링크를 열어 주세요.`;
+  }
+  if (authState === 'offline') return '계정 동기화에 실패해 이 기기 저장을 유지합니다. 다시 동기화하려면 로그인 링크를 받아 주세요.';
+  if (authState === 'expired') return '로그인 세션이 만료되었습니다. 다시 로그인하면 이 기기 저장 목록을 계정에 합칠 수 있습니다.';
+  if (savedCafeIds.size) return '이 기기에 저장된 카페입니다. 로그인하면 계정 저장 목록에 합쳐집니다.';
+  return '저장한 카페를 여러 기기에서 확인하려면 이메일로 로그인하세요.';
+}
+
 function renderSavedAuthUi() {
   if (!hasSavedSurface) return;
 
   if (loginForm) loginForm.dataset.state = authState;
-  if (loginEmailInput) loginEmailInput.disabled = authState === 'pending' || authState === 'authenticated';
+  if (savedScope) savedScope.textContent = savedScopeText();
+  if (savedAuthStateLabel) {
+    savedAuthStateLabel.dataset.state = authState;
+    savedAuthStateLabel.textContent = savedAuthStateText();
+  }
+
+  const busy = authState === 'checking' || authState === 'syncing' || authState === 'pending';
+  const authenticated = authState === 'authenticated';
+  if (loginEmailInput) loginEmailInput.disabled = busy || authenticated;
   if (loginAction) {
-    loginAction.disabled = authState === 'pending' || authState === 'authenticated' || !supabaseAuthEnabled();
-    loginAction.textContent = authState === 'pending' ? '처리 중' : '로그인 링크 받기';
+    loginAction.disabled = busy || authenticated || !supabaseAuthEnabled();
+    loginAction.textContent = authState === 'link_sent' ? '링크 다시 받기' : '로그인 링크 받기';
   }
-  if (loginLaterAction) loginLaterAction.hidden = authState === 'authenticated';
-  if (logoutAction) logoutAction.hidden = authState !== 'authenticated';
-
-  if (!savedAuthNote) return;
-  if (!supabaseAuthEnabled()) {
-    savedAuthNote.textContent = '현재 기기 기준으로 임시 저장합니다.';
-    return;
-  }
-
-  if (authState === 'authenticated') {
-    savedAuthNote.textContent = authSession?.email ? `${authSession.email} 계정에 저장됩니다.` : '로그인 계정에 저장됩니다.';
-  } else if (authState === 'pending') {
-    savedAuthNote.textContent = '로그인 또는 저장 동기화를 처리하고 있습니다.';
-  } else if (authState === 'offline') {
-    savedAuthNote.textContent = '계정 저장 동기화에 실패해 현재 기기 저장을 유지합니다.';
-  } else {
-    savedAuthNote.textContent = '저장한 카페를 여러 기기에서 확인하려면 이메일로 로그인하세요.';
-  }
+  if (loginLaterAction) loginLaterAction.hidden = busy || authenticated;
+  if (logoutAction) logoutAction.hidden = !authenticated;
+  if (savedAuthNote) savedAuthNote.textContent = savedAuthNoteText();
 }
 
 async function requestSavedCafeApi(method, cafeId = '') {
-  const token = currentAccessToken();
+  const token = await currentAccessToken();
   if (!token) throw new Error('Supabase access token is required.');
 
   const headers = { authorization: `Bearer ${token}` };
@@ -719,7 +816,8 @@ async function requestSavedCafeApi(method, cafeId = '') {
   if (!response.ok) {
     if (response.status === 401) {
       clearAuthSession();
-      authState = 'guest';
+      authRecoveryFailed = true;
+      authState = 'expired';
     }
     throw new Error(payload.message || `Saved cafes API failed with ${response.status}.`);
   }
@@ -741,12 +839,12 @@ function refreshSavedSurfaces(options = {}) {
 async function syncSavedCafesFromServer(options = {}) {
   const { mergeLocal = false, showSuccess = false } = options;
   const localSavedCafeIds = readSavedCafeIds();
-  if (!currentAccessToken()) {
-    setAuthState('guest');
+  if (!(await currentAccessToken())) {
+    setAuthState(authRecoveryFailed ? 'expired' : 'guest');
     return false;
   }
 
-  setAuthState('pending', '저장 목록을 계정과 동기화하고 있습니다.');
+  setAuthState('syncing', '저장 목록을 계정과 동기화하고 있습니다.');
 
   try {
     let serverSavedCafeIds = await requestSavedCafeApi('GET');
@@ -765,7 +863,8 @@ async function syncSavedCafesFromServer(options = {}) {
   } catch (error) {
     savedCafeIds = localSavedCafeIds;
     persistSavedCafeIds();
-    if (authState !== 'guest') setAuthState('offline', `저장 동기화에 실패했습니다. 현재 기기 저장을 유지합니다. ${error.message}`);
+    if (authRecoveryFailed) setAuthState('expired', '로그인 세션이 만료되었습니다. 다시 로그인해 주세요.');
+    else if (authState !== 'guest') setAuthState('offline', `저장 동기화에 실패했습니다. 현재 기기 저장을 유지합니다. ${error.message}`);
     refreshSavedSurfaces({ keepMapViewport: true });
     return false;
   }
@@ -809,14 +908,14 @@ async function requestEmailLogin(event) {
     }
 
     writeJsonStorageValue(authPendingEmailStorageKey, email);
-    setAuthState('guest', `${email}로 로그인 링크를 보냈습니다. 메일에서 링크를 열면 저장 목록을 계정과 동기화합니다.`);
+    setAuthState('link_sent', `${email}로 로그인 링크를 보냈습니다. 메일에서 링크를 열면 저장 목록을 계정과 동기화합니다.`);
   } catch (error) {
     setAuthState('offline', `로그인 링크 요청에 실패했습니다. ${error.message}`);
   }
 }
 
 async function logoutSavedAccount() {
-  const token = currentAccessToken();
+  const token = await currentAccessToken();
 
   if (token && supabaseAuthEnabled()) {
     await fetch(`${supabaseProjectUrl}/auth/v1/logout`, {
@@ -1075,7 +1174,9 @@ async function toggleSaved(cafeId) {
       ? `${cafe?.name || '카페'}를 계정에 저장했습니다.`
       : `${cafe?.name || '카페'} 계정 저장을 해제했습니다.`);
   } catch (error) {
-    setAuthState(authState === 'guest' ? 'guest' : 'offline', `서버 저장 동기화에 실패했습니다. 현재 기기 저장은 유지됩니다. ${error.message}`);
+    setAuthState(authState === 'guest' ? 'guest' : authRecoveryFailed ? 'expired' : 'offline', authRecoveryFailed
+      ? '로그인 세션이 만료되었습니다. 다시 로그인해 주세요.'
+      : `서버 저장 동기화에 실패했습니다. 현재 기기 저장은 유지됩니다. ${error.message}`);
   }
 
   refreshSavedSurfaces({ keepMapViewport: true, detailCafeId: cafeId });
@@ -2265,7 +2366,7 @@ csvSample?.addEventListener('click', loadCsvSample);
 csvValidate?.addEventListener('click', validateCsvFromAdmin);
 csvImport?.addEventListener('click', importCsvRows);
 loginForm?.addEventListener('submit', requestEmailLogin);
-loginLaterAction?.addEventListener('click', () => setAuthState(authState, '둘러보기를 계속합니다. 저장한 카페는 현재 기기에 남아 있습니다.'));
+loginLaterAction?.addEventListener('click', () => setAuthState('guest', '둘러보기를 계속합니다. 저장한 카페는 현재 기기에 남아 있습니다.'));
 logoutAction?.addEventListener('click', logoutSavedAccount);
 discoverPresetActions.forEach((button) => {
   button.addEventListener('click', () => {
@@ -2283,8 +2384,14 @@ async function startBrewMap() {
   await loadCafes();
   savedCafeIds = readSavedCafeIds();
   const authBootstrap = bootstrapAuthSession();
-  if (authBootstrap.session) await syncSavedCafesFromServer({ mergeLocal: authBootstrap.fromCallback, showSuccess: authBootstrap.fromCallback });
-  else renderSavedAuthUi();
+  if (authBootstrap.session) {
+    setAuthState(authBootstrap.fromCallback ? 'syncing' : 'checking', authBootstrap.fromCallback
+      ? '로그인 링크를 확인했습니다. 계정 저장 목록과 동기화하고 있습니다.'
+      : '저장된 로그인 상태를 확인하고 있습니다.');
+    await syncSavedCafesFromServer({ mergeLocal: authBootstrap.fromCallback, showSuccess: authBootstrap.fromCallback });
+  } else {
+    setAuthState('guest');
+  }
   if (retroDesktopRoot) {
     const { createRetroDesktop } = await import('./retro-desktop.js');
     retroDesktop = createRetroDesktop({
