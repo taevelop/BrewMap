@@ -739,7 +739,8 @@ function setAuthState(nextState, message = '') {
   authState = nextState;
   authSyncMessage = message;
   renderSavedAuthUi();
-  if (message) setSavedStatus(message);
+  if (nextState === 'link_sent') setSavedStatus('');
+  else if (message) setSavedStatus(message);
 }
 
 function savedScopeText() {
