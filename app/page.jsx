@@ -5,7 +5,7 @@ const publicShell = String.raw`<main class="app-shell">
     <nav class="top-nav" aria-label="BrewMap 주요 메뉴">
       <a class="brand" href="#home" aria-label="브루맵 홈으로 이동"><img class="brand-mark" src="/assets/brewmap-brand-icon.svg" alt="" width="38" height="38" /><span>브루맵</span></a>
       <div class="nav-actions">
-        <a href="#home">발견</a><a href="#cafes">결과</a><a href="#map">지도</a><a href="#saved">저장</a><a href="#report">제보</a>
+        <a href="#home">발견</a><a href="#cafes">결과</a><a href="#map">지도</a><a href="#login" data-login-nav>로그인</a><a href="#saved" data-auth-nav hidden>저장</a><a href="#report" data-auth-nav hidden>제보</a>
       </div>
     </nav>
   </div>
@@ -94,21 +94,32 @@ const publicShell = String.raw`<main class="app-shell">
     </div>
   </section>
 
-  <section class="ops-grid">
-    <article class="panel saved-panel" id="saved">
-      <p class="eyebrow">저장한 카페</p>
-      <h2>나중에 볼 카페</h2>
-      <p>마음에 드는 카페를 저장해 두고 나중에 다시 확인하세요.</p>
-      <div class="saved-summary"><strong data-saved-count>0개</strong><span data-saved-scope>이 기기 저장</span></div>
+  <section class="login-section" id="login" aria-labelledby="login-heading" data-login-section>
+    <div class="panel login-panel">
+      <p class="eyebrow">계정 로그인</p>
+      <h2 id="login-heading">저장과 제보를 계정으로 사용하세요</h2>
+      <p>Google, Apple 또는 이메일 링크로 로그인하면 저장한 카페와 정보 제보를 여러 기기에서 이어서 사용할 수 있습니다.</p>
       <p class="saved-auth-state" data-saved-auth-state>로그인 상태 확인 중</p>
-      <p class="saved-login-note" data-saved-auth-note>저장한 카페를 여러 기기에서 확인하려면 Google 또는 이메일로 로그인하세요.</p>
-      <form class="saved-login-actions" data-login-form>
+      <p class="saved-login-note" data-saved-auth-note>저장한 카페를 여러 기기에서 확인하려면 Google, Apple 또는 이메일로 로그인하세요.</p>
+      <form class="saved-login-actions login-provider-actions" data-login-form>
         <button class="saved-login-google" type="button" data-login-google><span class="provider-mark" aria-hidden="true">G</span>Google로 계속하기</button>
+        <button class="saved-login-apple" type="button" data-login-apple><span class="provider-mark" aria-hidden="true">A</span>Apple로 계속하기</button>
         <label class="saved-login-email"><span>이메일</span><input type="email" autocomplete="email" inputmode="email" placeholder="you@example.com" data-login-email /></label>
         <button type="submit" data-login-action>로그인 링크 받기</button>
         <button type="button" data-login-later>둘러보기 계속</button>
         <button type="button" data-logout-action hidden>로그아웃</button>
       </form>
+      <p class="form-status" data-saved-status aria-live="polite"></p>
+    </div>
+  </section>
+
+  <section class="ops-grid" data-auth-workspace hidden>
+    <article class="panel saved-panel" id="saved">
+      <p class="eyebrow">저장한 카페</p>
+      <h2>나중에 볼 카페</h2>
+      <p>계정에 저장한 카페를 다시 확인하세요.</p>
+      <div class="saved-summary"><strong data-saved-count>0개</strong><span data-saved-scope>계정 저장</span></div>
+      <button class="saved-logout-button" type="button" data-logout-action>로그아웃</button>
       <p class="form-status" data-saved-status aria-live="polite"></p>
       <ul class="saved-list" data-saved-list></ul>
     </article>

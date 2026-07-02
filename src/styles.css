@@ -1066,6 +1066,34 @@ h3 {
   transform-origin: 50% 100%;
 }
 
+.login-section {
+  display: grid;
+  justify-items: start;
+  padding-top: 8px;
+  scroll-margin-top: calc(var(--top-layer-height) + 18px);
+}
+
+.login-panel {
+  width: min(100%, 580px);
+}
+
+.login-panel > p:not(.eyebrow, .saved-auth-state, .saved-login-note, .form-status) {
+  max-width: 48ch;
+  color: #5f6c68;
+  line-height: 1.6;
+}
+
+.login-provider-actions {
+  max-width: 460px;
+}
+
+.nav-actions [hidden] {
+  display: none !important;
+}
+.login-section[hidden],
+.ops-grid[hidden] {
+  display: none !important;
+}
 .ops-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1137,7 +1165,8 @@ h3 {
   align-items: end;
 }
 
-.saved-login-google {
+.saved-login-google,
+.saved-login-apple {
   flex: 1 1 100%;
   justify-content: center;
   gap: 8px;
@@ -1188,6 +1217,7 @@ h3 {
 .saved-login-actions[data-state="authenticated"] .saved-login-email,
 .saved-login-actions[data-state="authenticated"] [data-login-google],
 .saved-login-actions[data-state="authenticated"] [data-login-action],
+.saved-login-actions[data-state="authenticated"] [data-login-apple],
 .saved-login-actions[data-state="authenticated"] [data-login-later] {
   display: none;
 }
@@ -1221,7 +1251,8 @@ h3 {
   background: #fff;
 }
 
-.saved-login-actions .saved-login-google {
+.saved-login-actions .saved-login-google,
+.saved-login-actions .saved-login-apple {
   border-color: #2d1b12;
   color: #fffdf7;
   background: #2d1b12;
@@ -1241,6 +1272,16 @@ h3 {
 .error-state button {
   justify-self: start;
   background: #a1372b;
+}
+.saved-logout-button {
+  min-height: 40px;
+  margin: 0 0 12px;
+  border: 1px solid #d9dfda;
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #34423e;
+  background: #fff;
+  font-weight: 900;
 }
 .saved-list,
 .admin-panel ul {
@@ -1410,6 +1451,7 @@ h3 {
 
 #cafes,
 #map,
+#login,
 #saved,
 #report {
   scroll-margin-top: calc(var(--top-layer-height) + 18px);
