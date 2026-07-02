@@ -1066,6 +1066,34 @@ h3 {
   transform-origin: 50% 100%;
 }
 
+.login-section {
+  display: grid;
+  justify-items: start;
+  padding-top: 8px;
+  scroll-margin-top: calc(var(--top-layer-height) + 18px);
+}
+
+.login-panel {
+  width: min(100%, 580px);
+}
+
+.login-panel > p:not(.eyebrow, .saved-auth-state, .saved-login-note, .form-status) {
+  max-width: 48ch;
+  color: #5f6c68;
+  line-height: 1.6;
+}
+
+.login-provider-actions {
+  max-width: 460px;
+}
+
+.nav-actions [hidden] {
+  display: none !important;
+}
+.login-section[hidden],
+.ops-grid[hidden] {
+  display: none !important;
+}
 .ops-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1137,6 +1165,47 @@ h3 {
   align-items: end;
 }
 
+.saved-login-google,
+.saved-login-apple {
+  display: inline-flex;
+  align-items: center;
+  flex: 1 1 100%;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.saved-login-actions .provider-mark {
+  display: inline-grid;
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  color: currentColor;
+  line-height: 1;
+}
+
+.saved-login-actions .provider-mark svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+}
+
+.saved-login-actions .provider-mark-google {
+  border-radius: 50%;
+  background: #fff;
+}
+
+.saved-login-actions .provider-mark-google svg {
+  width: 16px;
+  height: 16px;
+}
+
+.saved-login-actions .provider-mark-apple {
+  color: currentColor;
+}
+
 .saved-login-email {
   display: grid;
   flex: 1 1 220px;
@@ -1167,8 +1236,9 @@ h3 {
 }
 
 .saved-login-actions[data-state="authenticated"] .saved-login-email,
+.saved-login-actions[data-state="authenticated"] [data-login-google],
 .saved-login-actions[data-state="authenticated"] [data-login-action],
-.saved-login-actions[data-state="authenticated"] [data-login-later] {
+.saved-login-actions[data-state="authenticated"] [data-login-apple] {
   display: none;
 }
 .saved-login-actions[data-state="checking"],
@@ -1201,6 +1271,18 @@ h3 {
   background: #fff;
 }
 
+.saved-login-actions .saved-login-google,
+.saved-login-actions .saved-login-apple {
+  border-color: #2d1b12;
+  color: #fffdf7;
+  background: #2d1b12;
+}
+
+.saved-login-actions button:disabled {
+  cursor: not-allowed;
+  opacity: .62;
+}
+
 .loading-state,
 .error-state {
   min-height: 220px;
@@ -1210,6 +1292,16 @@ h3 {
 .error-state button {
   justify-self: start;
   background: #a1372b;
+}
+.saved-logout-button {
+  min-height: 40px;
+  margin: 0 0 12px;
+  border: 1px solid #d9dfda;
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #34423e;
+  background: #fff;
+  font-weight: 900;
 }
 .saved-list,
 .admin-panel ul {
@@ -1379,6 +1471,7 @@ h3 {
 
 #cafes,
 #map,
+#login,
 #saved,
 #report {
   scroll-margin-top: calc(var(--top-layer-height) + 18px);
@@ -4134,5 +4227,125 @@ body {
 
   .detail-metadata {
     grid-template-columns: 1fr;
+  }
+}
+/* Dedicated login route. */
+.login-app-shell {
+  min-height: 100vh;
+}
+
+.login-page {
+  display: grid;
+  place-items: center;
+  min-height: calc(100vh - var(--top-layer-height));
+  padding: 42px 18px;
+}
+
+.login-page-panel {
+  width: min(100%, 482px);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.login-page-panel h1 {
+  margin: 0 0 24px;
+  color: var(--local-ink, #2d1b12);
+  font-size: clamp(2rem, 5vw, 2.8rem);
+  line-height: 1.08;
+  text-align: center;
+}
+
+.login-page-panel .login-auth-state {
+  display: none;
+}
+
+.login-page-panel .login-provider-actions {
+  display: grid;
+  max-width: none;
+  gap: 14px;
+  margin: 0;
+}
+
+.login-page-panel .login-provider-actions[data-state="checking"],
+.login-page-panel .login-provider-actions[data-state="syncing"] {
+  display: grid;
+}
+
+.login-page-panel .login-email-field {
+  display: block;
+  min-width: 0;
+  margin: 0;
+}
+
+.login-page-panel .login-email-field input {
+  min-height: 58px;
+  border: 1px solid var(--local-line, #d8c3a6);
+  border-radius: 8px;
+  padding: 0 16px;
+  color: var(--local-ink, #2d1b12);
+  background: rgba(255, 253, 248, .96);
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.login-page-panel .saved-login-email-button,
+.login-page-panel .saved-login-google,
+.login-page-panel .saved-login-apple {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 58px;
+  border: 1px solid var(--local-ink, #2d1b12);
+  border-radius: 8px;
+  padding: 0 16px;
+  color: #fffdf7;
+  background: var(--local-ink, #2d1b12);
+  font-size: 1rem;
+  font-weight: 900;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.login-page-panel .saved-login-google,
+.login-page-panel .saved-login-apple {
+  gap: 10px;
+}
+
+.login-page-panel .login-provider-divider {
+  height: 1px;
+  margin: 10px 0 8px;
+  background: var(--local-line, #d8c3a6);
+}
+
+.login-page-panel [data-logout-action] {
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+}
+
+.login-page-panel .form-status {
+  margin-top: 14px;
+}
+
+@media (max-width: 560px) {
+  .login-page {
+    align-content: start;
+    min-height: calc(100vh - var(--top-layer-height));
+    padding: 28px 12px 40px;
+  }
+
+  .login-page-panel h1 {
+    margin-bottom: 20px;
+    font-size: 2rem;
+  }
+
+  .login-page-panel .login-email-field input,
+  .login-page-panel .saved-login-email-button,
+  .login-page-panel .saved-login-google,
+  .login-page-panel .saved-login-apple {
+    min-height: 54px;
   }
 }

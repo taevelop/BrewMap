@@ -136,8 +136,10 @@ const defaultCuration = {
 const savedStorageKey = 'brewmap.savedCafes.v1';
 const authSessionStorageKey = 'brewmap.authSession.v1';
 const authPendingEmailStorageKey = 'brewmap.authPendingEmail.v1';
+const authPendingActionStorageKey = 'brewmap.authPendingAction.v1';
 const supabaseProjectUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').replace(/\/+$/, '');
 const supabasePublishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || '';
+const appleLoginEnabled = process.env.NEXT_PUBLIC_ENABLE_APPLE_LOGIN === 'true';
 const neighborhoodMapZoom = 16;
 const clusterBreakoutZoom = 16;
 const activeMapProvider = getMapProvider();
@@ -168,6 +170,10 @@ const searchForm = document.querySelector('[data-search-form]');
 const searchInput = document.querySelector('[data-search-input]');
 const locationInput = document.querySelector('[data-location-input]');
 const topLayer = document.querySelector('.top-layer');
+const authNavLinks = document.querySelectorAll('[data-auth-nav]');
+const loginNavLinks = document.querySelectorAll('[data-login-nav]');
+const loginSection = document.querySelector('[data-login-section]');
+const authWorkspace = document.querySelector('[data-auth-workspace]');
 const filterRow = document.querySelector('[data-filter-row]');
 const areaRail = document.querySelector('[data-area-rail]');
 const retroDesktopRoot = document.querySelector('[data-retro-desktop]');
@@ -184,15 +190,16 @@ const adminQueueEl = document.querySelector('[data-admin-queue]');
 const resultCount = document.querySelector('[data-result-count]');
 const savedCount = document.querySelector('[data-saved-count]');
 const savedList = document.querySelector('[data-saved-list]');
-const savedStatus = document.querySelector('[data-saved-status]');
+const savedStatusEls = document.querySelectorAll('[data-saved-status]');
 const savedScope = document.querySelector('[data-saved-scope]');
 const savedAuthStateLabel = document.querySelector('[data-saved-auth-state]');
 const savedAuthNote = document.querySelector('[data-saved-auth-note]');
 const loginForm = document.querySelector('[data-login-form]');
 const loginEmailInput = document.querySelector('[data-login-email]');
 const loginAction = document.querySelector('[data-login-action]');
-const loginLaterAction = document.querySelector('[data-login-later]');
-const logoutAction = document.querySelector('[data-logout-action]');
+const loginGoogleAction = document.querySelector('[data-login-google]');
+const loginAppleAction = document.querySelector('[data-login-apple]');
+const logoutActions = document.querySelectorAll('[data-logout-action]');
 const reportForm = document.querySelector('[data-report-form]');
 const reportCafeSelect = document.querySelector('[data-report-cafe]');
 const reportTypeSelect = document.querySelector('[data-report-type]');
@@ -267,6 +274,7 @@ let visibleCafeResultCount = initialCafeResultLimit;
 
 const hasPublicSurface = Boolean(searchForm && filterRow && cafeGrid && resultCount);
 const hasMapSurface = Boolean(mapSurface && mapBaseLayer && mapMarkerLayer);
+const hasLoginSurface = Boolean(loginForm);
 const hasSavedSurface = Boolean(savedCount && savedList);
 const hasReportSurface = Boolean(reportForm && reportCafeSelect && reportTypeSelect && reportDetailInput);
 const hasDetailSurface = Boolean(detailDialog && detailBody && detailClose);
@@ -588,9 +596,32 @@ function supabaseAuthEnabled() {
 
 function authRedirectUrl() {
   if (typeof window === 'undefined') return '';
-  return `${window.location.origin}${window.location.pathname}`;
+  return `${window.location.origin}/`;
 }
 
+function isStandaloneLoginPage() {
+  if (typeof window === 'undefined') return false;
+  return window.location.pathname.replace(/\/$/, '') === '/login';
+}
+
+function loginPageUrl() {
+  return '/login';
+}
+
+function publicAuthTargetUrl() {
+  return `/${pendingAuthTargetHash()}`;
+}
+
+function authenticatedSessionReady() {
+  return authState === 'authenticated' && Boolean(authSession);
+}
+
+function pendingAuthTargetHash() {
+  const action = readJsonStorageValue(authPendingActionStorageKey, null);
+  if (action?.type === 'report') return '#report';
+  if (action?.type === 'save') return '#saved';
+  return '#saved';
+}
 function normalizeSavedCafeIds(ids) {
   const values = ids instanceof Set ? [...ids] : Array.isArray(ids) ? ids : [];
   return new Set(values.filter((id) => typeof id === 'string' && cafeById(id)));
@@ -632,7 +663,7 @@ function authSessionFromPayload(payload, fallback = {}) {
     refreshToken: payload.refresh_token || payload.refreshToken || fallback.refreshToken || '',
     tokenType: payload.token_type || payload.tokenType || fallback.tokenType || 'bearer',
     expiresAt,
-    email: payload.user?.email || fallback.email || authEmailFromAccessToken(accessToken),
+    email: payload.user?.email || authEmailFromAccessToken(accessToken) || fallback.email,
   };
 }
 function readAuthSessionFromStorage() {
@@ -675,22 +706,53 @@ function authSessionFromUrl() {
   }, { email: pendingEmail });
 }
 
-function clearAuthCallbackFromUrl() {
-  if (typeof window === 'undefined' || !window.location.hash.includes('access_token')) return;
-  window.history.replaceState({}, '', `${window.location.pathname}${window.location.search}#saved`);
-}
+function authErrorFromUrl() {
+  if (typeof window === 'undefined') return '';
 
+  const paramsList = [
+    new URLSearchParams(window.location.hash.startsWith('#') ? window.location.hash.slice(1) : ''),
+    new URLSearchParams(window.location.search),
+  ];
+
+  for (const params of paramsList) {
+    const message = params.get('error_description') || params.get('error_code') || params.get('error');
+    if (message) return message;
+  }
+
+  return '';
+}
+function clearAuthCallbackFromUrl() {
+  if (typeof window === 'undefined') return;
+
+  const hasAuthHash = window.location.hash.includes('access_token') || window.location.hash.includes('error');
+  const searchParams = new URLSearchParams(window.location.search);
+  const hasAuthSearch = searchParams.has('error') || searchParams.has('error_code') || searchParams.has('error_description');
+  if (!hasAuthHash && !hasAuthSearch) return;
+
+  searchParams.delete('error');
+  searchParams.delete('error_code');
+  searchParams.delete('error_description');
+  const search = searchParams.toString();
+  const pathname = isStandaloneLoginPage() ? '/' : window.location.pathname;
+  window.history.replaceState({}, '', `${pathname}${search ? `?${search}` : ''}${pendingAuthTargetHash()}`);
+}
 function bootstrapAuthSession() {
   const callbackSession = authSessionFromUrl();
 
   if (callbackSession) {
     writeAuthSession(callbackSession);
     clearAuthCallbackFromUrl();
-    return { session: callbackSession, fromCallback: true };
+    return { session: callbackSession, fromCallback: true, error: '' };
+  }
+
+  const callbackError = authErrorFromUrl();
+  if (callbackError) {
+    clearAuthCallbackFromUrl();
+    return { session: null, fromCallback: true, error: callbackError };
   }
 
   authSession = readAuthSessionFromStorage();
-  return { session: authSession, fromCallback: false };
+  return { session: authSession, fromCallback: false, error: '' };
 }
 
 async function refreshAuthSession() {
@@ -771,14 +833,22 @@ function savedAuthNoteText() {
     const pendingEmail = readJsonStorageValue(authPendingEmailStorageKey, '') || loginEmailInput?.value.trim() || '입력한 이메일';
     return `${pendingEmail}로 로그인 링크를 보냈습니다. 메일에서 링크를 열어 주세요.`;
   }
-  if (authState === 'offline') return '계정 동기화에 실패해 이 기기 저장을 유지합니다. 다시 동기화하려면 로그인 링크를 받아 주세요.';
+  if (authState === 'offline') return '계정 동기화에 실패해 이 기기 저장을 유지합니다. 다시 동기화하려면 Google, Apple 또는 로그인 링크를 사용해 주세요.';
   if (authState === 'expired') return '로그인 세션이 만료되었습니다. 다시 로그인하면 이 기기 저장 목록을 계정에 합칠 수 있습니다.';
   if (savedCafeIds.size) return '이 기기에 저장된 카페입니다. 로그인하면 계정 저장 목록에 합쳐집니다.';
-  return '저장한 카페를 여러 기기에서 확인하려면 이메일로 로그인하세요.';
+  return '저장한 카페를 여러 기기에서 확인하려면 Google, Apple 또는 이메일로 로그인하세요.';
 }
 
+function renderAuthGatedUi() {
+  const authenticated = authenticatedSessionReady();
+
+  authNavLinks.forEach((link) => { link.hidden = !authenticated; });
+  loginNavLinks.forEach((link) => { link.hidden = authenticated; });
+  if (authWorkspace) authWorkspace.hidden = !authenticated;
+  if (loginSection) loginSection.hidden = !isStandaloneLoginPage();
+}
 function renderSavedAuthUi() {
-  if (!hasSavedSurface) return;
+  renderAuthGatedUi();
 
   if (loginForm) loginForm.dataset.state = authState;
   if (savedScope) savedScope.textContent = savedScopeText();
@@ -790,12 +860,16 @@ function renderSavedAuthUi() {
   const busy = authState === 'checking' || authState === 'syncing' || authState === 'pending';
   const authenticated = authState === 'authenticated';
   if (loginEmailInput) loginEmailInput.disabled = busy || authenticated;
+  if (loginGoogleAction) loginGoogleAction.disabled = busy || authenticated || !supabaseAuthEnabled();
+  if (loginAppleAction) {
+    loginAppleAction.disabled = busy || authenticated || !supabaseAuthEnabled() || !appleLoginEnabled;
+    loginAppleAction.title = appleLoginEnabled ? '' : 'Apple Provider 설정 후 활성화됩니다.';
+  }
   if (loginAction) {
     loginAction.disabled = busy || authenticated || !supabaseAuthEnabled();
-    loginAction.textContent = authState === 'link_sent' ? '링크 다시 받기' : '로그인 링크 받기';
+    loginAction.textContent = authState === 'link_sent' ? '이메일 다시 받기' : '이메일로 계속하기';
   }
-  if (loginLaterAction) loginLaterAction.hidden = busy || authenticated;
-  if (logoutAction) logoutAction.hidden = !authenticated;
+  logoutActions.forEach((button) => { button.hidden = !authenticated; });
   if (savedAuthNote) savedAuthNote.textContent = savedAuthNoteText();
 }
 
@@ -871,9 +945,82 @@ async function syncSavedCafesFromServer(options = {}) {
   }
 }
 
+function queueAuthAction(action, message) {
+  if (action?.type) writeJsonStorageValue(authPendingActionStorageKey, action);
+  setAuthState('guest', message || '로그인이 필요한 기능입니다. 먼저 로그인해 주세요.');
+
+  if (typeof window !== 'undefined') {
+    if (!isStandaloneLoginPage()) {
+      window.location.assign(loginPageUrl());
+      return;
+    }
+    loginSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+async function consumePendingAuthAction() {
+  const action = readJsonStorageValue(authPendingActionStorageKey, null);
+  if (!authenticatedSessionReady() || !action?.type) return;
+
+  removeStorageValue(authPendingActionStorageKey);
+
+  if (action.type === 'save' && action.cafeId) {
+    const cafe = cafeById(action.cafeId);
+    if (!cafe) return;
+    if (savedCafeIds.has(action.cafeId)) {
+      setSavedStatus(`${cafe.name}는 이미 계정에 저장되어 있습니다.`);
+      document.querySelector('#saved')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    await toggleSaved(action.cafeId);
+    document.querySelector('#saved')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return;
+  }
+
+  if (action.type === 'report') {
+    startReport(action.cafeId || '');
+    if (action.submit) {
+      submitReportDraft(action);
+    }
+  }
+}
+
+function requestOAuthLogin(provider, event) {
+  event?.preventDefault();
+  if (!hasLoginSurface) return;
+
+  const providerLabel = provider === 'apple' ? 'Apple' : 'Google';
+  if (!supabaseAuthEnabled()) {
+    setAuthState('offline', `Supabase 환경 변수가 없어 ${providerLabel} 로그인 요청을 보낼 수 없습니다.`);
+    return;
+  }
+
+  removeStorageValue(authPendingEmailStorageKey);
+  setAuthState('pending', `${providerLabel} 로그인으로 이동합니다.`);
+
+  const params = new URLSearchParams({
+    provider,
+    redirect_to: authRedirectUrl(),
+  });
+  window.location.assign(`${supabaseProjectUrl}/auth/v1/authorize?${params.toString()}`);
+}
+
+function requestGoogleLogin(event) {
+  requestOAuthLogin('google', event);
+}
+
+function requestAppleLogin(event) {
+  if (!appleLoginEnabled) {
+    event?.preventDefault();
+    setAuthState('offline', 'Apple 로그인은 Provider 설정 후 활성화됩니다.');
+    return;
+  }
+  requestOAuthLogin('apple', event);
+}
+
 async function requestEmailLogin(event) {
   event?.preventDefault();
-  if (!hasSavedSurface) return;
+  if (!hasLoginSurface) return;
 
   const email = loginEmailInput?.value.trim() || '';
   if (!email) {
@@ -1018,7 +1165,9 @@ function setReportStatus(message) {
 }
 
 function setSavedStatus(message) {
-  if (savedStatus) savedStatus.textContent = message;
+  savedStatusEls.forEach((status) => {
+    status.textContent = message;
+  });
 }
 
 function setAdminCafeStatus(message) {
@@ -1151,6 +1300,15 @@ function filteredCafes() {
 
 async function toggleSaved(cafeId) {
   const cafe = cafeById(cafeId);
+
+  if (!authenticatedSessionReady()) {
+    queueAuthAction(
+      { type: 'save', cafeId },
+      `${cafe?.name || '카페'} 저장은 로그인 후 사용할 수 있습니다.`
+    );
+    return;
+  }
+
   const shouldSave = !savedCafeIds.has(cafeId);
   if (shouldSave) savedCafeIds.add(cafeId);
   else savedCafeIds.delete(cafeId);
@@ -1161,13 +1319,6 @@ async function toggleSaved(cafeId) {
   persistSavedCafeIds();
   refreshSavedSurfaces({ keepMapViewport: true, detailCafeId: cafeId });
 
-  if (!authSession || authState === 'guest') {
-    setSavedStatus(shouldSave
-      ? `${cafe?.name || '카페'}를 현재 기기에 저장했습니다. 로그인하면 다른 기기에서도 볼 수 있어요.`
-      : `${cafe?.name || '카페'} 저장을 해제했습니다.`);
-    return;
-  }
-
   try {
     savedCafeIds = await requestSavedCafeApi(shouldSave ? 'POST' : 'DELETE', cafeId);
     persistSavedCafeIds();
@@ -1175,14 +1326,13 @@ async function toggleSaved(cafeId) {
       ? `${cafe?.name || '카페'}를 계정에 저장했습니다.`
       : `${cafe?.name || '카페'} 계정 저장을 해제했습니다.`);
   } catch (error) {
-    setAuthState(authState === 'guest' ? 'guest' : authRecoveryFailed ? 'expired' : 'offline', authRecoveryFailed
+    setAuthState(authRecoveryFailed ? 'expired' : 'offline', authRecoveryFailed
       ? '로그인 세션이 만료되었습니다. 다시 로그인해 주세요.'
       : `서버 저장 동기화에 실패했습니다. 현재 기기 저장은 유지됩니다. ${error.message}`);
   }
 
   refreshSavedSurfaces({ keepMapViewport: true, detailCafeId: cafeId });
 }
-
 function focusMapOnCafe(cafe) {
   if (!hasMapSurface || !cafe) return;
   const latitude = Number(cafe.latitude);
@@ -1278,8 +1428,7 @@ function renderEmptyState() {
     renderCafeResults();
   });
   card.querySelector('[data-empty-report]')?.addEventListener('click', () => {
-    document.querySelector('#report')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    reportDetailInput?.focus();
+    startReport('');
   });
   return card;
 }
@@ -1543,21 +1692,58 @@ function renderReportOptions() {
   if ([...reportCafeSelect.options].some((option) => option.value === selectedValue)) reportCafeSelect.value = selectedValue;
 }
 
-function startReport(cafeId) {
+function startReport(cafeId = '') {
   if (!hasReportSurface) return;
-  const cafe = cafeById(cafeId);
-  if (!cafe) return;
 
-  reportCafeSelect.value = cafe.id;
-  reportTypeSelect.value = 'update';
-  reportDetailInput.placeholder = `${cafe.name}의 커피 가능 여부, 주소, 폐업 여부 등을 적어주세요.`;
-  setReportStatus(`${cafe.name} 제보를 작성 중입니다.`);
+  const cafe = cafeById(cafeId);
+  if (!authenticatedSessionReady()) {
+    queueAuthAction(
+      { type: 'report', cafeId: cafe?.id || '' },
+      cafe ? `${cafe.name} 제보는 로그인 후 작성할 수 있습니다.` : '정보 제보는 로그인 후 작성할 수 있습니다.'
+    );
+    return;
+  }
+
+  if (cafe) {
+    reportCafeSelect.value = cafe.id;
+    reportTypeSelect.value = 'update';
+    reportDetailInput.placeholder = `${cafe.name}의 커피 가능 여부, 주소, 폐업 여부 등을 적어주세요.`;
+    setReportStatus(`${cafe.name} 제보를 작성 중입니다.`);
+  } else {
+    reportCafeSelect.value = 'new-cafe';
+    reportTypeSelect.value = 'add';
+    reportDetailInput.placeholder = '새 카페나 수정할 정보를 적어주세요.';
+    setReportStatus('새 정보 제보를 작성 중입니다.');
+  }
+
   document.querySelector('#report')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   reportDetailInput.focus();
 }
+function reportDraftFromForm() {
+  return {
+    type: 'report',
+    submit: true,
+    cafeId: reportCafeSelect?.value || 'new-cafe',
+    typeCode: reportTypeSelect?.value || 'update',
+    detail: reportDetailInput?.value.trim() || '',
+  };
+}
 
-function submitReport(event) {
-  event.preventDefault();
+function restoreReportDraft(draft) {
+  if (!hasReportSurface || !draft) return;
+  if (draft.cafeId && [...reportCafeSelect.options].some((option) => option.value === draft.cafeId)) {
+    reportCafeSelect.value = draft.cafeId;
+  }
+  if (draft.typeCode && [...reportTypeSelect.options].some((option) => option.value === draft.typeCode)) {
+    reportTypeSelect.value = draft.typeCode;
+  }
+  if (typeof draft.detail === 'string') reportDetailInput.value = draft.detail;
+}
+
+function submitReportDraft(draft) {
+  if (!hasReportSurface) return false;
+  restoreReportDraft(draft);
+
   const cafe = cafeById(reportCafeSelect.value);
   const typeCode = reportTypeSelect.value;
   const type = reportTypeLabels[typeCode] || '수정';
@@ -1566,7 +1752,7 @@ function submitReport(event) {
   if (!detail) {
     setReportStatus('검증할 내용을 입력해 주세요.');
     reportDetailInput.focus();
-    return;
+    return false;
   }
 
   const report = {
@@ -1576,7 +1762,7 @@ function submitReport(event) {
     cafeId: cafe ? cafe.id : '',
     cafe: cafe ? cafe.name : '새 카페 / 기타',
     request: detail,
-    status: typeCode === 'add' ? '근거 필요' : '검수 대기',
+    status: typeCode === 'add' ? '근거 필요' : '검토 대기',
   };
 
   adminQueue.unshift(report);
@@ -1586,8 +1772,27 @@ function submitReport(event) {
   renderAdminQueue();
   renderAdminCounts();
   renderAdminLogs();
+  document.querySelector('#report')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  return true;
 }
 
+function submitReport(event) {
+  event.preventDefault();
+  const draft = reportDraftFromForm();
+
+  if (!draft.detail) {
+    setReportStatus('검증할 내용을 입력해 주세요.');
+    reportDetailInput.focus();
+    return;
+  }
+
+  if (!authenticatedSessionReady()) {
+    queueAuthAction(draft, '정보 제보는 로그인 후 제출할 수 있습니다. 로그인 후 이어서 접수합니다.');
+    return;
+  }
+
+  submitReportDraft(draft);
+}
 function applyReportSideEffect(report) {
   const cafe = cafeById(report.cafeId);
   if (!cafe) return;
@@ -2367,8 +2572,11 @@ csvSample?.addEventListener('click', loadCsvSample);
 csvValidate?.addEventListener('click', validateCsvFromAdmin);
 csvImport?.addEventListener('click', importCsvRows);
 loginForm?.addEventListener('submit', requestEmailLogin);
-loginLaterAction?.addEventListener('click', () => setAuthState('guest', '둘러보기를 계속합니다. 저장한 카페는 현재 기기에 남아 있습니다.'));
-logoutAction?.addEventListener('click', logoutSavedAccount);
+loginGoogleAction?.addEventListener('click', requestGoogleLogin);
+loginAppleAction?.addEventListener('click', requestAppleLogin);
+logoutActions.forEach((button) => {
+  button.addEventListener('click', logoutSavedAccount);
+});
 discoverPresetActions.forEach((button) => {
   button.addEventListener('click', () => {
     const preset = button.dataset.discoverPreset;
@@ -2380,6 +2588,7 @@ discoverPresetActions.forEach((button) => {
 
 async function startBrewMap() {
   updateTopLayerOffset();
+  const startedOnStandaloneLoginPage = isStandaloneLoginPage();
   syncSearchStateFromUrl();
   registerServiceWorker();
   await loadCafes();
@@ -2387,9 +2596,11 @@ async function startBrewMap() {
   const authBootstrap = bootstrapAuthSession();
   if (authBootstrap.session) {
     setAuthState(authBootstrap.fromCallback ? 'syncing' : 'checking', authBootstrap.fromCallback
-      ? '로그인 링크를 확인했습니다. 계정 저장 목록과 동기화하고 있습니다.'
+      ? '로그인을 확인했습니다. 계정 저장 목록과 동기화하고 있습니다.'
       : '저장된 로그인 상태를 확인하고 있습니다.');
     await syncSavedCafesFromServer({ mergeLocal: authBootstrap.fromCallback, showSuccess: authBootstrap.fromCallback });
+  } else if (authBootstrap.error) {
+    setAuthState('offline', `로그인에 실패했습니다. ${authBootstrap.error}`);
   } else {
     setAuthState('guest');
   }
@@ -2407,9 +2618,14 @@ async function startBrewMap() {
       verificationSourceLabel,
     });
   }
+  if (startedOnStandaloneLoginPage && authenticatedSessionReady() && readJsonStorageValue(authPendingActionStorageKey, null)?.type) {
+    window.location.replace(publicAuthTargetUrl());
+    return;
+  }
   resetCafeForm();
   resetTagForm();
   renderApp();
+  await consumePendingAuthAction();
   await verifyAdminSession();
 }
 
