@@ -199,7 +199,6 @@ const loginEmailInput = document.querySelector('[data-login-email]');
 const loginAction = document.querySelector('[data-login-action]');
 const loginGoogleAction = document.querySelector('[data-login-google]');
 const loginAppleAction = document.querySelector('[data-login-apple]');
-const loginLaterAction = document.querySelector('[data-login-later]');
 const logoutActions = document.querySelectorAll('[data-logout-action]');
 const reportForm = document.querySelector('[data-report-form]');
 const reportCafeSelect = document.querySelector('[data-report-cafe]');
@@ -275,6 +274,7 @@ let visibleCafeResultCount = initialCafeResultLimit;
 
 const hasPublicSurface = Boolean(searchForm && filterRow && cafeGrid && resultCount);
 const hasMapSurface = Boolean(mapSurface && mapBaseLayer && mapMarkerLayer);
+const hasLoginSurface = Boolean(loginForm);
 const hasSavedSurface = Boolean(savedCount && savedList);
 const hasReportSurface = Boolean(reportForm && reportCafeSelect && reportTypeSelect && reportDetailInput);
 const hasDetailSurface = Boolean(detailDialog && detailBody && detailClose);
@@ -596,7 +596,20 @@ function supabaseAuthEnabled() {
 
 function authRedirectUrl() {
   if (typeof window === 'undefined') return '';
-  return `${window.location.origin}${window.location.pathname}`;
+  return `${window.location.origin}/`;
+}
+
+function isStandaloneLoginPage() {
+  if (typeof window === 'undefined') return false;
+  return window.location.pathname.replace(/\/$/, '') === '/login';
+}
+
+function loginPageUrl() {
+  return '/login';
+}
+
+function publicAuthTargetUrl() {
+  return `/${pendingAuthTargetHash()}`;
 }
 
 function authenticatedSessionReady() {
@@ -720,7 +733,8 @@ function clearAuthCallbackFromUrl() {
   searchParams.delete('error_code');
   searchParams.delete('error_description');
   const search = searchParams.toString();
-  window.history.replaceState({}, '', `${window.location.pathname}${search ? `?${search}` : ''}${pendingAuthTargetHash()}`);
+  const pathname = isStandaloneLoginPage() ? '/' : window.location.pathname;
+  window.history.replaceState({}, '', `${pathname}${search ? `?${search}` : ''}${pendingAuthTargetHash()}`);
 }
 function bootstrapAuthSession() {
   const callbackSession = authSessionFromUrl();
@@ -831,11 +845,10 @@ function renderAuthGatedUi() {
   authNavLinks.forEach((link) => { link.hidden = !authenticated; });
   loginNavLinks.forEach((link) => { link.hidden = authenticated; });
   if (authWorkspace) authWorkspace.hidden = !authenticated;
-  if (loginSection) loginSection.hidden = authenticated;
+  if (loginSection) loginSection.hidden = !isStandaloneLoginPage();
 }
 function renderSavedAuthUi() {
   renderAuthGatedUi();
-  if (!hasSavedSurface) return;
 
   if (loginForm) loginForm.dataset.state = authState;
   if (savedScope) savedScope.textContent = savedScopeText();
@@ -854,9 +867,8 @@ function renderSavedAuthUi() {
   }
   if (loginAction) {
     loginAction.disabled = busy || authenticated || !supabaseAuthEnabled();
-    loginAction.textContent = authState === 'link_sent' ? '링크 다시 받기' : '로그인 링크 받기';
+    loginAction.textContent = authState === 'link_sent' ? '이메일 다시 받기' : '이메일로 계속하기';
   }
-  if (loginLaterAction) loginLaterAction.hidden = busy || authenticated;
   logoutActions.forEach((button) => { button.hidden = !authenticated; });
   if (savedAuthNote) savedAuthNote.textContent = savedAuthNoteText();
 }
@@ -938,7 +950,10 @@ function queueAuthAction(action, message) {
   setAuthState('guest', message || '로그인이 필요한 기능입니다. 먼저 로그인해 주세요.');
 
   if (typeof window !== 'undefined') {
-    if (window.location.hash !== '#login') window.location.hash = 'login';
+    if (!isStandaloneLoginPage()) {
+      window.location.assign(loginPageUrl());
+      return;
+    }
     loginSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 }
@@ -969,7 +984,7 @@ async function consumePendingAuthAction() {
 
 function requestOAuthLogin(provider, event) {
   event?.preventDefault();
-  if (!hasSavedSurface) return;
+  if (!hasLoginSurface) return;
 
   const providerLabel = provider === 'apple' ? 'Apple' : 'Google';
   if (!supabaseAuthEnabled()) {
@@ -1002,7 +1017,7 @@ function requestAppleLogin(event) {
 
 async function requestEmailLogin(event) {
   event?.preventDefault();
-  if (!hasSavedSurface) return;
+  if (!hasLoginSurface) return;
 
   const email = loginEmailInput?.value.trim() || '';
   if (!email) {
@@ -2518,10 +2533,6 @@ csvImport?.addEventListener('click', importCsvRows);
 loginForm?.addEventListener('submit', requestEmailLogin);
 loginGoogleAction?.addEventListener('click', requestGoogleLogin);
 loginAppleAction?.addEventListener('click', requestAppleLogin);
-loginLaterAction?.addEventListener('click', () => {
-  removeStorageValue(authPendingActionStorageKey);
-  setAuthState('guest', '둘러보기를 계속합니다. 저장과 제보는 로그인 후 사용할 수 있습니다.');
-});
 logoutActions.forEach((button) => {
   button.addEventListener('click', logoutSavedAccount);
 });
@@ -2536,6 +2547,7 @@ discoverPresetActions.forEach((button) => {
 
 async function startBrewMap() {
   updateTopLayerOffset();
+  const startedOnStandaloneLoginPage = isStandaloneLoginPage();
   syncSearchStateFromUrl();
   registerServiceWorker();
   await loadCafes();
@@ -2564,6 +2576,10 @@ async function startBrewMap() {
       confidenceLabel,
       verificationSourceLabel,
     });
+  }
+  if (startedOnStandaloneLoginPage && authenticatedSessionReady() && readJsonStorageValue(authPendingActionStorageKey, null)?.type) {
+    window.location.replace(publicAuthTargetUrl());
+    return;
   }
   resetCafeForm();
   resetTagForm();
