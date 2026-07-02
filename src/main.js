@@ -979,6 +979,9 @@ async function consumePendingAuthAction() {
 
   if (action.type === 'report') {
     startReport(action.cafeId || '');
+    if (action.submit) {
+      submitReportDraft(action);
+    }
   }
 }
 
@@ -1716,12 +1719,31 @@ function startReport(cafeId = '') {
   document.querySelector('#report')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   reportDetailInput.focus();
 }
-function submitReport(event) {
-  event.preventDefault();
-  if (!authenticatedSessionReady()) {
-    queueAuthAction({ type: 'report', cafeId: reportCafeSelect?.value || '' }, '정보 제보는 로그인 후 제출할 수 있습니다.');
-    return;
+function reportDraftFromForm() {
+  return {
+    type: 'report',
+    submit: true,
+    cafeId: reportCafeSelect?.value || 'new-cafe',
+    typeCode: reportTypeSelect?.value || 'update',
+    detail: reportDetailInput?.value.trim() || '',
+  };
+}
+
+function restoreReportDraft(draft) {
+  if (!hasReportSurface || !draft) return;
+  if (draft.cafeId && [...reportCafeSelect.options].some((option) => option.value === draft.cafeId)) {
+    reportCafeSelect.value = draft.cafeId;
   }
+  if (draft.typeCode && [...reportTypeSelect.options].some((option) => option.value === draft.typeCode)) {
+    reportTypeSelect.value = draft.typeCode;
+  }
+  if (typeof draft.detail === 'string') reportDetailInput.value = draft.detail;
+}
+
+function submitReportDraft(draft) {
+  if (!hasReportSurface) return false;
+  restoreReportDraft(draft);
+
   const cafe = cafeById(reportCafeSelect.value);
   const typeCode = reportTypeSelect.value;
   const type = reportTypeLabels[typeCode] || '수정';
@@ -1730,7 +1752,7 @@ function submitReport(event) {
   if (!detail) {
     setReportStatus('검증할 내용을 입력해 주세요.');
     reportDetailInput.focus();
-    return;
+    return false;
   }
 
   const report = {
@@ -1740,7 +1762,7 @@ function submitReport(event) {
     cafeId: cafe ? cafe.id : '',
     cafe: cafe ? cafe.name : '새 카페 / 기타',
     request: detail,
-    status: typeCode === 'add' ? '근거 필요' : '검수 대기',
+    status: typeCode === 'add' ? '근거 필요' : '검토 대기',
   };
 
   adminQueue.unshift(report);
@@ -1750,8 +1772,27 @@ function submitReport(event) {
   renderAdminQueue();
   renderAdminCounts();
   renderAdminLogs();
+  document.querySelector('#report')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  return true;
 }
 
+function submitReport(event) {
+  event.preventDefault();
+  const draft = reportDraftFromForm();
+
+  if (!draft.detail) {
+    setReportStatus('검증할 내용을 입력해 주세요.');
+    reportDetailInput.focus();
+    return;
+  }
+
+  if (!authenticatedSessionReady()) {
+    queueAuthAction(draft, '정보 제보는 로그인 후 제출할 수 있습니다. 로그인 후 이어서 접수합니다.');
+    return;
+  }
+
+  submitReportDraft(draft);
+}
 function applyReportSideEffect(report) {
   const cafe = cafeById(report.cafeId);
   if (!cafe) return;
