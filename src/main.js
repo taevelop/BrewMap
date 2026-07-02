@@ -191,6 +191,7 @@ const savedAuthNote = document.querySelector('[data-saved-auth-note]');
 const loginForm = document.querySelector('[data-login-form]');
 const loginEmailInput = document.querySelector('[data-login-email]');
 const loginAction = document.querySelector('[data-login-action]');
+const loginGoogleAction = document.querySelector('[data-login-google]');
 const loginLaterAction = document.querySelector('[data-login-later]');
 const logoutAction = document.querySelector('[data-logout-action]');
 const reportForm = document.querySelector('[data-report-form]');
@@ -632,7 +633,7 @@ function authSessionFromPayload(payload, fallback = {}) {
     refreshToken: payload.refresh_token || payload.refreshToken || fallback.refreshToken || '',
     tokenType: payload.token_type || payload.tokenType || fallback.tokenType || 'bearer',
     expiresAt,
-    email: payload.user?.email || fallback.email || authEmailFromAccessToken(accessToken),
+    email: payload.user?.email || authEmailFromAccessToken(accessToken) || fallback.email,
   };
 }
 function readAuthSessionFromStorage() {
@@ -675,22 +676,52 @@ function authSessionFromUrl() {
   }, { email: pendingEmail });
 }
 
-function clearAuthCallbackFromUrl() {
-  if (typeof window === 'undefined' || !window.location.hash.includes('access_token')) return;
-  window.history.replaceState({}, '', `${window.location.pathname}${window.location.search}#saved`);
-}
+function authErrorFromUrl() {
+  if (typeof window === 'undefined') return '';
 
+  const paramsList = [
+    new URLSearchParams(window.location.hash.startsWith('#') ? window.location.hash.slice(1) : ''),
+    new URLSearchParams(window.location.search),
+  ];
+
+  for (const params of paramsList) {
+    const message = params.get('error_description') || params.get('error_code') || params.get('error');
+    if (message) return message;
+  }
+
+  return '';
+}
+function clearAuthCallbackFromUrl() {
+  if (typeof window === 'undefined') return;
+
+  const hasAuthHash = window.location.hash.includes('access_token') || window.location.hash.includes('error');
+  const searchParams = new URLSearchParams(window.location.search);
+  const hasAuthSearch = searchParams.has('error') || searchParams.has('error_code') || searchParams.has('error_description');
+  if (!hasAuthHash && !hasAuthSearch) return;
+
+  searchParams.delete('error');
+  searchParams.delete('error_code');
+  searchParams.delete('error_description');
+  const search = searchParams.toString();
+  window.history.replaceState({}, '', `${window.location.pathname}${search ? `?${search}` : ''}#saved`);
+}
 function bootstrapAuthSession() {
   const callbackSession = authSessionFromUrl();
 
   if (callbackSession) {
     writeAuthSession(callbackSession);
     clearAuthCallbackFromUrl();
-    return { session: callbackSession, fromCallback: true };
+    return { session: callbackSession, fromCallback: true, error: '' };
+  }
+
+  const callbackError = authErrorFromUrl();
+  if (callbackError) {
+    clearAuthCallbackFromUrl();
+    return { session: null, fromCallback: true, error: callbackError };
   }
 
   authSession = readAuthSessionFromStorage();
-  return { session: authSession, fromCallback: false };
+  return { session: authSession, fromCallback: false, error: '' };
 }
 
 async function refreshAuthSession() {
@@ -771,10 +802,10 @@ function savedAuthNoteText() {
     const pendingEmail = readJsonStorageValue(authPendingEmailStorageKey, '') || loginEmailInput?.value.trim() || '입력한 이메일';
     return `${pendingEmail}로 로그인 링크를 보냈습니다. 메일에서 링크를 열어 주세요.`;
   }
-  if (authState === 'offline') return '계정 동기화에 실패해 이 기기 저장을 유지합니다. 다시 동기화하려면 로그인 링크를 받아 주세요.';
+  if (authState === 'offline') return '계정 동기화에 실패해 이 기기 저장을 유지합니다. 다시 동기화하려면 Google 로그인 또는 로그인 링크를 사용해 주세요.';
   if (authState === 'expired') return '로그인 세션이 만료되었습니다. 다시 로그인하면 이 기기 저장 목록을 계정에 합칠 수 있습니다.';
   if (savedCafeIds.size) return '이 기기에 저장된 카페입니다. 로그인하면 계정 저장 목록에 합쳐집니다.';
-  return '저장한 카페를 여러 기기에서 확인하려면 이메일로 로그인하세요.';
+  return '저장한 카페를 여러 기기에서 확인하려면 Google 또는 이메일로 로그인하세요.';
 }
 
 function renderSavedAuthUi() {
@@ -790,6 +821,7 @@ function renderSavedAuthUi() {
   const busy = authState === 'checking' || authState === 'syncing' || authState === 'pending';
   const authenticated = authState === 'authenticated';
   if (loginEmailInput) loginEmailInput.disabled = busy || authenticated;
+  if (loginGoogleAction) loginGoogleAction.disabled = busy || authenticated || !supabaseAuthEnabled();
   if (loginAction) {
     loginAction.disabled = busy || authenticated || !supabaseAuthEnabled();
     loginAction.textContent = authState === 'link_sent' ? '링크 다시 받기' : '로그인 링크 받기';
@@ -869,6 +901,25 @@ async function syncSavedCafesFromServer(options = {}) {
     refreshSavedSurfaces({ keepMapViewport: true });
     return false;
   }
+}
+
+function requestGoogleLogin(event) {
+  event?.preventDefault();
+  if (!hasSavedSurface) return;
+
+  if (!supabaseAuthEnabled()) {
+    setAuthState('offline', 'Supabase 환경 변수가 없어 Google 로그인 요청을 보낼 수 없습니다.');
+    return;
+  }
+
+  removeStorageValue(authPendingEmailStorageKey);
+  setAuthState('pending', 'Google 로그인으로 이동합니다.');
+
+  const params = new URLSearchParams({
+    provider: 'google',
+    redirect_to: authRedirectUrl(),
+  });
+  window.location.assign(`${supabaseProjectUrl}/auth/v1/authorize?${params.toString()}`);
 }
 
 async function requestEmailLogin(event) {
@@ -2367,6 +2418,7 @@ csvSample?.addEventListener('click', loadCsvSample);
 csvValidate?.addEventListener('click', validateCsvFromAdmin);
 csvImport?.addEventListener('click', importCsvRows);
 loginForm?.addEventListener('submit', requestEmailLogin);
+loginGoogleAction?.addEventListener('click', requestGoogleLogin);
 loginLaterAction?.addEventListener('click', () => setAuthState('guest', '둘러보기를 계속합니다. 저장한 카페는 현재 기기에 남아 있습니다.'));
 logoutAction?.addEventListener('click', logoutSavedAccount);
 discoverPresetActions.forEach((button) => {
@@ -2387,9 +2439,11 @@ async function startBrewMap() {
   const authBootstrap = bootstrapAuthSession();
   if (authBootstrap.session) {
     setAuthState(authBootstrap.fromCallback ? 'syncing' : 'checking', authBootstrap.fromCallback
-      ? '로그인 링크를 확인했습니다. 계정 저장 목록과 동기화하고 있습니다.'
+      ? '로그인을 확인했습니다. 계정 저장 목록과 동기화하고 있습니다.'
       : '저장된 로그인 상태를 확인하고 있습니다.');
     await syncSavedCafesFromServer({ mergeLocal: authBootstrap.fromCallback, showSuccess: authBootstrap.fromCallback });
+  } else if (authBootstrap.error) {
+    setAuthState('offline', `로그인에 실패했습니다. ${authBootstrap.error}`);
   } else {
     setAuthState('guest');
   }

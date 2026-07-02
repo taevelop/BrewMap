@@ -101,8 +101,9 @@ const publicShell = String.raw`<main class="app-shell">
       <p>마음에 드는 카페를 저장해 두고 나중에 다시 확인하세요.</p>
       <div class="saved-summary"><strong data-saved-count>0개</strong><span data-saved-scope>이 기기 저장</span></div>
       <p class="saved-auth-state" data-saved-auth-state>로그인 상태 확인 중</p>
-      <p class="saved-login-note" data-saved-auth-note>저장한 카페를 여러 기기에서 확인하려면 이메일로 로그인하세요.</p>
+      <p class="saved-login-note" data-saved-auth-note>저장한 카페를 여러 기기에서 확인하려면 Google 또는 이메일로 로그인하세요.</p>
       <form class="saved-login-actions" data-login-form>
+        <button class="saved-login-google" type="button" data-login-google><span class="provider-mark" aria-hidden="true">G</span>Google로 계속하기</button>
         <label class="saved-login-email"><span>이메일</span><input type="email" autocomplete="email" inputmode="email" placeholder="you@example.com" data-login-email /></label>
         <button type="submit" data-login-action>로그인 링크 받기</button>
         <button type="button" data-login-later>둘러보기 계속</button>

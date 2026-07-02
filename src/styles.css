@@ -1137,6 +1137,25 @@ h3 {
   align-items: end;
 }
 
+.saved-login-google {
+  flex: 1 1 100%;
+  justify-content: center;
+  gap: 8px;
+}
+
+.saved-login-actions .provider-mark {
+  display: inline-grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  border-radius: 50%;
+  color: #173f35;
+  background: #fff;
+  font-size: .82rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
 .saved-login-email {
   display: grid;
   flex: 1 1 220px;
@@ -1167,6 +1186,7 @@ h3 {
 }
 
 .saved-login-actions[data-state="authenticated"] .saved-login-email,
+.saved-login-actions[data-state="authenticated"] [data-login-google],
 .saved-login-actions[data-state="authenticated"] [data-login-action],
 .saved-login-actions[data-state="authenticated"] [data-login-later] {
   display: none;
@@ -1199,6 +1219,17 @@ h3 {
   border: 1px solid #d9dfda;
   color: #34423e;
   background: #fff;
+}
+
+.saved-login-actions .saved-login-google {
+  border-color: #2d1b12;
+  color: #fffdf7;
+  background: #2d1b12;
+}
+
+.saved-login-actions button:disabled {
+  cursor: not-allowed;
+  opacity: .62;
 }
 
 .loading-state,
