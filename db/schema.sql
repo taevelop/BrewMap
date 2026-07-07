@@ -92,11 +92,48 @@ create table if not exists admin_logs (
   after_data jsonb,
   created_at timestamptz not null default now()
 );
+create table if not exists site_pages (
+  id uuid primary key default gen_random_uuid(),
+  slug text not null unique,
+  title text not null,
+  description text,
+  seo_title text,
+  seo_description text,
+  status text not null default 'draft' check (status in ('draft', 'published', 'archived')),
+  published_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists content_blocks (
+  id uuid primary key default gen_random_uuid(),
+  page_id uuid not null references site_pages(id) on delete cascade,
+  block_key text not null,
+  block_type text not null check (block_type in ('hero', 'notice', 'curation_card', 'text', 'cta')),
+  position integer not null default 0 check (position >= 0),
+  content jsonb not null default '{}'::jsonb,
+  is_visible boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (page_id, block_key)
+);
+
+create table if not exists content_revisions (
+  id uuid primary key default gen_random_uuid(),
+  page_id uuid not null references site_pages(id) on delete cascade,
+  snapshot jsonb not null,
+  change_note text,
+  created_by uuid references users(id) default auth.uid(),
+  created_at timestamptz not null default now()
+);
 
 create index if not exists cafes_status_area_idx on cafes(status, city, area);
 create index if not exists cafe_capabilities_capability_idx on cafe_capabilities(capability_id);
 create index if not exists reports_status_created_idx on reports(status, created_at desc);
 create index if not exists saved_lists_user_idx on saved_lists(user_id);
+create index if not exists site_pages_status_slug_idx on site_pages(status, slug);
+create index if not exists content_blocks_page_position_idx on content_blocks(page_id, position);
+create index if not exists content_revisions_page_created_idx on content_revisions(page_id, created_at desc);
 
 create or replace function set_updated_at()
 returns trigger
@@ -134,6 +171,16 @@ begin
 end;
 $$;
 
+drop trigger if exists site_pages_set_updated_at on site_pages;
+create trigger site_pages_set_updated_at
+before update on site_pages
+for each row execute function set_updated_at();
+
+drop trigger if exists content_blocks_set_updated_at on content_blocks;
+create trigger content_blocks_set_updated_at
+before update on content_blocks
+for each row execute function set_updated_at();
+
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
 after insert on auth.users
@@ -168,6 +215,9 @@ alter table saved_lists enable row level security;
 alter table saved_cafes enable row level security;
 alter table reports enable row level security;
 alter table admin_logs enable row level security;
+alter table site_pages enable row level security;
+alter table content_blocks enable row level security;
+alter table content_revisions enable row level security;
 
 grant usage on schema public to anon, authenticated;
 
@@ -181,6 +231,8 @@ grant insert, update, delete on cafes, coffee_capabilities, cafe_capabilities, e
 grant select, update on reports to authenticated;
 grant delete on reports to authenticated;
 grant select, insert, update, delete on saved_lists, saved_cafes, admin_logs to authenticated;
+grant select on site_pages, content_blocks to anon, authenticated;
+grant select, insert, update, delete on site_pages, content_blocks, content_revisions to authenticated, service_role;
 
 drop policy if exists "Users can read own profile and admins can read all" on users;
 create policy "Users can read own profile and admins can read all"
@@ -306,3 +358,40 @@ create policy "Admins manage admin logs"
 on admin_logs for all to authenticated
 using (is_admin())
 with check (is_admin());
+drop policy if exists "Anyone can read published site pages" on site_pages;
+create policy "Anyone can read published site pages"
+on site_pages for select to anon, authenticated
+using (status = 'published' or (select is_admin()));
+
+drop policy if exists "Admins manage site pages" on site_pages;
+create policy "Admins manage site pages"
+on site_pages for all to authenticated
+using ((select is_admin()))
+with check ((select is_admin()));
+
+drop policy if exists "Anyone can read visible content blocks" on content_blocks;
+create policy "Anyone can read visible content blocks"
+on content_blocks for select to anon, authenticated
+using (
+  (select is_admin())
+  or (
+    is_visible
+    and exists (
+      select 1 from site_pages
+      where site_pages.id = content_blocks.page_id
+        and site_pages.status = 'published'
+    )
+  )
+);
+
+drop policy if exists "Admins manage content blocks" on content_blocks;
+create policy "Admins manage content blocks"
+on content_blocks for all to authenticated
+using ((select is_admin()))
+with check ((select is_admin()));
+
+drop policy if exists "Admins manage content revisions" on content_revisions;
+create policy "Admins manage content revisions"
+on content_revisions for all to authenticated
+using ((select is_admin()))
+with check ((select is_admin()));
