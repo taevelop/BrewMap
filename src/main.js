@@ -155,6 +155,8 @@ const savedStorageKey = 'brewmap.savedCafes.v1';
 const authSessionStorageKey = 'brewmap.authSession.v1';
 const authPendingEmailStorageKey = 'brewmap.authPendingEmail.v1';
 const authPendingActionStorageKey = 'brewmap.authPendingAction.v1';
+const adminQueueStorageKey = 'brewmap.adminQueue.v1';
+const adminLogsStorageKey = 'brewmap.adminLogs.v1';
 const supabaseProjectUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').replace(/\/+$/, '');
 const supabasePublishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || '';
 const appleLoginEnabled = process.env.NEXT_PUBLIC_ENABLE_APPLE_LOGIN === 'true';
@@ -178,11 +180,13 @@ let cafes = [];
 let cafeLoadState = 'loading';
 let cafeLoadErrorMessage = '';
 
-const adminQueue = [];
-
-const adminLogs = [
+const defaultAdminLogs = [
   { id: 'log-seed-1', action: 'seed', targetTable: 'cafes', targetId: 'busan-coffee', summary: '네이버 저장 목록 기반 실제 카페 seed 데이터 반영', at: '2026. 6. 16.' },
 ];
+const storedAdminQueue = readJsonStorageValue(adminQueueStorageKey, []);
+const storedAdminLogs = readJsonStorageValue(adminLogsStorageKey, defaultAdminLogs);
+const adminQueue = Array.isArray(storedAdminQueue) ? storedAdminQueue : [];
+const adminLogs = Array.isArray(storedAdminLogs) && storedAdminLogs.length ? storedAdminLogs : [...defaultAdminLogs];
 const defaultAdminContentPages = [
   {
     id: 'home',
@@ -1236,6 +1240,14 @@ async function logoutSavedAccount() {
   refreshSavedSurfaces({ keepMapViewport: true });
 }
 
+function persistAdminQueue() {
+  writeJsonStorageValue(adminQueueStorageKey, adminQueue);
+}
+
+function persistAdminLogs() {
+  writeJsonStorageValue(adminLogsStorageKey, adminLogs);
+}
+
 function addAdminLog(action, targetTable, targetId, summary) {
   adminLogs.unshift({
     id: `log-${Date.now()}-${adminLogs.length}`,
@@ -1245,6 +1257,7 @@ function addAdminLog(action, targetTable, targetId, summary) {
     summary,
     at: new Date().toLocaleString('ko-KR'),
   });
+  persistAdminLogs();
 }
 
 function searchTokens() {
@@ -1926,6 +1939,7 @@ function submitReportDraft(draft) {
   };
 
   adminQueue.unshift(report);
+  persistAdminQueue();
   reportDetailInput.value = '';
   setReportStatus(`${report.cafe} 제보가 운영 검토 대기열에 추가되었습니다.`);
   addAdminLog('create_report', 'reports', report.id, `${report.cafe} ${report.type} 제보 접수`);
@@ -1968,17 +1982,20 @@ function approveReport(reportId) {
 
   report.status = '승인됨';
   applyReportSideEffect(report);
+  persistAdminQueue();
   addAdminLog('approve_report', 'reports', report.id, `${report.cafe} ${report.type} 제보 승인`);
   renderApp();
 }
 
-function rejectReport(reportId) {
+function rejectReport(reportId, reason = '운영자 반려') {
   if (!requireAdminAccess()) return;
   const report = adminQueue.find((item) => item.id === reportId);
   if (!report) return;
 
   report.status = '반려됨';
-  addAdminLog('reject_report', 'reports', report.id, `${report.cafe} ${report.type} 제보 반려`);
+  report.rejectionReason = reason;
+  persistAdminQueue();
+  addAdminLog('reject_report', 'reports', report.id, `${report.cafe} ${report.type} 제보 반려: ${reason}`);
   renderApp();
 }
 
