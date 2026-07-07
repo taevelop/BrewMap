@@ -12,6 +12,7 @@
     "start": "next start",
     "clean": "node scripts/clean.mjs",
     "data:check": "node scripts/check-seed-data.mjs",
+    "data:gaps": "node scripts/data-gap-report.mjs",
     "lint": "node scripts/validate.mjs",
     "supabase:seed:sql": "node scripts/generate-supabase-seed.mjs"
   },

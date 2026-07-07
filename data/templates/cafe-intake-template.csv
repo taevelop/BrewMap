@@ -1,0 +1,2 @@
+﻿id,name,city,area,address,latitude,longitude,capabilities,confidence,verification_source,verified_at,naver_map_url,kakao_map_url,google_map_url
+example-jeonpo-cafe,예시 카페,busan,jeonpo,부산 부산진구 전포대로 000,35.1549000,129.0632000,filter_coffee|single_origin|bean_sales,A,admin_verified,2026-07-07,#,#,#
