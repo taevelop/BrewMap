@@ -103,9 +103,10 @@ Week 4 작업이 완료되었으므로 `docs/week5-login-save-plan.md` 기준으
 | Admin 콘텐츠 API | 페이지/블록 저장, 게시, 보관 작업을 관리자 권한으로 처리한다. | Done (실DB 쓰기 검증은 운영자 확인) |
 | Admin UI 구현 | `/admin`에서 콘텐츠 관리 메뉴와 편집 화면을 사용할 수 있다. | Done |
 | 공개 홈 연동 | 홈 히어로, 공지, 큐레이션 카드가 콘텐츠 API를 사용하고 실패 시 기존 정적 콘텐츠로 fallback한다. | Done |
+| 제보 E2E 검증 | 비로그인 제보 게이트, 로그인 후 초안 복원, Admin 승인/반려, 운영 로그 기록을 확인한다. | Done (2026-07-07 자동 QA, 실DB 반영은 운영자 확인) |
 | QA | Admin API 인증 경계, published-only 공개 API, fallback, lint/data:check/build를 확인한다. | Done (자동 검증, Supabase 실DB 게시 흐름은 운영자 확인) |
 
-2026-07-07 기준 콘텐츠 관리 스키마/API/Admin UI와 공개 홈 연동은 코드 기준 완료됐다. Supabase 마이그레이션 적용, 실DB draft 저장/게시/보관 확인, production DELETE성 작업은 운영자 확인 항목이다.
+2026-07-07 기준 콘텐츠 관리 스키마/API/Admin UI와 공개 홈 연동은 코드 기준 완료됐다. 제보 E2E 자동 QA는 비로그인 제보 제출 게이트, 모의 세션 로그인 후 `#report` 복귀와 초안 복원, 빈 제보 입력 안내, `/admin` 검토 대기열 표시, 승인 시 폐업 상태 반영, 반려 사유 저장, `admin_logs` 기록을 통과했다. 산출물은 `artifacts/report-e2e/admin-queue.png`, `artifacts/report-e2e/approval-rejection-result.png`에 보관한다. Supabase 마이그레이션 적용, 실DB draft 저장/게시/보관 확인, production DELETE성 작업, 제보 승인 결과의 실DB 반영 확인은 운영자 확인 항목이다.
 
 ## 지속 운영 항목
 
