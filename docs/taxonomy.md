@@ -1,5 +1,7 @@
 # Coffee & Option Taxonomy v1
 
+이 문서는 커피/옵션 태그, 동의어 매핑, 검증 상태, 신뢰도 등급 정의의 **단일 소스(source of truth)**다. 다른 문서(`docs/csv-format.md` 등)와 코드는 이 목록을 복제하지 않고 참조한다. 허용값을 바꿀 때는 이 문서를 먼저 갱신한 뒤 `scripts/check-seed-data.mjs`와 Admin 태그 관리에 반영한다.
+
 ## MVP 필터
 
 | 그룹 | 태그 |

@@ -83,6 +83,7 @@ git switch <target-branch>
 
 - `docs/work-board.md`: 현재 목표, 우선순위, Week 4 작업 목록, 로그인/저장 후속 계획
 - `docs/week5-login-save-plan.md`: Week 5 로그인/저장 구현 계획과 1차 PR 완료 기준
+- `docs/admin-content-management-plan.md`: Week 6 Admin 페이지/콘텐츠 관리 메뉴, 화면, API, 스키마 계획
 - `docs/mvp-plan.md`: 12주 실행 계획과 MVP 판단 기준
 - `docs/scope.md`: P0/P1/P2 범위
 - `docs/taxonomy.md`: 커피 태그, 동의어, 검증/신뢰도 정책

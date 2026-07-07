@@ -1,5 +1,7 @@
 # BrewMap Retro UI/UX 점검 체크리스트
 
+> **시점 기록 (2026-06-24).** 레트로 QA 체크리스트의 최종본은 이 문서다(이전 기준인 `docs/retro-ux-checklist.md`의 "레거시 숨김" 방식은 이 문서가 폐기했다). 다만 이 문서가 검증한 "레트로 + Classic Workspace 하이브리드" 첫 화면 구성 자체가 2026-06-25 공개/Admin 분리 결정(`docs/public-admin-completion-plan.md`)으로 폐기되었고, 현재 레트로 UI는 `/retro` 별도 진입점에서 제공된다. 아래 내용은 하이브리드 시점의 검증 기록이다.
+
 기준 문서: `docs/brewmap_retro_desktop_spec.md`  
 작성일: 2026-06-24  
 목적: 레트로 UI와 캡쳐 화면의 기존 UI가 같은 화면 흐름 안에서 공존하는지 확인하고, 기획 의도대로 수정한 뒤 완료 여부를 체크한다.

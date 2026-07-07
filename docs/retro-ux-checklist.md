@@ -1,5 +1,7 @@
 # BrewMap Retro UI/UX QA Checklist
 
+> **Superseded — 기록용 문서.** 이 체크리스트의 "레거시 UI 숨김" 기준은 2026-06-24 `docs/retro-ui-ux-checklist.md`의 "Classic Workspace 공존" 기준으로 대체되었고, 그 하이브리드 구성도 2026-06-25 공개/Admin 분리 결정(`docs/public-admin-completion-plan.md`)으로 폐기되었다. 현재 레트로 UI는 `/retro` 별도 진입점에서만 제공된다. 아래 완료 표시는 2026-06-19 시점 기록이며 현행 QA 기준이 아니다.
+
 이 체크리스트는 브루맵 테마가 적용된 레트로 UI가 기존 MVP 동작을 해치지 않고 동일한 핵심 기능을 제공하는지 점검하기 위해 작성했습니다.
 
 ## 점검 항목

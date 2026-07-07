@@ -3,6 +3,7 @@ node_modules/
 out/
 dist/
 public/
+artifacts/*.log
 .env*
 !.env.example
 .DS_Store
