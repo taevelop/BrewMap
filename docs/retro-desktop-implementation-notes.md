@@ -1,5 +1,7 @@
 # Retro Desktop Implementation Notes
 
+> **Superseded — 기록용 문서.** 이 노트의 기술 전제(의존성 없는 정적 Web MVP, `index.html` 해시 라우팅, CSV 소스 오브 트루스, 하이브리드 첫 화면)는 2026-06-25 Next.js App Router + Supabase 전환으로 더 이상 유효하지 않다. 현행 아키텍처는 `docs/supabase-setup.md`와 README를, 레트로 별관(`/retro`) 명세는 `docs/brewmap_retro_desktop_spec.md`를 참조한다.
+
 ## Phase 0 감사 결과
 
 - 현재 BrewMap은 의존성 없는 정적 Web MVP입니다. 라우팅은 별도 프레임워크 없이 `index.html`과 해시 앵커를 사용합니다.

@@ -1,5 +1,7 @@
 # BrewMap UI/UX Beta Validation Checklist
 
+> **시점 기록 (2026-06-24).** 이 검증은 레트로 데스크톱이 첫 진입 화면이던 시점의 기록이다. 2026-06-25 이후 공개 홈은 검색 중심 앱이고 레트로는 `/retro` 별관이므로 "첫 진입" 전제는 현행과 다르다. 데이터 준비도 Gap(113/150)의 최신 상태는 `docs/work-board.md`의 지속 운영 항목을 참조한다. 방문 기록 기능은 별관 전용 실험이다(`docs/scope.md`).
+
 ## 검증 기준
 
 - 최초 디자인 콘셉트: `docs/design-concepts.md`
