@@ -2,10 +2,149 @@ import BrewMapRuntime from '../components/BrewMapRuntime';
 
 export const metadata = {
   title: '브루맵 운영 도구',
-  description: '브루맵 카페 데이터, 제보, 태그, CSV를 관리하는 운영 화면',
+  description: '브루맵 카페 데이터, 제보, 태그, CSV, 공개 콘텐츠를 관리하는 운영 화면',
 };
 
-const adminShell = "\r\n    \u003cmain class=\"app-shell admin-shell\"\u003e\r\n      \u003cdiv class=\"top-layer\"\u003e\r\n        \u003cnav class=\"top-nav\" aria-label=\"브루맵 운영 메뉴\"\u003e\r\n          \u003ca class=\"brand\" href=\"/#home\" aria-label=\"브루맵 공개 화면으로 이동\"\u003e\u003cimg class=\"brand-mark\" src=\"/assets/brewmap-brand-icon.svg\" alt=\"\" width=\"38\" height=\"38\" /\u003e\u003cspan\u003e브루맵 운영 도구\u003c/span\u003e\u003c/a\u003e\r\n          \u003cdiv class=\"nav-actions\"\u003e\r\n            \u003ca href=\"/#home\"\u003e공개 화면\u003c/a\u003e\u003ca href=\"#admin-reports\"\u003e제보 검토\u003c/a\u003e\u003ca href=\"#admin-cafes\"\u003e카페 관리\u003c/a\u003e\u003ca href=\"#admin-imports\"\u003eCSV 가져오기\u003c/a\u003e\r\n          \u003c/div\u003e\r\n        \u003c/nav\u003e\r\n      \u003c/div\u003e\r\n      \u003csection class=\"admin-gate\" aria-label=\"운영 도구 접근 안내\"\u003e\r\n        \u003cp class=\"eyebrow\"\u003e운영자 전용\u003c/p\u003e\r\n        \u003ch1\u003e카페 데이터와 제보를 분리된 화면에서 관리합니다\u003c/h1\u003e\r\n        \u003cp\u003eServer session and admin role are required before operating this console.\u003c/p\u003e\r\n        \u003cp class=\"form-status admin-auth-status\" data-admin-auth-status aria-live=\"polite\"\u003eChecking admin session...\u003c/p\u003e\r\n      \u003c/section\u003e\r\n      \u003csection class=\"ops-grid admin-review-grid\" id=\"admin-reports\"\u003e\r\n        \u003carticle class=\"panel admin-panel\"\u003e\r\n          \u003cp class=\"eyebrow\"\u003e제보 검토\u003c/p\u003e\r\n          \u003ch2\u003e운영 검토 대기열\u003c/h2\u003e\r\n          \u003cdiv class=\"admin-summary\"\u003e\r\n            \u003cspan\u003e\u003cstrong data-admin-pending-count\u003e0건\u003c/strong\u003e 대기\u003c/span\u003e\r\n            \u003cspan\u003e\u003cstrong data-admin-cafe-count\u003e0개\u003c/strong\u003e 카페\u003c/span\u003e\r\n            \u003cspan\u003e\u003cstrong data-admin-tag-count\u003e0개\u003c/strong\u003e 태그\u003c/span\u003e\r\n          \u003c/div\u003e\r\n          \u003cul data-admin-queue\u003e\u003c/ul\u003e\r\n        \u003c/article\u003e\r\n      \u003c/section\u003e\r\n      \u003csection class=\"admin-workspace\" id=\"admin-cafes\" aria-label=\"브루맵 운영 도구\"\u003e\r\n        \u003cdiv class=\"section-heading\"\u003e\u003cp class=\"eyebrow\"\u003e운영 콘솔\u003c/p\u003e\u003ch2\u003e카페 · 태그 · 제보 · CSV 관리\u003c/h2\u003e\u003c/div\u003e\r\n        \u003cdiv class=\"admin-grid\"\u003e\r\n          \u003carticle class=\"admin-tool admin-cafe-tool\"\u003e\r\n            \u003cdiv class=\"tool-heading\"\u003e\u003cp class=\"eyebrow\"\u003e카페 관리\u003c/p\u003e\u003ch3\u003e기본 정보 편집\u003c/h3\u003e\u003c/div\u003e\r\n            \u003cform class=\"admin-form\" data-admin-cafe-form\u003e\r\n              \u003cdiv class=\"form-pair\"\u003e\u003clabel\u003eID\u003cinput data-admin-cafe-id placeholder=\"jeonpo-new-brew\" required /\u003e\u003c/label\u003e\u003clabel\u003e상태\u003cselect data-admin-cafe-status\u003e\u003coption value=\"active\"\u003e운영중\u003c/option\u003e\u003coption value=\"closed\"\u003e폐업\u003c/option\u003e\u003coption value=\"hidden\"\u003e숨김\u003c/option\u003e\u003c/select\u003e\u003c/label\u003e\u003c/div\u003e\r\n              \u003cdiv class=\"form-pair\"\u003e\u003clabel\u003e카페명\u003cinput data-admin-cafe-name required /\u003e\u003c/label\u003e\u003clabel\u003e도시\u003cselect data-admin-cafe-city\u003e\u003coption value=\"부산\"\u003e부산\u003c/option\u003e\u003coption value=\"서울\"\u003e서울\u003c/option\u003e\u003c/select\u003e\u003c/label\u003e\u003c/div\u003e\r\n              \u003clabel\u003e권역\u003cinput data-admin-cafe-area placeholder=\"전포\" required /\u003e\u003c/label\u003e\r\n              \u003clabel\u003e주소\u003cinput data-admin-cafe-address required /\u003e\u003c/label\u003e\r\n              \u003cdiv class=\"form-pair\"\u003e\u003clabel\u003e위도\u003cinput data-admin-cafe-latitude inputmode=\"decimal\" placeholder=\"35.1549000\" required /\u003e\u003c/label\u003e\u003clabel\u003e경도\u003cinput data-admin-cafe-longitude inputmode=\"decimal\" placeholder=\"129.0632000\" required /\u003e\u003c/label\u003e\u003c/div\u003e\r\n              \u003cdiv class=\"form-pair\"\u003e\u003clabel\u003e신뢰도\u003cselect data-admin-cafe-confidence\u003e\u003coption value=\"A\"\u003eA 등급\u003c/option\u003e\u003coption value=\"B\"\u003eB 등급\u003c/option\u003e\u003coption value=\"C\"\u003eC 등급\u003c/option\u003e\u003coption value=\"D\"\u003eD 등급\u003c/option\u003e\u003coption value=\"X\"\u003e검증 필요\u003c/option\u003e\u003c/select\u003e\u003c/label\u003e\u003clabel\u003e검증 출처\u003cselect data-admin-cafe-source\u003e\u003coption value=\"admin_verified\"\u003e관리자 확인\u003c/option\u003e\u003coption value=\"owner_verified\"\u003e사장님 확인\u003c/option\u003e\u003coption value=\"user_report\"\u003e사용자 제보\u003c/option\u003e\u003coption value=\"menu_photo\"\u003e메뉴 사진\u003c/option\u003e\u003c/select\u003e\u003c/label\u003e\u003c/div\u003e\r\n              \u003clabel\u003e최근 확인일\u003cinput data-admin-cafe-verified-at type=\"date\" /\u003e\u003c/label\u003e\r\n              \u003cdiv class=\"capability-checklist\" data-admin-cafe-capabilities\u003e\u003c/div\u003e\r\n              \u003cdiv class=\"form-pair\"\u003e\u003clabel\u003e네이버 지도\u003cinput data-admin-cafe-naver placeholder=\"#\" /\u003e\u003c/label\u003e\u003clabel\u003e카카오맵\u003cinput data-admin-cafe-kakao placeholder=\"#\" /\u003e\u003c/label\u003e\u003c/div\u003e\r\n              \u003clabel\u003eGoogle Maps\u003cinput data-admin-cafe-google placeholder=\"#\" /\u003e\u003c/label\u003e\r\n              \u003cdiv class=\"form-actions\"\u003e\u003cbutton type=\"submit\"\u003e저장\u003c/button\u003e\u003cbutton type=\"button\" data-admin-cafe-new\u003e새 카페\u003c/button\u003e\u003cbutton type=\"button\" class=\"danger-button\" data-admin-cafe-delete\u003e선택 카페 삭제\u003c/button\u003e\u003c/div\u003e\r\n              \u003cp class=\"form-status\" data-admin-cafe-status-text aria-live=\"polite\"\u003e\u003c/p\u003e\r\n            \u003c/form\u003e\r\n          \u003c/article\u003e\r\n\r\n          \u003carticle class=\"admin-tool admin-list-tool\"\u003e\r\n            \u003cdiv class=\"tool-heading\"\u003e\u003cp class=\"eyebrow\"\u003e카페 목록\u003c/p\u003e\u003ch3\u003e운영 데이터\u003c/h3\u003e\u003c/div\u003e\r\n            \u003cdiv class=\"admin-table\" data-admin-cafe-list\u003e\u003c/div\u003e\r\n          \u003c/article\u003e\r\n\r\n          \u003carticle class=\"admin-tool admin-tag-tool\"\u003e\r\n            \u003cdiv class=\"tool-heading\"\u003e\u003cp class=\"eyebrow\"\u003e태그 관리\u003c/p\u003e\u003ch3\u003e커피 태그\u003c/h3\u003e\u003c/div\u003e\r\n            \u003cform class=\"admin-form\" data-admin-tag-form\u003e\r\n              \u003clabel\u003e태그 ID\u003cinput data-admin-tag-key placeholder=\"batch_brew\" required /\u003e\u003c/label\u003e\r\n              \u003clabel\u003e라벨\u003cinput data-admin-tag-label placeholder=\"배치브루\" required /\u003e\u003c/label\u003e\r\n              \u003clabel\u003e그룹\u003cinput data-admin-tag-group placeholder=\"추출\" required /\u003e\u003c/label\u003e\r\n              \u003clabel class=\"check-line\"\u003e\u003cinput data-admin-tag-mvp type=\"checkbox\" /\u003e 공개 필터\u003c/label\u003e\r\n              \u003cdiv class=\"form-actions\"\u003e\u003cbutton type=\"submit\"\u003e태그 저장\u003c/button\u003e\u003cbutton type=\"button\" data-admin-tag-new\u003e새 태그\u003c/button\u003e\u003c/div\u003e\r\n              \u003cp class=\"form-status\" data-admin-tag-status aria-live=\"polite\"\u003e\u003c/p\u003e\r\n            \u003c/form\u003e\r\n            \u003cdiv class=\"tag-admin-list\" data-admin-tag-list\u003e\u003c/div\u003e\r\n          \u003c/article\u003e\r\n\r\n          \u003carticle class=\"admin-tool admin-csv-tool\" id=\"admin-imports\"\u003e\r\n            \u003cdiv class=\"tool-heading\"\u003e\u003cp class=\"eyebrow\"\u003eCSV 가져오기\u003c/p\u003e\u003ch3\u003e검증 결과 미리보기\u003c/h3\u003e\u003c/div\u003e\r\n            \u003ctextarea data-csv-input rows=\"10\" spellcheck=\"false\" placeholder=\"id,name,city,area,address,latitude,longitude,capabilities,confidence,verification_source,verified_at,naver_map_url,kakao_map_url,google_map_url\"\u003e\u003c/textarea\u003e\r\n            \u003cdiv class=\"form-actions\"\u003e\u003cbutton type=\"button\" data-csv-sample\u003e샘플 불러오기\u003c/button\u003e\u003cbutton type=\"button\" data-csv-validate\u003e변경 미리보기\u003c/button\u003e\u003cbutton type=\"button\" data-csv-import disabled\u003e검증 결과 반영\u003c/button\u003e\u003c/div\u003e\r\n            \u003cp class=\"form-status\" data-csv-summary aria-live=\"polite\"\u003e\u003c/p\u003e\r\n            \u003cul class=\"csv-errors\" data-csv-errors\u003e\u003c/ul\u003e\r\n          \u003c/article\u003e\r\n\r\n          \u003carticle class=\"admin-tool admin-log-tool\"\u003e\r\n            \u003cdiv class=\"tool-heading\"\u003e\u003cp class=\"eyebrow\"\u003e변경 기록\u003c/p\u003e\u003ch3\u003e최근 운영 로그\u003c/h3\u003e\u003c/div\u003e\r\n            \u003cul class=\"admin-log-list\" data-admin-log-list\u003e\u003c/ul\u003e\r\n          \u003c/article\u003e\r\n        \u003c/div\u003e\r\n      \u003c/section\u003e\r\n    \u003c/main\u003e";
+const adminShell = String.raw`<main class="app-shell admin-shell">
+  <div class="top-layer">
+    <nav class="top-nav" aria-label="브루맵 운영 메뉴">
+      <a class="brand" href="/#home" aria-label="브루맵 공개 화면으로 이동"><img class="brand-mark" src="/assets/brewmap-brand-icon.svg" alt="" width="38" height="38" /><span>브루맵 운영 도구</span></a>
+      <div class="nav-actions">
+        <a href="/#home">공개 화면</a><a href="#admin-reports">제보 검토</a><a href="#admin-cafes">카페 관리</a><a href="#admin-content">콘텐츠 관리</a><a href="#admin-imports">CSV 가져오기</a>
+      </div>
+    </nav>
+  </div>
+
+  <section class="admin-gate" aria-label="운영 도구 접근 안내">
+    <p class="eyebrow">운영자 전용</p>
+    <h1>카페 데이터와 공개 콘텐츠를 분리된 화면에서 관리합니다</h1>
+    <p>Server session and admin role are required before operating this console.</p>
+    <p class="form-status admin-auth-status" data-admin-auth-status aria-live="polite">Checking admin session...</p>
+  </section>
+
+  <section class="ops-grid admin-review-grid" id="admin-reports">
+    <article class="panel admin-panel">
+      <p class="eyebrow">제보 검토</p>
+      <h2>운영 검토 대기열</h2>
+      <div class="admin-summary">
+        <span><strong data-admin-pending-count>0건</strong> 대기</span>
+        <span><strong data-admin-cafe-count>0개</strong> 카페</span>
+        <span><strong data-admin-tag-count>0개</strong> 태그</span>
+      </div>
+      <ul data-admin-queue></ul>
+    </article>
+  </section>
+
+  <section class="admin-workspace" id="admin-cafes" aria-label="브루맵 운영 도구">
+    <div class="section-heading"><p class="eyebrow">운영 콘솔</p><h2>카페 · 태그 · 제보 · CSV 관리</h2></div>
+    <div class="admin-grid">
+      <article class="admin-tool admin-cafe-tool">
+        <div class="tool-heading"><p class="eyebrow">카페 관리</p><h3>기본 정보 편집</h3></div>
+        <form class="admin-form" data-admin-cafe-form>
+          <div class="form-pair"><label>ID<input data-admin-cafe-id placeholder="jeonpo-new-brew" required /></label><label>상태<select data-admin-cafe-status><option value="active">운영중</option><option value="closed">폐업</option><option value="hidden">숨김</option></select></label></div>
+          <div class="form-pair"><label>카페명<input data-admin-cafe-name required /></label><label>도시<select data-admin-cafe-city><option value="부산">부산</option><option value="서울">서울</option></select></label></div>
+          <label>권역<input data-admin-cafe-area placeholder="전포" required /></label>
+          <label>주소<input data-admin-cafe-address required /></label>
+          <div class="form-pair"><label>위도<input data-admin-cafe-latitude inputmode="decimal" placeholder="35.1549000" required /></label><label>경도<input data-admin-cafe-longitude inputmode="decimal" placeholder="129.0632000" required /></label></div>
+          <div class="form-pair"><label>신뢰도<select data-admin-cafe-confidence><option value="A">A 등급</option><option value="B">B 등급</option><option value="C">C 등급</option><option value="D">D 등급</option><option value="X">검증 필요</option></select></label><label>검증 출처<select data-admin-cafe-source><option value="admin_verified">관리자 확인</option><option value="owner_verified">사장님 확인</option><option value="user_report">사용자 제보</option><option value="menu_photo">메뉴 사진</option></select></label></div>
+          <label>최근 확인일<input data-admin-cafe-verified-at type="date" /></label>
+          <div class="capability-checklist" data-admin-cafe-capabilities></div>
+          <div class="form-pair"><label>네이버 지도<input data-admin-cafe-naver placeholder="#" /></label><label>카카오맵<input data-admin-cafe-kakao placeholder="#" /></label></div>
+          <label>Google Maps<input data-admin-cafe-google placeholder="#" /></label>
+          <div class="form-actions"><button type="submit">저장</button><button type="button" data-admin-cafe-new>새 카페</button><button type="button" class="danger-button" data-admin-cafe-delete>선택 카페 삭제</button></div>
+          <p class="form-status" data-admin-cafe-status-text aria-live="polite"></p>
+        </form>
+      </article>
+
+      <article class="admin-tool admin-list-tool">
+        <div class="tool-heading"><p class="eyebrow">카페 목록</p><h3>운영 데이터</h3></div>
+        <div class="admin-table" data-admin-cafe-list></div>
+      </article>
+
+      <article class="admin-tool admin-tag-tool">
+        <div class="tool-heading"><p class="eyebrow">태그 관리</p><h3>커피 태그</h3></div>
+        <form class="admin-form" data-admin-tag-form>
+          <label>태그 ID<input data-admin-tag-key placeholder="batch_brew" required /></label>
+          <label>라벨<input data-admin-tag-label placeholder="배치브루" required /></label>
+          <label>그룹<input data-admin-tag-group placeholder="추출" required /></label>
+          <label class="check-line"><input data-admin-tag-mvp type="checkbox" /> 공개 필터</label>
+          <div class="form-actions"><button type="submit">태그 저장</button><button type="button" data-admin-tag-new>새 태그</button></div>
+          <p class="form-status" data-admin-tag-status aria-live="polite"></p>
+        </form>
+        <div class="tag-admin-list" data-admin-tag-list></div>
+      </article>
+
+      <article class="admin-tool admin-csv-tool" id="admin-imports">
+        <div class="tool-heading"><p class="eyebrow">CSV 가져오기</p><h3>검증 결과 미리보기</h3></div>
+        <textarea data-csv-input rows="10" spellcheck="false" placeholder="id,name,city,area,address,latitude,longitude,capabilities,confidence,verification_source,verified_at,naver_map_url,kakao_map_url,google_map_url"></textarea>
+        <div class="form-actions"><button type="button" data-csv-sample>샘플 불러오기</button><button type="button" data-csv-validate>변경 미리보기</button><button type="button" data-csv-import disabled>검증 결과 반영</button></div>
+        <p class="form-status" data-csv-summary aria-live="polite"></p>
+        <ul class="csv-errors" data-csv-errors></ul>
+      </article>
+    </div>
+  </section>
+
+  <section class="admin-workspace admin-content-workspace" id="admin-content" aria-label="브루맵 콘텐츠 관리">
+    <div class="section-heading"><p class="eyebrow">콘텐츠 관리</p><h2>공개 페이지 · 홈 블록 · 게시 상태</h2></div>
+    <div class="admin-content-summary" aria-label="콘텐츠 상태 요약">
+      <span><strong data-admin-content-page-count>0개</strong> 페이지</span>
+      <span><strong data-admin-content-draft-count>0개</strong> 초안</span>
+      <span><strong data-admin-content-published-at>-</strong> 최근 게시</span>
+    </div>
+    <div class="admin-content-grid">
+      <article class="admin-tool admin-content-pages-tool">
+        <div class="tool-heading"><p class="eyebrow">페이지 목록</p><h3>운영 페이지</h3></div>
+        <div class="admin-table" data-admin-content-page-list></div>
+      </article>
+
+      <article class="admin-tool admin-content-editor-tool">
+        <div class="tool-heading"><p class="eyebrow">페이지 편집</p><h3>기본 정보와 SEO</h3></div>
+        <form class="admin-form" data-admin-content-form>
+          <div class="form-pair"><label>Slug<input data-admin-content-slug placeholder="home" required /></label><label>상태<select data-admin-content-status-select><option value="draft">초안</option><option value="published">게시됨</option><option value="archived">보관됨</option></select></label></div>
+          <label>운영 제목<input data-admin-content-title required /></label>
+          <label>설명<input data-admin-content-description /></label>
+          <label>SEO 제목<input data-admin-content-seo-title /></label>
+          <label>SEO 설명<textarea data-admin-content-seo-description rows="3"></textarea></label>
+          <div class="form-actions"><button type="submit">페이지 저장</button><button type="button" data-admin-content-new>새 페이지</button><button type="button" data-admin-content-preview-action>미리보기</button><button type="button" data-admin-content-publish>게시</button></div>
+          <p class="form-status" data-admin-content-status aria-live="polite"></p>
+        </form>
+      </article>
+
+      <article class="admin-tool admin-content-blocks-tool">
+        <div class="tool-heading"><p class="eyebrow">블록 목록</p><h3>홈 구성 요소</h3></div>
+        <div class="admin-table" data-admin-content-block-list></div>
+      </article>
+
+      <article class="admin-tool admin-content-block-editor-tool">
+        <div class="tool-heading"><p class="eyebrow">블록 편집</p><h3>타입별 콘텐츠</h3></div>
+        <form class="admin-form" data-admin-content-block-form>
+          <div class="form-pair"><label>Block key<input data-admin-content-block-key placeholder="home-hero" required /></label><label>타입<select data-admin-content-block-type><option value="hero">Hero</option><option value="notice">Notice</option><option value="curation_card">Curation card</option><option value="text">Text</option><option value="cta">CTA</option></select></label></div>
+          <div class="form-pair"><label>순서<input data-admin-content-block-position inputmode="numeric" value="1" /></label><label class="check-line content-visible-line"><input data-admin-content-block-visible type="checkbox" checked /> 공개</label></div>
+          <label>제목/Headline<input data-admin-content-block-headline /></label>
+          <label>본문<textarea data-admin-content-block-body rows="4"></textarea></label>
+          <div class="form-pair"><label>CTA 라벨<input data-admin-content-block-cta-label /></label><label>CTA 링크<input data-admin-content-block-cta-href placeholder="#cafes" /></label></div>
+          <label>이미지 URL<input data-admin-content-block-image-url placeholder="/assets/curation/jeonpo-local-espresso.png" /></label>
+          <div class="form-pair"><label>연결 지역<input data-admin-content-block-linked-area placeholder="전포" /></label><label>연결 필터<input data-admin-content-block-linked-filter placeholder="filter_coffee" /></label></div>
+          <div class="form-actions"><button type="submit">블록 저장</button><button type="button" data-admin-content-block-new>새 블록</button></div>
+        </form>
+      </article>
+
+      <article class="admin-tool admin-content-preview-tool">
+        <div class="tool-heading"><p class="eyebrow">미리보기</p><h3>공개 화면 요약</h3></div>
+        <div class="content-preview" data-admin-content-preview></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="admin-workspace" id="admin-history" aria-label="브루맵 변경 기록">
+    <div class="admin-grid admin-history-grid">
+      <article class="admin-tool admin-log-tool">
+        <div class="tool-heading"><p class="eyebrow">변경 기록</p><h3>최근 운영 로그</h3></div>
+        <ul class="admin-log-list" data-admin-log-list></ul>
+      </article>
+    </div>
+  </section>
+</main>`;
 
 export default function AdminPage() {
   return (

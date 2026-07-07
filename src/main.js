@@ -101,11 +101,29 @@ const adminActionLabels = {
   update_tag: '태그 수정',
   create_tag: '태그 등록',
   csv_import: 'CSV 반영',
+  update_content: '콘텐츠 수정',
+  publish_content: '콘텐츠 게시',
+  create_content_block: '콘텐츠 블록 등록',
+  update_content_block: '콘텐츠 블록 수정',
 };
 const adminTargetLabels = {
   cafes: '카페',
   reports: '제보',
   coffee_capabilities: '커피 태그',
+  site_pages: '페이지',
+  content_blocks: '콘텐츠 블록',
+};
+const contentStatusLabels = {
+  draft: '초안',
+  published: '게시됨',
+  archived: '보관됨',
+};
+const contentBlockTypeLabels = {
+  hero: 'Hero',
+  notice: '공지',
+  curation_card: '큐레이션 카드',
+  text: '본문',
+  cta: 'CTA',
 };
 const confidenceLevels = ['A', 'B', 'C', 'D', 'X'];
 const verificationSources = ['owner_verified', 'admin_verified', 'user_report', 'menu_photo'];
@@ -164,6 +182,66 @@ const adminQueue = [];
 
 const adminLogs = [
   { id: 'log-seed-1', action: 'seed', targetTable: 'cafes', targetId: 'busan-coffee', summary: '네이버 저장 목록 기반 실제 카페 seed 데이터 반영', at: '2026. 6. 16.' },
+];
+const defaultAdminContentPages = [
+  {
+    id: 'home',
+    slug: 'home',
+    title: 'BrewMap Home',
+    description: '브루맵 공개 홈 콘텐츠',
+    seoTitle: '브루맵 | 부산에서 원하는 커피를 찾는 지도',
+    seoDescription: '메뉴와 최근 확인 정보를 기준으로 부산에서 원하는 커피를 판매하는 카페를 찾아보세요.',
+    status: 'published',
+    publishedAt: '2026-07-06T00:00:00.000Z',
+    updatedAt: '2026-07-06T00:00:00.000Z',
+    blocks: [
+      {
+        id: 'home-hero',
+        pageId: 'home',
+        blockKey: 'home-hero',
+        blockType: 'hero',
+        position: 1,
+        isVisible: true,
+        updatedAt: '2026-07-06T00:00:00.000Z',
+        content: {
+          headline: '마시고 싶은 커피가 있는 로컬 지도',
+          body: '당신이 찾고 싶은 커피 지도',
+          primaryCtaLabel: '부산 카페 찾기',
+          primaryCtaHref: '#cafes',
+        },
+      },
+      {
+        id: 'home-notice',
+        pageId: 'home',
+        blockKey: 'home-notice',
+        blockType: 'notice',
+        position: 2,
+        isVisible: true,
+        updatedAt: '2026-07-06T00:00:00.000Z',
+        content: {
+          title: '부산 베타 데이터 보강 중',
+          body: '전포, 해운대, 광안리 중심으로 커피 가능 여부와 최근 확인일을 계속 업데이트합니다.',
+          severity: 'info',
+        },
+      },
+      {
+        id: 'home-curation-jeonpo',
+        pageId: 'home',
+        blockKey: 'home-curation-jeonpo',
+        blockType: 'curation_card',
+        position: 3,
+        isVisible: true,
+        updatedAt: '2026-07-06T00:00:00.000Z',
+        content: {
+          title: '부산 - 전포',
+          body: '골목 에스프레소',
+          imageUrl: '/assets/curation/jeonpo-local-espresso.png',
+          linkedArea: '전포',
+          linkedFilter: 'espresso_machine',
+        },
+      },
+    ],
+  },
 ];
 
 const searchForm = document.querySelector('[data-search-form]');
@@ -230,6 +308,19 @@ const csvSummary = document.querySelector('[data-csv-summary]');
 const csvErrors = document.querySelector('[data-csv-errors]');
 const adminLogList = document.querySelector('[data-admin-log-list]');
 const adminAuthStatus = document.querySelector('[data-admin-auth-status]');
+const adminContentPageCount = document.querySelector('[data-admin-content-page-count]');
+const adminContentDraftCount = document.querySelector('[data-admin-content-draft-count]');
+const adminContentPublishedAt = document.querySelector('[data-admin-content-published-at]');
+const adminContentPageList = document.querySelector('[data-admin-content-page-list]');
+const adminContentForm = document.querySelector('[data-admin-content-form]');
+const adminContentNew = document.querySelector('[data-admin-content-new]');
+const adminContentPreviewAction = document.querySelector('[data-admin-content-preview-action]');
+const adminContentPublish = document.querySelector('[data-admin-content-publish]');
+const adminContentStatus = document.querySelector('[data-admin-content-status]');
+const adminContentBlockForm = document.querySelector('[data-admin-content-block-form]');
+const adminContentBlockList = document.querySelector('[data-admin-content-block-list]');
+const adminContentBlockNew = document.querySelector('[data-admin-content-block-new]');
+const adminContentPreview = document.querySelector('[data-admin-content-preview]');
 
 const adminCafeFields = {
   id: document.querySelector('[data-admin-cafe-id]'),
@@ -254,6 +345,28 @@ const adminTagFields = {
   group: document.querySelector('[data-admin-tag-group]'),
   isMvp: document.querySelector('[data-admin-tag-mvp]'),
 };
+const adminContentFields = {
+  slug: document.querySelector('[data-admin-content-slug]'),
+  status: document.querySelector('[data-admin-content-status-select]'),
+  title: document.querySelector('[data-admin-content-title]'),
+  description: document.querySelector('[data-admin-content-description]'),
+  seoTitle: document.querySelector('[data-admin-content-seo-title]'),
+  seoDescription: document.querySelector('[data-admin-content-seo-description]'),
+};
+
+const adminContentBlockFields = {
+  key: document.querySelector('[data-admin-content-block-key]'),
+  type: document.querySelector('[data-admin-content-block-type]'),
+  position: document.querySelector('[data-admin-content-block-position]'),
+  visible: document.querySelector('[data-admin-content-block-visible]'),
+  headline: document.querySelector('[data-admin-content-block-headline]'),
+  body: document.querySelector('[data-admin-content-block-body]'),
+  ctaLabel: document.querySelector('[data-admin-content-block-cta-label]'),
+  ctaHref: document.querySelector('[data-admin-content-block-cta-href]'),
+  imageUrl: document.querySelector('[data-admin-content-block-image-url]'),
+  linkedArea: document.querySelector('[data-admin-content-block-linked-area]'),
+  linkedFilter: document.querySelector('[data-admin-content-block-linked-filter]'),
+};
 
 const selectedFilters = new Set();
 let savedCafeIds = new Set();
@@ -265,6 +378,10 @@ let searchQuery = '';
 let selectedCafeId = '';
 let selectedAdminCafeId = '';
 let selectedAdminTagKey = '';
+let adminContentPages = cloneContentPages(defaultAdminContentPages);
+let selectedAdminContentPageId = 'home';
+let selectedAdminContentBlockKey = 'home-hero';
+let adminContentReadOnly = false;
 let lastCsvValidation = null;
 let lastCsvSource = '';
 let retroDesktop = null;
@@ -325,6 +442,37 @@ function adminTargetLabel(targetTable) {
   return adminTargetLabels[targetTable] || targetTable;
 }
 
+function contentStatusLabel(status) {
+  return contentStatusLabels[status] || status || '초안';
+}
+
+function blockTypeLabel(type) {
+  return contentBlockTypeLabels[type] || type || '본문';
+}
+
+function cloneContentPages(pages) {
+  return (Array.isArray(pages) ? pages : []).map((page) => ({
+    id: page.id || page.slug || `page-${Date.now()}`,
+    slug: page.slug || '',
+    title: page.title || '',
+    description: page.description || '',
+    seoTitle: page.seoTitle || page.seo_title || '',
+    seoDescription: page.seoDescription || page.seo_description || '',
+    status: page.status || 'draft',
+    publishedAt: page.publishedAt || page.published_at || '',
+    updatedAt: page.updatedAt || page.updated_at || '',
+    blocks: (Array.isArray(page.blocks) ? page.blocks : []).map((block) => ({
+      id: block.id || block.blockKey || block.block_key || `block-${Date.now()}`,
+      pageId: block.pageId || block.page_id || page.id || page.slug || '',
+      blockKey: block.blockKey || block.block_key || '',
+      blockType: block.blockType || block.block_type || 'text',
+      position: Number(block.position || 0),
+      content: { ...(block.content || {}) },
+      isVisible: block.isVisible !== false && block.is_visible !== false,
+      updatedAt: block.updatedAt || block.updated_at || '',
+    })),
+  }));
+}
 function mvpCapabilities() {
   return capabilityCatalog.filter((capability) => capability.isMvpFilter);
 }
@@ -1178,6 +1326,10 @@ function setAdminTagStatus(message) {
   if (adminTagStatus) adminTagStatus.textContent = message;
 }
 
+function setAdminContentStatus(message) {
+  if (adminContentStatus) adminContentStatus.textContent = message;
+}
+
 function setAdminAuthStatus(message, state = '') {
   if (!adminAuthStatus) return;
   adminAuthStatus.textContent = message;
@@ -1186,7 +1338,7 @@ function setAdminAuthStatus(message, state = '') {
 
 function setAdminControlsEnabled(isEnabled) {
   if (!hasAdminSurface) return;
-  document.querySelectorAll('[data-admin-cafe-form] input, [data-admin-cafe-form] select, [data-admin-cafe-form] button, [data-admin-tag-form] input, [data-admin-tag-form] button, [data-csv-input], [data-csv-sample], [data-csv-validate], [data-csv-import], [data-admin-queue] button').forEach((control) => {
+  document.querySelectorAll('[data-admin-cafe-form] input, [data-admin-cafe-form] select, [data-admin-cafe-form] button, [data-admin-tag-form] input, [data-admin-tag-form] button, [data-admin-content-form] input, [data-admin-content-form] select, [data-admin-content-form] textarea, [data-admin-content-form] button, [data-admin-content-block-form] input, [data-admin-content-block-form] select, [data-admin-content-block-form] textarea, [data-admin-content-block-form] button, [data-csv-input], [data-csv-sample], [data-csv-validate], [data-csv-import], [data-admin-queue] button').forEach((control) => {
     control.disabled = !isEnabled;
   });
 }
@@ -1196,6 +1348,7 @@ function requireAdminAccess() {
   setAdminAuthStatus('Admin session is required before changing operational data.', 'error');
   setAdminCafeStatus('Admin session is required.');
   setAdminTagStatus('Admin session is required.');
+  setAdminContentStatus('Admin content session is required.');
   return false;
 }
 
@@ -2506,6 +2659,445 @@ function renderPublic() {
   renderReportOptions();
 }
 
+
+function sortedContentBlocks(page) {
+  return [...(page?.blocks || [])].sort((a, b) => a.position - b.position);
+}
+
+function selectedAdminContentPage() {
+  return adminContentPages.find((page) => page.id === selectedAdminContentPageId) || null;
+}
+
+function currentAdminContentPage() {
+  return selectedAdminContentPage()
+    || adminContentPages[0]
+    || null;
+}
+
+function currentAdminContentBlock() {
+  const page = currentAdminContentPage();
+  return sortedContentBlocks(page).find((block) => block.blockKey === selectedAdminContentBlockKey)
+    || sortedContentBlocks(page)[0]
+    || null;
+}
+
+function renderAdminContentSummary() {
+  if (!adminContentPageCount || !adminContentDraftCount || !adminContentPublishedAt) return;
+  const publishedPages = adminContentPages.filter((page) => page.status === 'published');
+  const latestPublishedAt = publishedPages.map((page) => page.publishedAt).filter(Boolean).sort().at(-1);
+  adminContentPageCount.textContent = `${adminContentPages.length}개`;
+  adminContentDraftCount.textContent = `${adminContentPages.filter((page) => page.status === 'draft').length}개`;
+  adminContentPublishedAt.textContent = latestPublishedAt ? new Date(latestPublishedAt).toLocaleString('ko-KR') : '-';
+}
+
+function renderAdminContentPageList() {
+  if (!adminContentPageList) return;
+  const rows = adminContentPages.map((page) => {
+    const row = document.createElement('div');
+    const info = document.createElement('div');
+    const meta = document.createElement('span');
+    const edit = document.createElement('button');
+    row.className = `admin-row content-status-${page.status}`;
+    info.className = 'admin-row-info';
+    info.innerHTML = `<strong>${escapeHtml(page.title)}</strong>`;
+    meta.textContent = `${page.slug} · ${contentStatusLabel(page.status)} · 블록 ${page.blocks.length}개`;
+    edit.type = 'button';
+    edit.textContent = '편집';
+    edit.addEventListener('click', () => selectContentPage(page.id));
+    info.append(meta);
+    row.append(info, edit);
+    return row;
+  });
+
+  if (!rows.length) {
+    const empty = document.createElement('p');
+    empty.className = 'form-status';
+    empty.textContent = '등록된 페이지가 없습니다.';
+    adminContentPageList.replaceChildren(empty);
+    return;
+  }
+
+  adminContentPageList.replaceChildren(...rows);
+}
+
+function renderAdminContentForm() {
+  if (!adminContentForm) return;
+  const page = currentAdminContentPage();
+  if (!page) return;
+  selectedAdminContentPageId = page.id;
+  adminContentFields.slug.value = page.slug;
+  adminContentFields.status.value = page.status;
+  adminContentFields.title.value = page.title;
+  adminContentFields.description.value = page.description || '';
+  adminContentFields.seoTitle.value = page.seoTitle || '';
+  adminContentFields.seoDescription.value = page.seoDescription || '';
+}
+
+function renderAdminContentBlockList() {
+  if (!adminContentBlockList) return;
+  const page = currentAdminContentPage();
+  const rows = sortedContentBlocks(page).map((block) => {
+    const row = document.createElement('div');
+    const info = document.createElement('div');
+    const meta = document.createElement('span');
+    const edit = document.createElement('button');
+    row.className = `admin-row content-block-row ${block.isVisible ? '' : 'is-hidden'}`.trim();
+    info.className = 'admin-row-info';
+    info.innerHTML = `<strong>${escapeHtml(block.content.headline || block.content.title || block.content.label || block.blockKey)}</strong>`;
+    meta.textContent = `${block.blockKey} · ${blockTypeLabel(block.blockType)} · ${block.isVisible ? '공개' : '숨김'} · ${block.position}`;
+    edit.type = 'button';
+    edit.textContent = '편집';
+    edit.addEventListener('click', () => selectContentBlock(block.blockKey));
+    info.append(meta);
+    row.append(info, edit);
+    return row;
+  });
+
+  if (!rows.length) {
+    const empty = document.createElement('p');
+    empty.className = 'form-status';
+    empty.textContent = '등록된 콘텐츠 블록이 없습니다.';
+    adminContentBlockList.replaceChildren(empty);
+    return;
+  }
+
+  adminContentBlockList.replaceChildren(...rows);
+}
+
+function renderAdminContentBlockForm() {
+  if (!adminContentBlockForm) return;
+  const block = currentAdminContentBlock();
+  if (!block) {
+    resetContentBlockForm();
+    return;
+  }
+
+  selectedAdminContentBlockKey = block.blockKey;
+  adminContentBlockFields.key.value = block.blockKey;
+  adminContentBlockFields.type.value = block.blockType;
+  adminContentBlockFields.position.value = String(block.position);
+  adminContentBlockFields.visible.checked = block.isVisible;
+  adminContentBlockFields.headline.value = block.content.headline || block.content.title || block.content.label || '';
+  adminContentBlockFields.body.value = block.content.body || '';
+  adminContentBlockFields.ctaLabel.value = block.content.primaryCtaLabel || block.content.label || '';
+  adminContentBlockFields.ctaHref.value = block.content.primaryCtaHref || block.content.href || '';
+  adminContentBlockFields.imageUrl.value = block.content.imageUrl || '';
+  adminContentBlockFields.linkedArea.value = block.content.linkedArea || '';
+  adminContentBlockFields.linkedFilter.value = block.content.linkedFilter || '';
+}
+
+function renderAdminContentPreview() {
+  if (!adminContentPreview) return;
+  const page = currentAdminContentPage();
+  if (!page) return;
+  const visibleBlocks = sortedContentBlocks(page).filter((block) => block.isVisible);
+  const blockMarkup = visibleBlocks.map((block) => {
+    const title = block.content.headline || block.content.title || block.content.label || block.blockKey;
+    const body = block.content.body || block.content.primaryCtaHref || block.content.imageUrl || '';
+    return `<li><strong>${escapeHtml(title)}</strong><span>${escapeHtml(blockTypeLabel(block.blockType))} · ${escapeHtml(body)}</span></li>`;
+  }).join('');
+
+  adminContentPreview.innerHTML = `
+    <div class="content-preview-page">
+      <p class="eyebrow">${escapeHtml(contentStatusLabel(page.status))}</p>
+      <h3>${escapeHtml(page.title)}</h3>
+      <p>${escapeHtml(page.description || page.seoDescription || '설명 없음')}</p>
+      <ul>${blockMarkup || '<li><strong>빈 페이지</strong><span>공개 블록이 없습니다.</span></li>'}</ul>
+    </div>
+  `;
+}
+
+function renderAdminContent() {
+  renderAdminContentSummary();
+  renderAdminContentPageList();
+  renderAdminContentForm();
+  renderAdminContentBlockList();
+  renderAdminContentBlockForm();
+  renderAdminContentPreview();
+}
+
+function selectContentPage(pageId) {
+  const page = adminContentPages.find((item) => item.id === pageId);
+  if (!page) return;
+  selectedAdminContentPageId = page.id;
+  selectedAdminContentBlockKey = sortedContentBlocks(page)[0]?.blockKey || '';
+  setAdminContentStatus(`${page.title} 편집 중`);
+  renderAdminContent();
+}
+
+function selectContentBlock(blockKey) {
+  const block = sortedContentBlocks(currentAdminContentPage()).find((item) => item.blockKey === blockKey);
+  if (!block) return;
+  selectedAdminContentBlockKey = block.blockKey;
+  setAdminContentStatus(`${block.blockKey} 블록 편집 중`);
+  renderAdminContentBlockForm();
+}
+
+function resetContentPageForm() {
+  const draftPage = {
+    id: `local-page-${Date.now()}`,
+    slug: '',
+    title: '',
+    description: '',
+    seoTitle: '',
+    seoDescription: '',
+    status: 'draft',
+    publishedAt: '',
+    updatedAt: new Date().toISOString(),
+    blocks: [],
+  };
+  adminContentPages = adminContentPages.filter((page) => !String(page.id).startsWith('local-page-'));
+  adminContentPages.unshift(draftPage);
+  selectedAdminContentPageId = draftPage.id;
+  selectedAdminContentBlockKey = '';
+  adminContentFields.slug.value = '';
+  adminContentFields.status.value = 'draft';
+  adminContentFields.title.value = '';
+  adminContentFields.description.value = '';
+  adminContentFields.seoTitle.value = '';
+  adminContentFields.seoDescription.value = '';
+  resetContentBlockForm();
+  renderAdminContentSummary();
+  renderAdminContentPageList();
+  renderAdminContentBlockList();
+  renderAdminContentPreview();
+  setAdminContentStatus('새 페이지를 작성 중입니다.');
+}
+
+function resetContentBlockForm() {
+  selectedAdminContentBlockKey = '';
+  adminContentBlockFields.key.value = '';
+  adminContentBlockFields.type.value = 'text';
+  adminContentBlockFields.position.value = String((currentAdminContentPage()?.blocks.length || 0) + 1);
+  adminContentBlockFields.visible.checked = true;
+  adminContentBlockFields.headline.value = '';
+  adminContentBlockFields.body.value = '';
+  adminContentBlockFields.ctaLabel.value = '';
+  adminContentBlockFields.ctaHref.value = '';
+  adminContentBlockFields.imageUrl.value = '';
+  adminContentBlockFields.linkedArea.value = '';
+  adminContentBlockFields.linkedFilter.value = '';
+}
+
+function contentPageFromAdminForm() {
+  const slug = adminContentFields.slug.value.trim();
+  const title = adminContentFields.title.value.trim();
+  const existingPage = selectedAdminContentPage();
+  if (!/^[a-z0-9][a-z0-9-]{1,80}$/.test(slug)) return { error: 'Slug는 소문자 영문, 숫자, hyphen만 사용할 수 있습니다.' };
+  if (!title) return { error: '운영 제목을 입력해 주세요.' };
+  return {
+    page: {
+      id: selectedAdminContentPageId || `local-page-${Date.now()}`,
+      slug,
+      title,
+      description: adminContentFields.description.value.trim(),
+      seoTitle: adminContentFields.seoTitle.value.trim(),
+      seoDescription: adminContentFields.seoDescription.value.trim(),
+      status: adminContentFields.status.value,
+      publishedAt: existingPage?.publishedAt || '',
+      updatedAt: new Date().toISOString(),
+      blocks: existingPage?.blocks || [],
+    },
+  };
+}
+
+function contentBlockFromAdminForm() {
+  const blockKey = adminContentBlockFields.key.value.trim();
+  const position = Number(adminContentBlockFields.position.value || 0);
+  if (!/^[a-z0-9][a-z0-9-]{1,120}$/.test(blockKey)) return { error: 'Block key는 소문자 영문, 숫자, hyphen만 사용할 수 있습니다.' };
+  if (!Number.isInteger(position) || position < 0) return { error: '순서를 0 이상의 정수로 입력해 주세요.' };
+
+  const blockType = adminContentBlockFields.type.value;
+  const headline = adminContentBlockFields.headline.value.trim();
+  const body = adminContentBlockFields.body.value.trim();
+  const ctaLabel = adminContentBlockFields.ctaLabel.value.trim();
+  const ctaHref = adminContentBlockFields.ctaHref.value.trim();
+  const imageUrl = adminContentBlockFields.imageUrl.value.trim();
+  const linkedArea = adminContentBlockFields.linkedArea.value.trim();
+  const linkedFilter = adminContentBlockFields.linkedFilter.value.trim();
+  const content = {};
+
+  if (blockType === 'hero') {
+    content.headline = headline;
+    content.body = body;
+    content.primaryCtaLabel = ctaLabel;
+    content.primaryCtaHref = ctaHref;
+  } else if (blockType === 'notice') {
+    content.title = headline;
+    content.body = body;
+    content.severity = 'info';
+  } else if (blockType === 'curation_card') {
+    content.title = headline;
+    content.body = body;
+    content.imageUrl = imageUrl;
+    content.linkedArea = linkedArea;
+    content.linkedFilter = linkedFilter;
+  } else if (blockType === 'cta') {
+    content.label = ctaLabel || headline;
+    content.href = ctaHref;
+    content.body = body;
+  } else {
+    content.title = headline;
+    content.body = body;
+  }
+
+  return {
+    block: {
+      id: selectedAdminContentBlockKey || `local-block-${Date.now()}`,
+      pageId: currentAdminContentPage()?.id || selectedAdminContentPageId,
+      blockKey,
+      blockType,
+      position,
+      content,
+      isVisible: adminContentBlockFields.visible.checked,
+      updatedAt: new Date().toISOString(),
+    },
+  };
+}
+
+function upsertLocalContentPage(page) {
+  const index = adminContentPages.findIndex((item) => item.id === page.id || item.slug === page.slug);
+  if (index >= 0) adminContentPages[index] = page;
+  else adminContentPages.push(page);
+  selectedAdminContentPageId = page.id;
+}
+
+function upsertLocalContentBlock(block) {
+  const page = currentAdminContentPage();
+  if (!page) return;
+  const index = page.blocks.findIndex((item) => item.blockKey === block.blockKey || item.blockKey === selectedAdminContentBlockKey);
+  if (index >= 0) page.blocks[index] = block;
+  else page.blocks.push(block);
+  selectedAdminContentBlockKey = block.blockKey;
+  page.updatedAt = new Date().toISOString();
+}
+
+async function persistContentPage(page) {
+  if (adminContentReadOnly) throw new Error('Supabase Admin content API is in fallback read-only mode.');
+  const isLocal = String(page.id).startsWith('local-') || page.id === page.slug;
+  const endpoint = isLocal ? '/api/admin/content/pages' : `/api/admin/content/pages/${encodeURIComponent(page.id)}`;
+  const response = await fetch(endpoint, {
+    method: isLocal ? 'POST' : 'PATCH',
+    headers: { 'content-type': 'application/json' },
+    credentials: 'same-origin',
+    cache: 'no-store',
+    body: JSON.stringify(page),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.message || `Content API failed with ${response.status}`);
+  return payload.page;
+}
+
+async function saveContentPageFromAdmin(event) {
+  event.preventDefault();
+  if (!requireAdminAccess()) return;
+  const result = contentPageFromAdminForm();
+  if (result.error) {
+    setAdminContentStatus(result.error);
+    return;
+  }
+
+  const page = result.page;
+  upsertLocalContentPage(page);
+  addAdminLog('update_content', 'site_pages', page.slug, `${page.title} 저장`);
+  renderAdminContent();
+
+  try {
+    const savedPage = await persistContentPage(page);
+    if (savedPage) upsertLocalContentPage(savedPage);
+    setAdminContentStatus(`${page.title} 저장 완료`);
+  } catch (error) {
+    setAdminContentStatus(`${page.title} 로컬 저장 완료. 서버 반영은 보류됨: ${error.message}`);
+  }
+  renderAdminContent();
+  renderAdminLogs();
+}
+
+async function saveContentBlockFromAdmin(event) {
+  event.preventDefault();
+  if (!requireAdminAccess()) return;
+  const result = contentBlockFromAdminForm();
+  if (result.error) {
+    setAdminContentStatus(result.error);
+    return;
+  }
+
+  const block = result.block;
+  const action = currentAdminContentPage()?.blocks.some((item) => item.blockKey === block.blockKey) ? 'update_content_block' : 'create_content_block';
+  upsertLocalContentBlock(block);
+  addAdminLog(action, 'content_blocks', block.blockKey, `${block.blockKey} 블록 저장`);
+  renderAdminContent();
+
+  try {
+    const savedPage = await persistContentPage(currentAdminContentPage());
+    if (savedPage) upsertLocalContentPage(savedPage);
+    setAdminContentStatus(`${block.blockKey} 블록 저장 완료`);
+  } catch (error) {
+    setAdminContentStatus(`${block.blockKey} 로컬 저장 완료. 서버 반영은 보류됨: ${error.message}`);
+  }
+  renderAdminContent();
+  renderAdminLogs();
+}
+
+async function publishContentPageFromAdmin() {
+  if (!requireAdminAccess()) return;
+  const page = currentAdminContentPage();
+  if (!page) return;
+  page.status = 'published';
+  page.publishedAt = new Date().toISOString();
+  page.updatedAt = page.publishedAt;
+  addAdminLog('publish_content', 'site_pages', page.slug, `${page.title} 게시`);
+  renderAdminContent();
+
+  try {
+    if (String(page.id).startsWith('local-') || page.id === page.slug) await persistContentPage(page);
+    else {
+      const response = await fetch(`/api/admin/content/pages/${encodeURIComponent(page.id)}/publish`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        credentials: 'same-origin',
+        cache: 'no-store',
+        body: JSON.stringify({ changeNote: `${page.title} 게시` }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.message || `Publish API failed with ${response.status}`);
+      if (payload.page) upsertLocalContentPage(payload.page);
+    }
+    setAdminContentStatus(`${page.title} 게시 완료`);
+  } catch (error) {
+    setAdminContentStatus(`${page.title} 로컬 게시 완료. 서버 반영은 보류됨: ${error.message}`);
+  }
+  renderAdminContent();
+  renderAdminLogs();
+}
+
+function previewContentPageFromAdmin() {
+  const result = contentPageFromAdminForm();
+  if (!result.error) upsertLocalContentPage(result.page);
+  renderAdminContentPreview();
+  setAdminContentStatus(result.error || '현재 입력값으로 미리보기를 갱신했습니다.');
+}
+
+async function loadAdminContentPages() {
+  if (!adminContentPageList || !adminAuthorized) return;
+  try {
+    const response = await fetch('/api/admin/content/pages', { cache: 'no-store', credentials: 'same-origin' });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload.message || `Content API failed with ${response.status}`);
+    if (Array.isArray(payload.pages) && payload.pages.length) {
+      adminContentPages = cloneContentPages(payload.pages);
+      adminContentReadOnly = Boolean(payload.readOnly);
+      selectedAdminContentPageId = adminContentPages[0].id;
+      selectedAdminContentBlockKey = sortedContentBlocks(adminContentPages[0])[0]?.blockKey || '';
+    }
+    setAdminContentStatus(payload.readOnly ? `Fallback content loaded. ${payload.warning || ''}`.trim() : '콘텐츠 데이터를 불러왔습니다.');
+  } catch (error) {
+    adminContentPages = cloneContentPages(defaultAdminContentPages);
+    adminContentReadOnly = true;
+    setAdminContentStatus(`기본 콘텐츠로 시작합니다. ${error.message}`);
+  }
+  renderAdminContent();
+}
 function renderAdmin() {
   renderAdminQueue();
   renderAdminCafeList();
@@ -2513,6 +3105,7 @@ function renderAdmin() {
   renderTagList();
   renderAdminLogs();
   renderAdminCapabilityControls();
+  renderAdminContent();
 }
 
 function renderApp() {
@@ -2568,6 +3161,12 @@ adminCafeNew?.addEventListener('click', resetCafeForm);
 adminCafeDelete?.addEventListener('click', deleteSelectedCafe);
 adminTagForm?.addEventListener('submit', saveTagFromAdmin);
 adminTagNew?.addEventListener('click', resetTagForm);
+adminContentForm?.addEventListener('submit', saveContentPageFromAdmin);
+adminContentNew?.addEventListener('click', resetContentPageForm);
+adminContentPreviewAction?.addEventListener('click', previewContentPageFromAdmin);
+adminContentPublish?.addEventListener('click', publishContentPageFromAdmin);
+adminContentBlockForm?.addEventListener('submit', saveContentBlockFromAdmin);
+adminContentBlockNew?.addEventListener('click', resetContentBlockForm);
 csvSample?.addEventListener('click', loadCsvSample);
 csvValidate?.addEventListener('click', validateCsvFromAdmin);
 csvImport?.addEventListener('click', importCsvRows);
@@ -2627,6 +3226,7 @@ async function startBrewMap() {
   renderApp();
   await consumePendingAuthAction();
   await verifyAdminSession();
+  await loadAdminContentPages();
 }
 
 startBrewMap().catch((error) => {
