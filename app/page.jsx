@@ -13,9 +13,9 @@ const publicShell = String.raw`<main class="app-shell">
   <section class="search-shell" id="home">
     <header class="search-header">
       <div class="search-intro">
-        <p class="eyebrow">Local Discover</p>
-        <h1>마시고 싶은 커피가 있는 로컬 지도</h1>
-        <p>당신이 찾고 싶은 커피 지도</p>
+        <p class="eyebrow" data-home-hero-eyebrow>Local Discover</p>
+        <h1 data-home-hero-headline>마시고 싶은 커피가 있는 로컬 지도</h1>
+        <p data-home-hero-body>당신이 찾고 싶은 커피 지도</p>
         <div class="hero-proof" aria-label="BrewMap 핵심 기준">
           <span><strong>별점 없음</strong> 커피 가능 여부 우선</span>
           <span><strong>검증 표시</strong> 출처 · 최근 확인일</span>
@@ -29,21 +29,26 @@ const publicShell = String.raw`<main class="app-shell">
       </form>
     </header>
 
+    <aside class="home-notice" data-home-notice hidden>
+      <p class="eyebrow" data-home-notice-title></p>
+      <p data-home-notice-body></p>
+    </aside>
+
     <section class="local-discover" aria-labelledby="local-discover-heading">
       <div class="local-discover-copy">
         <p class="eyebrow">Busan Local</p>
         <h2 id="local-discover-heading">오늘의 부산 로컬</h2>
       </div>
       <div class="local-region-grid">
-        <button class="local-region-card" type="button" data-discover-preset="전포" aria-label="부산 전포 카페 보기">
-          <img src="/assets/curation/jeonpo-local-espresso.png" alt="전포 골목 에스프레소 바 분위기" loading="eager" decoding="async" />
-          <span class="local-region-label">부산 - 전포</span>
-          <span class="local-region-note">골목 에스프레소</span>
+        <button class="local-region-card" type="button" data-home-curation-card data-discover-preset="전포" aria-label="부산 전포 카페 보기">
+          <img data-home-curation-image src="/assets/curation/jeonpo-local-espresso.png" alt="전포 골목 에스프레소 바 분위기" loading="eager" decoding="async" />
+          <span class="local-region-label" data-home-curation-title>부산 - 전포</span>
+          <span class="local-region-note" data-home-curation-note>골목 에스프레소</span>
         </button>
-        <button class="local-region-card" type="button" data-discover-preset="해운대" aria-label="부산 해운대 카페 보기">
-          <img src="/assets/curation/haeundae-seaside-cafe.png" alt="해운대 조용한 바다 앞 카페 분위기" loading="eager" decoding="async" />
-          <span class="local-region-label">부산 - 해운대</span>
-          <span class="local-region-note">바다 앞 커피</span>
+        <button class="local-region-card" type="button" data-home-curation-card data-discover-preset="해운대" aria-label="부산 해운대 카페 보기">
+          <img data-home-curation-image src="/assets/curation/haeundae-seaside-cafe.png" alt="해운대 조용한 바다 앞 카페 분위기" loading="eager" decoding="async" />
+          <span class="local-region-label" data-home-curation-title>부산 - 해운대</span>
+          <span class="local-region-note" data-home-curation-note>바다 앞 커피</span>
         </button>
       </div>
     </section>

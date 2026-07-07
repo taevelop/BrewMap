@@ -247,6 +247,13 @@ const defaultAdminContentPages = [
 const searchForm = document.querySelector('[data-search-form]');
 const searchInput = document.querySelector('[data-search-input]');
 const locationInput = document.querySelector('[data-location-input]');
+const homeHeroEyebrow = document.querySelector('[data-home-hero-eyebrow]');
+const homeHeroHeadline = document.querySelector('[data-home-hero-headline]');
+const homeHeroBody = document.querySelector('[data-home-hero-body]');
+const homeNotice = document.querySelector('[data-home-notice]');
+const homeNoticeTitle = document.querySelector('[data-home-notice-title]');
+const homeNoticeBody = document.querySelector('[data-home-notice-body]');
+const homeCurationCards = document.querySelectorAll('[data-home-curation-card]');
 const topLayer = document.querySelector('.top-layer');
 const authNavLinks = document.querySelectorAll('[data-auth-nav]');
 const loginNavLinks = document.querySelectorAll('[data-login-nav]');
@@ -2580,6 +2587,109 @@ async function loadCafes() {
     await loadSeedCafeFallback(error);
   }
 }
+function contentText(value) {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function contentImageUrl(value) {
+  const url = contentText(value);
+  if (!url) return '';
+  if (url.startsWith('/') || /^https?:\/\//i.test(url)) return url;
+  return '';
+}
+
+function homeContentBlocks(page, blockType) {
+  return sortedContentBlocks(page).filter((block) => block.blockType === blockType && block.isVisible !== false);
+}
+
+function applyHomeHeroContent(block) {
+  const content = block?.content || {};
+  const eyebrow = contentText(content.eyebrow);
+  const headline = contentText(content.headline || content.title);
+  const body = contentText(content.body || content.description);
+  if (eyebrow && homeHeroEyebrow) homeHeroEyebrow.textContent = eyebrow;
+  if (headline && homeHeroHeadline) homeHeroHeadline.textContent = headline;
+  if (body && homeHeroBody) homeHeroBody.textContent = body;
+  return Boolean(eyebrow || headline || body);
+}
+
+function applyHomeNoticeContent(block) {
+  if (!homeNotice) return false;
+  const content = block?.content || {};
+  const title = contentText(content.title || content.headline);
+  const body = contentText(content.body);
+  if (!title && !body) return false;
+  if (homeNoticeTitle) homeNoticeTitle.textContent = title || '공지';
+  if (homeNoticeBody) homeNoticeBody.textContent = body;
+  homeNotice.dataset.severity = contentText(content.severity) || 'info';
+  homeNotice.hidden = false;
+  return true;
+}
+
+function applyHomeCurationContent(blocks) {
+  if (!homeCurationCards.length || !blocks.length) return false;
+  homeCurationCards.forEach((card, index) => {
+    const block = blocks[index];
+    if (!block) {
+      card.hidden = true;
+      return;
+    }
+
+    const content = block.content || {};
+    const title = contentText(content.title || content.headline || block.blockKey);
+    const body = contentText(content.body || content.description);
+    const imageUrl = contentImageUrl(content.imageUrl || content.image_url);
+    const linkedArea = contentText(content.linkedArea || content.linked_area);
+    const linkedFilter = contentText(content.linkedFilter || content.linked_filter);
+    const titleEl = card.querySelector('[data-home-curation-title]');
+    const noteEl = card.querySelector('[data-home-curation-note]');
+    const imageEl = card.querySelector('[data-home-curation-image]');
+
+    if (title && titleEl) titleEl.textContent = title;
+    if (body && noteEl) noteEl.textContent = body;
+    if (imageUrl && imageEl) {
+      imageEl.src = imageUrl;
+      imageEl.alt = title ? `${title} 이미지` : imageEl.alt;
+    }
+    if (linkedArea) card.dataset.discoverPreset = linkedArea;
+    else delete card.dataset.discoverPreset;
+    if (linkedFilter) card.dataset.discoverFilter = linkedFilter;
+    else delete card.dataset.discoverFilter;
+    card.setAttribute('aria-label', `${title || linkedArea || '추천'} 카페 보기`);
+    card.hidden = false;
+  });
+  return true;
+}
+
+function applyPublicHomeContent(page) {
+  const blocks = sortedContentBlocks(page).filter((block) => block.isVisible !== false);
+  if (!blocks.length) return false;
+
+  const applied = [
+    applyHomeHeroContent(homeContentBlocks(page, 'hero')[0]),
+    applyHomeNoticeContent(homeContentBlocks(page, 'notice')[0]),
+    applyHomeCurationContent(homeContentBlocks(page, 'curation_card')),
+  ];
+  return applied.some(Boolean);
+}
+
+async function loadPublicHomeContent() {
+  if (!homeHeroHeadline && !homeNotice && !homeCurationCards.length) return false;
+  if (typeof fetch !== 'function') return false;
+
+  try {
+    const response = await fetch('/api/content?slug=home', { cache: 'no-store' });
+    await assertExpectedResponse(response, 'Content API', ['application/json']);
+    const payload = await response.json().catch(() => {
+      throw new Error('Content API response is not valid JSON.');
+    });
+    if (payload.source !== 'supabase' || !payload.page) return false;
+    return applyPublicHomeContent(payload.page);
+  } catch (error) {
+    console.warn(`Using static home content fallback. ${error.message}`);
+    return false;
+  }
+}
 function importCsvRows() {
   if (!csvInput || !csvSummary || !csvImport) return;
   if (!requireAdminAccess()) return;
@@ -3179,8 +3289,18 @@ logoutActions.forEach((button) => {
 discoverPresetActions.forEach((button) => {
   button.addEventListener('click', () => {
     const preset = button.dataset.discoverPreset;
-    if (!preset) return;
-    applyLocationPreset(preset);
+    const filter = button.dataset.discoverFilter;
+    const shouldApplyFilter = filter && capabilityCatalog.some((capability) => capability.key === filter);
+    if (!preset && !shouldApplyFilter) return;
+    if (shouldApplyFilter) selectedFilters.add(filter);
+    if (preset) applyLocationPreset(preset);
+    else {
+      searchQuery = readSearchQuery();
+      resetCafeResultLimit();
+      writeSearchStateToUrl();
+      renderCafeResults();
+    }
+    if (shouldApplyFilter) renderFilters();
     document.querySelector('#cafes')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 });
@@ -3191,6 +3311,7 @@ async function startBrewMap() {
   syncSearchStateFromUrl();
   registerServiceWorker();
   await loadCafes();
+  await loadPublicHomeContent();
   savedCafeIds = readSavedCafeIds();
   const authBootstrap = bootstrapAuthSession();
   if (authBootstrap.session) {
