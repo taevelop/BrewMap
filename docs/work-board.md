@@ -98,14 +98,14 @@ Week 4 작업이 완료되었으므로 `docs/week5-login-save-plan.md` 기준으
 | 작업 | 완료 기준 | 상태 |
 | --- | --- | --- |
 | 메뉴/화면 설계 | Admin 메뉴에 콘텐츠 관리 진입점, 대시보드, 페이지 목록, 페이지 편집, 블록 편집, 미리보기를 정의한다. | Done (2026-07-06 계획 확정) |
-| 콘텐츠 스키마 | `site_pages`, `content_blocks`, `content_revisions`와 RLS 정책 초안을 만든다. | In Progress (마이그레이션 초안 작업 트리 존재) |
-| 공개 콘텐츠 API | published 페이지와 visible 블록만 반환하는 `/api/content?slug=home`을 추가한다. | In Progress (라우트 초안 작업 트리 존재) |
-| Admin 콘텐츠 API | 페이지/블록 저장, 게시, 보관 작업을 관리자 권한으로 처리한다. | In Progress (라우트 초안 작업 트리 존재) |
-| Admin UI 구현 | `/admin`에서 콘텐츠 관리 메뉴와 편집 화면을 사용할 수 있다. | In Progress (편집 화면 초안 작업 트리 존재) |
-| 공개 홈 연동 | 홈 히어로, 공지, 큐레이션 카드가 콘텐츠 API를 사용하고 실패 시 기존 정적 콘텐츠로 fallback한다. | Todo |
-| QA | Admin API 인증 경계, published-only 공개 API, fallback, lint/data:check/build를 확인한다. | Todo |
+| 콘텐츠 스키마 | `site_pages`, `content_blocks`, `content_revisions`와 RLS 정책 초안을 만든다. | Done (마이그레이션 커밋, Supabase 적용은 운영자 확인) |
+| 공개 콘텐츠 API | published 페이지와 visible 블록만 반환하는 `/api/content?slug=home`을 추가한다. | Done |
+| Admin 콘텐츠 API | 페이지/블록 저장, 게시, 보관 작업을 관리자 권한으로 처리한다. | Done (실DB 쓰기 검증은 운영자 확인) |
+| Admin UI 구현 | `/admin`에서 콘텐츠 관리 메뉴와 편집 화면을 사용할 수 있다. | Done |
+| 공개 홈 연동 | 홈 히어로, 공지, 큐레이션 카드가 콘텐츠 API를 사용하고 실패 시 기존 정적 콘텐츠로 fallback한다. | Done |
+| QA | Admin API 인증 경계, published-only 공개 API, fallback, lint/data:check/build를 확인한다. | Done (자동 검증, Supabase 실DB 게시 흐름은 운영자 확인) |
 
-2026-07-07 기준 `codex/google-login`에 `supabase/migrations/20260706000000_content_management.sql`, `/api/content`, `/api/admin/content/*` 라우트와 Admin 편집 화면 초안이 커밋되어 있으며 공개 홈 연동과 QA 전이다.
+2026-07-07 기준 콘텐츠 관리 스키마/API/Admin UI와 공개 홈 연동은 코드 기준 완료됐다. Supabase 마이그레이션 적용, 실DB draft 저장/게시/보관 확인, production DELETE성 작업은 운영자 확인 항목이다.
 
 ## 지속 운영 항목
 

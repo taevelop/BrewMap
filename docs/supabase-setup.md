@@ -88,3 +88,20 @@ Browser -> /api/cafes -> Supabase REST API -> cafes + cafe_capabilities
 ## Next Step
 
 After `/api/cafes` is verified in Vercel, connect login and saved cafes to Supabase Auth and the `saved_lists` / `saved_cafes` tables.
+
+## Step 8: Apply Content Management Migration
+
+운영자 확인 항목: Codex는 Supabase production 프로젝트에 이 마이그레이션을 직접 적용하지 않는다. 운영자가 SQL Editor에서 아래 순서로 적용한다.
+
+1. Open Supabase Dashboard for project `tymgcvdlbpmikxriboel`.
+2. Go to `SQL Editor`.
+3. Confirm `Step 5` initial schema has already been applied.
+4. Create a new query.
+5. Paste the full contents of `supabase/migrations/20260706000000_content_management.sql`.
+6. Click `Run`.
+7. Confirm these tables exist in `Table Editor`:
+   - `site_pages`
+   - `content_blocks`
+   - `content_revisions`
+8. Confirm RLS is enabled and public reads only return `published` pages with `is_visible=true` blocks.
+9. Promote the intended admin user first, then verify `/api/admin/content/pages` with Basic Auth before saving or publishing content.

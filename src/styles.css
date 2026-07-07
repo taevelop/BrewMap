@@ -3888,6 +3888,29 @@ body {
   color: var(--local-muted);
 }
 
+.home-notice {
+  display: grid;
+  gap: 4px;
+  max-width: 1500px;
+  margin: 0 auto 14px;
+  padding: 12px 16px;
+  border: 1px solid var(--local-line);
+  border-radius: 8px;
+  background: #fffaf2;
+  color: var(--local-ink);
+}
+
+.home-notice[hidden] {
+  display: none;
+}
+
+.home-notice p {
+  margin: 0;
+}
+
+.home-notice .eyebrow {
+  color: var(--brewmap-orange);
+}
 .local-discover {
   display: grid;
   grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
@@ -4151,7 +4174,30 @@ body {
 }
 
 @media (max-width: 900px) {
-  .local-discover {
+  .home-notice {
+  display: grid;
+  gap: 4px;
+  max-width: 1500px;
+  margin: 0 auto 14px;
+  padding: 12px 16px;
+  border: 1px solid var(--local-line);
+  border-radius: 8px;
+  background: #fffaf2;
+  color: var(--local-ink);
+}
+
+.home-notice[hidden] {
+  display: none;
+}
+
+.home-notice p {
+  margin: 0;
+}
+
+.home-notice .eyebrow {
+  color: var(--brewmap-orange);
+}
+.local-discover {
     grid-template-columns: 1fr;
     gap: 10px;
     padding: 12px;
