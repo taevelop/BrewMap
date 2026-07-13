@@ -1527,11 +1527,23 @@ function scrollMapIntoView() {
   mapSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+function revealCafeResult(cafeId) {
+  const items = filteredCafes();
+  const cafeIndex = items.findIndex((cafe) => cafe.id === cafeId);
+  if (cafeIndex < visibleCafeResultCount) return;
+
+  visibleCafeResultCount = Math.min(
+    items.length,
+    Math.ceil((cafeIndex + 1) / cafeResultPageSize) * cafeResultPageSize,
+  );
+}
+
 function selectCafe(cafeId, options = {}) {
   const cafe = cafeById(cafeId);
   if (!cafe) return;
   selectedCafeId = cafeId;
   if (options.focusMap) focusMapOnCafe(cafe);
+  if (options.scrollList) revealCafeResult(cafeId);
   renderCafeResults({ keepMapViewport: Boolean(options.keepMapViewport || options.focusMap) });
 
   if (options.scrollList) {
@@ -1741,20 +1753,68 @@ function bindMapInteractions() {
   });
 }
 
+function resultVisibleCount(items) {
+  return Math.min(visibleCafeResultCount, items.length);
+}
+
+function updateResultSummary(items) {
+  resultCount.textContent = items.length
+    ? `목록 ${resultVisibleCount(items)} / ${items.length}개 표시`
+    : '0개 카페';
+}
+
+function updateResultPager(pager, items) {
+  const status = pager.querySelector('[data-result-status]');
+  const button = pager.querySelector('[data-result-more]');
+  const visibleCount = resultVisibleCount(items);
+  const hiddenCount = Math.max(0, items.length - visibleCount);
+
+  if (!hiddenCount) {
+    const buttonHadFocus = document.activeElement === button;
+    status.textContent = `현재 조건의 ${items.length}개 카페를 목록과 지도에 모두 표시했습니다.`;
+    button.hidden = true;
+    if (buttonHadFocus) status.focus({ preventScroll: true });
+    return;
+  }
+
+  const nextCount = Math.min(cafeResultPageSize, hiddenCount);
+  status.textContent = `목록 ${visibleCount} / ${items.length}개 표시 중 · 지도에는 ${items.length}개 전체가 표시됩니다.`;
+  button.textContent = `목록에 ${nextCount}개 더 표시`;
+  button.hidden = false;
+}
+
+function appendCafeResultPage(items, pager) {
+  const previousCount = resultVisibleCount(items);
+  const nextVisibleCount = Math.min(previousCount + cafeResultPageSize, items.length);
+  if (nextVisibleCount <= previousCount || pager.parentElement !== cafeGrid) return;
+
+  const fragment = document.createDocumentFragment();
+  items.slice(previousCount, nextVisibleCount).forEach((cafe, index) => {
+    fragment.append(renderCafe(cafe, previousCount + index));
+  });
+
+  visibleCafeResultCount = nextVisibleCount;
+  cafeGrid.insertBefore(fragment, pager);
+  updateResultSummary(items);
+  updateResultPager(pager, items);
+}
+
 function renderResultPager(items) {
   const pager = document.createElement('div');
+  const status = document.createElement('p');
+  const button = document.createElement('button');
   pager.className = 'result-pager';
-  const hiddenCount = Math.max(0, items.length - visibleCafeResultCount);
-  if (!hiddenCount) {
-    pager.innerHTML = `<p>현재 조건의 ${items.length}개 카페를 모두 표시했습니다.</p>`;
-    return pager;
-  }
-  const nextCount = Math.min(cafeResultPageSize, hiddenCount);
-  pager.innerHTML = `<p>${items.length}개 중 ${Math.min(visibleCafeResultCount, items.length)}개만 먼저 표시 중입니다. 지도를 함께 보며 필요한 만큼 더 불러오세요.</p><button type="button">${nextCount}개 더 보기</button>`;
-  pager.querySelector('button').addEventListener('click', () => {
-    visibleCafeResultCount += cafeResultPageSize;
-    renderCafeResults({ keepMapViewport: true });
-  });
+  pager.dataset.resultPager = '';
+  status.id = 'cafe-result-status';
+  status.dataset.resultStatus = '';
+  status.tabIndex = -1;
+  button.type = 'button';
+  button.dataset.resultMore = '';
+  button.setAttribute('aria-controls', 'cafes');
+  button.setAttribute('aria-describedby', status.id);
+  button.addEventListener('click', () => appendCafeResultPage(items, pager));
+  pager.append(status, button);
+  updateResultPager(pager, items);
   return pager;
 }
 
@@ -1777,7 +1837,7 @@ function renderCafeResults(options = {}) {
 
   const items = filteredCafes();
   if (selectedCafeId && !items.some((cafe) => cafe.id === selectedCafeId)) selectedCafeId = '';
-  resultCount.textContent = `${items.length}개 카페`;
+  updateResultSummary(items);
   const visibleItems = items.slice(0, visibleCafeResultCount);
   cafeGrid.replaceChildren(...(items.length ? [...visibleItems.map(renderCafe), renderResultPager(items)] : [renderEmptyState()]));
   renderMapPins(items, { keepViewport: Boolean(options.keepMapViewport) });
