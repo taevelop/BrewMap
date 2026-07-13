@@ -68,8 +68,8 @@ Then import it in Supabase:
 4. Click `Run`.
 5. Confirm row counts in `Table Editor`:
    - `coffee_capabilities`: 21 rows
-   - `cafes`: 113 rows
-   - `cafe_capabilities`: 283 rows
+   - `cafes`: 165 rows
+   - `cafe_capabilities`: 434 rows
 
 The generated SQL is safe to run again. It upserts capabilities and cafes, then refreshes capability links for the seed cafes.
 
