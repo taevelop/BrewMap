@@ -2673,6 +2673,11 @@ h3,
   line-height: 1.45;
 }
 
+.result-pager p:focus-visible {
+  outline: 3px solid var(--coffee-orange);
+  outline-offset: 3px;
+}
+
 .result-pager button {
   border: 2px solid var(--retro-line);
   border-radius: 4px;

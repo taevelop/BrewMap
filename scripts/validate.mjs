@@ -94,6 +94,11 @@ const contentMigration = await readFile('supabase/migrations/20260706000000_cont
 const seedCheck = await readFile('scripts/check-seed-data.mjs', 'utf8');
 const seedBytes = await readFile('data/seed-cafes.csv');
 const seed = seedBytes.toString('utf8');
+const resultPagerStart = js.indexOf('function resultVisibleCount(');
+const resultPagerEnd = js.indexOf('\nfunction renderCafeResults(', resultPagerStart);
+const resultPagerSource = resultPagerStart >= 0 && resultPagerEnd > resultPagerStart
+  ? js.slice(resultPagerStart, resultPagerEnd)
+  : '';
 
 const checks = [
   ['Package uses Next.js dev/build/start scripts', packageJson.includes('"dev": "next dev"') && packageJson.includes('"build": "next build"') && packageJson.includes('"start": "next start"')],
@@ -131,6 +136,10 @@ const checks = [
   ['JavaScript defines launch coffee capabilities', js.includes('filter_coffee') && js.includes('bean_sales')],
   ['JavaScript syncs filters to URL state', js.includes('syncSearchStateFromUrl') && js.includes('writeSearchStateToUrl') && js.includes('URLSearchParams')],
   ['JavaScript renders cafe primary tags with known label helper', js.includes('map(tagLabel)') && !js.includes('capabilityLabel')],
+  ['JavaScript uses accurate progressive cafe result copy', Boolean(resultPagerSource) && ['개 표시 중', '지도에는', '개 전체가 표시됩니다', '목록에', '개 더 표시'].every((copy) => resultPagerSource.includes(copy)) && !js.includes('더 불러오세요')],
+  ['JavaScript appends only the next cafe result page', Boolean(resultPagerSource) && resultPagerSource.includes('items.slice(previousCount, nextVisibleCount)') && resultPagerSource.includes('document.createDocumentFragment()') && resultPagerSource.includes('cafeGrid.insertBefore(fragment, pager)') && !resultPagerSource.includes('replaceChildren')],
+  ['Cafe result paging preserves the map and announces visible counts', Boolean(resultPagerSource) && resultPagerSource.includes('resultCount.textContent') && !resultPagerSource.includes('renderCafeResults(') && !resultPagerSource.includes('renderMapPins(') && publicPage.includes('data-result-count aria-live="polite"')],
+  ['Map selections reveal hidden cafe result cards', js.includes('function revealCafeResult(') && js.includes('if (options.scrollList) revealCafeResult(cafeId)')],
   ['JavaScript wires public saved/report/detail flows', js.includes('data-saved-list') && js.includes('toggleSaved') && js.includes('data-report-form') && js.includes('submitReport') && js.includes('data-detail-dialog') && js.includes('openDetail')],
   ['JavaScript wires Admin operations and session check', js.includes('verifyAdminSession') && js.includes('/api/admin/session') && js.includes('saveCafeFromAdmin') && js.includes('saveTagFromAdmin') && js.includes('validateCsvImportText')],
   ['JavaScript wires Admin content management', js.includes('renderAdminContent') && js.includes('saveContentPageFromAdmin') && js.includes('publishContentPageFromAdmin') && js.includes('/api/admin/content/pages')],
